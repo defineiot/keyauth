@@ -10,6 +10,7 @@ import (
 	"openauth/api/config"
 	"openauth/api/config/env"
 	"openauth/api/config/file"
+	"openauth/api/http"
 )
 
 // startCmd represents the start command
@@ -30,6 +31,15 @@ to quickly create a Cobra application.`,
 
 		conf, err := checkConfType(confType)
 		if err != nil {
+			return err
+		}
+
+		s, err := http.NewService(conf)
+		if err != nil {
+			return err
+		}
+
+		if err := s.Start(); err != nil {
 			return err
 		}
 
