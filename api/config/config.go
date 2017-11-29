@@ -16,7 +16,6 @@ import (
 var (
 	db     *sql.DB
 	logger *logrus.Logger
-	once   sync.Once
 )
 
 // Configer use to get conf
@@ -95,7 +94,10 @@ func (c *Config) validateMySQL() error {
 
 // GetDBConn use to get mysql database connection
 func (c *Config) GetDBConn() (*sql.DB, error) {
-	var err error
+	var (
+		err  error
+		once sync.Once
+	)
 
 	once.Do(func() {
 		err = c.initDBConn()
@@ -111,7 +113,10 @@ func (c *Config) GetDBConn() (*sql.DB, error) {
 
 // GetLogger use to get logger instance
 func (c *Config) GetLogger() (*logrus.Logger, error) {
-	var err error
+	var (
+		err  error
+		once sync.Once
+	)
 
 	once.Do(func() {
 		err = c.initLogger()
@@ -152,7 +157,7 @@ func (c *Config) initLogger() error {
 	// if filepath is not set, use stdout to input
 	logger.AddHook(lfshook.NewHook(lfshook.PathMap{
 		logrus.DebugLevel: "/tmp/debug.log",
-		logrus.InfoLevel:  "/tmp/info.log",
+		logrus.InfoLevel:  "/tmp/debug.log",
 	}))
 
 	return nil

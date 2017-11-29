@@ -54,16 +54,16 @@ func initDatabase() error {
 		return fmt.Errorf("get mysql connection error, %s", err.Error())
 	}
 
-	if _, err := db.Exec(string(sql)); err != nil {
-		return fmt.Errorf("[ERROR] - [MySQL Create Table] - create table error, %s", err.Error())
-	}
-
 	vers, desc, err := checkDBInit(db)
 	if err != nil {
 		return err
 	}
-	if vers == 1 {
+	if vers >= 1 {
 		return fmt.Errorf("the database has been initialized, sql version: %d, description: %s", vers, desc)
+	}
+
+	if _, err := db.Exec(string(sql)); err != nil {
+		return fmt.Errorf("[ERROR] - [MySQL Create Table] - create table error, %s", err.Error())
 	}
 
 	if err := initialRecord(db); err != nil {

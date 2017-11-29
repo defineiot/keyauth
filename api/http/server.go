@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/rs/cors"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 
 	"openauth/api/config"
@@ -18,7 +19,8 @@ var stopSignal = make(chan bool, 1)
 
 // Service is gateway service
 type Service struct {
-	conf *config.Config
+	conf   *config.Config
+	logger *logrus.Logger
 }
 
 // NewService use to new an gateway service
@@ -28,7 +30,12 @@ func NewService(conf *config.Config) (*Service, error) {
 		return nil, fmt.Errorf("config validate failed, %s", err)
 	}
 
-	return &Service{conf: conf}, nil
+	logger, err := conf.GetLogger()
+	if err != nil {
+		return nil, err
+	}
+
+	return &Service{conf: conf, logger: logger}, nil
 }
 
 // Start use to start openauth http service
@@ -49,21 +56,23 @@ func (s *Service) Start() error {
 	recoverM := negroni.NewRecovery()
 	n.Use(corsM)
 	n.Use(recoverM)
+	s.logger.Info("loading http middleware success")
 
 	// config router
 	n.UseHandler(r.Router)
+	s.logger.Info("loading router success")
 
 	// run http service
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL, syscall.SIGHUP, syscall.SIGQUIT)
 	go func() {
-		s := <-ch
-		fmt.Printf("receive signal '%v'", s)
+		sg := <-ch
+		s.logger.Info(fmt.Sprintf("receive signal '%v'", sg))
 		os.Exit(1)
 	}()
 
 	addr := fmt.Sprintf("%s:%s", s.conf.APP.Host, s.conf.APP.Port)
-	fmt.Printf("starting openauth service at %s:%s ...\n", s.conf.APP.Host, s.conf.APP.Port)
+	s.logger.Info(fmt.Sprintf("starting openauth service at %s", addr))
 	if err := http.ListenAndServe(addr, n); err != nil {
 		return fmt.Errorf("start openauth error, %s", err.Error())
 	}

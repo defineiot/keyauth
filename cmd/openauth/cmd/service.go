@@ -34,6 +34,27 @@ to quickly create a Cobra application.`,
 			return err
 		}
 
+		// get db conn and logger
+		db, err := conf.GetDBConn()
+		if err != nil {
+			return err
+		}
+		logger, err := conf.GetLogger()
+		if err != nil {
+			return err
+		}
+
+		// check the database is initial
+		vers, desc, err := checkDBInit(db)
+		if err != nil {
+			return err
+		}
+		if vers < 1 {
+			return fmt.Errorf("the database hasn't initialized")
+		}
+		logger.Debug(fmt.Sprintf("the database version: %d, desc: %s", vers, desc))
+
+		// start service
 		s, err := http.NewService(conf)
 		if err != nil {
 			return err
@@ -71,34 +92,35 @@ func checkConfType(configType string) (conf *config.Config, err error) {
 
 // CheckDBInit use to check the mysql db is initial
 func checkDBInit(db *sql.DB) (version int, desc string, err error) {
-	rows, errSE := db.Query("SELECT version,description FROM dbmanager")
+	// if table not exists, version: 0
+	rows, err := db.Query("SHOW TABLES LIKE 'dbmanager'")
 	if err != nil {
-		err = fmt.Errorf("check database initial failed, %s", errSE.Error())
-		return
+		return 0, "", fmt.Errorf("check table exists failed, %s", err)
+	}
+	tc := 0
+	for rows.Next() {
+		tc++
+	}
+	if tc == 0 {
+		return 0, "", nil
 	}
 
+	// query the version
+	rows, err = db.Query("SELECT version,description FROM dbmanager ORDER BY version DESC LIMIT 1")
+	if err != nil {
+		return 0, "", fmt.Errorf("check database version failed, %s", err)
+	}
 	count := 0
 	for rows.Next() {
-
-		rows.Columns()
-		if errSC := rows.Scan(&version, &desc); err != nil {
-			err = fmt.Errorf("check database initial table failed, %s", errSC.Error())
-			return
+		if err := rows.Scan(&version, &desc); err != nil {
+			return 0, "", fmt.Errorf("check database initial table failed, %s", err)
 		}
 		count++
-
 	}
 
-	if count == 0 {
-		err = errors.New("database initial failed, there is no dbversion in dbmanager")
-		return
-	}
-
-	return
+	return version, desc, nil
 }
 
 func init() {
-
 	RootCmd.AddCommand(serviceCmd)
-
 }
