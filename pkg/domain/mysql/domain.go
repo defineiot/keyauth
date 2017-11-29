@@ -1,4 +1,4 @@
-package mongodb
+package mysql
 
 import (
 	"database/sql"

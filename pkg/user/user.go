@@ -65,10 +65,11 @@ type Manager interface {
 	// Get user with User name & user password
 	GetUserByName(domainID, userName, userPassword string) (*User, error)
 	// Get user with User id & user password
-	GetUserById(userID, userPassword string) (*User, error)
-	// Delete user from persistence storage
+	GetUserByID(userID, userPassword string) (*User, error)
+	// GetUser get an user
 	GetUser(cert Credential) (*User, error)
-	HardDeleteUser(cert Credential) error
+	// Delete user from persistence storage
+	DeleteUser(cert Credential) error
 	// Add Phone to User
 	AddPhone(cert Credential, number, phoneType, description string) error
 	// Remove Phone from User

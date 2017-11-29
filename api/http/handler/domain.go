@@ -1,10 +1,11 @@
 package handler
 
-import "net/http"
+import (
+	"net/http"
+)
 
 // CreateDomain use to create domain
 func CreateDomain(w http.ResponseWriter, r *http.Request) {
-
 }
 
 // GetDomain use to get domain

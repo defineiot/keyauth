@@ -14,8 +14,8 @@
 
 package main
 
-import "openauth/cmd/openauth/pkg"
+import "openauth/cmd/openauth/cmd"
 
 func main() {
-	pkg.Execute()
+	cmd.Execute()
 }

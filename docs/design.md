@@ -1,5 +1,5 @@
-# Keyauth Design Summary
-介绍关于keyauth的开发场景, 设计目标,设计方式
+# OpenAuth Design Summary
+介绍关于openauth的开发场景, 设计目标,设计方式
 
 ## 场景和需求
 对于一个多租户系统, 必须支持以公司或者组织为单位的用户管理, 以角色为单位的授权管理, 以资源为单位的项目管理。我们以公司A为例做场景说明:
@@ -11,9 +11,9 @@
 
 针对第三方开发者的支持:
 + 添加第三方开发者用户, 通过添加一个用户, 并赋予该用户相应的角色, 来访问这些数据。
-+ 不添加用户, 利用oauth2, 让用户从定向到keyauth完成用户数据的授权, 然后第三方开发者获取到相应的数据。
++ 不添加用户, 利用oauth2, 让用户从定向到openauth完成用户数据的授权, 然后第三方开发者获取到相应的数据。
 
-## 为什么要开发keyauth?
+## 为什么要开发openauth?
 openstack的keystone基本满足上面的需求,但是存在这些问题:
 + 服务目录我们并不需求, 我们服务发现交给网关做了
 + oauth2的认证模式支撑不是很好
@@ -23,7 +23,7 @@ openstack的keystone基本满足上面的需求,但是存在这些问题:
 基于以上原因, 我们准备开发一套适合自己的用户认证服务
 
 ## 具体设计
-在参考了[openstack keystone](https://developer.openstack.org/api-ref/identity/v3/?expanded=password-authentication-with-unscoped-authorization-detail,password-authentication-with-scoped-authorization-detail) 和 [cloud foundry uaa](http://docs.cloudfoundry.org/api/uaa/#user-token-grant-21336)后, 我们觉得keyauth的功能列表应该是这样的: ![](./images/keyauth_fl.png)
+在参考了[openstack keystone](https://developer.openstack.org/api-ref/identity/v3/?expanded=password-authentication-with-unscoped-authorization-detail,password-authentication-with-scoped-authorization-detail) 和 [cloud foundry uaa](http://docs.cloudfoundry.org/api/uaa/#user-token-grant-21336)后, 我们觉得openauth的功能列表应该是这样的: ![](./images/openauth_fl.png)
 
 下面对一些核心概念做出一一解释:
 + 域: 用户, 用户组, 项目的一个集合, 域全局唯一, 每个用户, 用户组, 项目必须属于一个确定的域
@@ -36,20 +36,20 @@ openstack的keystone基本满足上面的需求,但是存在这些问题:
 + 令牌(Token): 用户访问服务的凭证, 通过OAuth2的几种方式获得
 
 ### 认证逻辑
-用户认证访问服务的逻辑![](./images/keyauth_flow.png)
+用户认证访问服务的逻辑![](./images/openauth_flow.png)
 + 用户通过用户信息(用户名, 域, 项目)以及认证手段(比如密码认证)来获取一个访问服务的token
 + 用户携带该Token访问真正的资源服务
-+ 资源服务获取到用户token后, 去keyauth获取该token的相关信息, 然后根据这些用户信息返回用户访问的资源。
++ 资源服务获取到用户token后, 去openauth获取该token的相关信息, 然后根据这些用户信息返回用户访问的资源。
 
 ### 身份逻辑
 用户的身份信息包含: 用户, 用户组, 角色, 项目, 域 这5部分组成, 他们的关系如图:
-![](./images/keyauth_id.png)
+![](./images/openauth_id.png)
 + 用户组是用户的容器, 用户的角色控制着用户可以访问那些服务, 用户的项目和域控制着用户操作资源的归属地。
 + 角色由很多服务的功能组成, 控制这服务功能的访问控制, 角色可以赋予用户组或者直接赋予用户, 拥有该角色的用户, 就拥有相应服务功能的访问权限, 角色仅能由系统管理员创建, 域管理员仅能分配角色。
 
 ### ACL逻辑
 服务将自己的功能列表注册到 注册中心, 系统管理员根据需要创建角色, 并且将这些角色和服务功能进行关联, 服务验证token,获取用户的角色对应的功能列表, 进行校验, 从而实现 用户访问服务功能的ACL, 逻辑流程如下:
-![](./images/keyauth_acl.png)
+![](./images/openauth_acl.png)
 + 服务将自己的功能列表注册到etcd的服务功能列表注册中心
 + 系统管理员选择合适的功能列表进行分配, 创建响应的角色
 + 服务通过token验证, 获取用户角色的功能访问列表, 并检查是否有权力调用该功能。

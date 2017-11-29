@@ -84,6 +84,7 @@ COMMENT = '用户访问令牌表';
 CREATE TABLE `domain` (
 `id` varchar(255) NOT NULL,
 `name` varchar(255) NOT NULL UNIQUE,
+`display_name` varchar(255) NOT NULL DEFAULT '',
 `description` text NOT NULL DEFAULT '',
 `enabled` int(1) NOT NULL,
 `extra` text NOT NULL DEFAULT '',
