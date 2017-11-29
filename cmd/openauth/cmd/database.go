@@ -13,7 +13,7 @@ import (
 // databaseCmd represents the database command
 var databaseCmd = &cobra.Command{
 	Use:   "database [init]",
-	Short: "management keyauth database",
+	Short: "management openauth database",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return errors.New("[init] are required")
@@ -62,7 +62,9 @@ func initDatabase() error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("database sql version: %d, description: %s\n", vers, desc)
+	if vers == 1 {
+		return fmt.Errorf("the database has been initialized, sql version: %d, description: %s", vers, desc)
+	}
 
 	if err := initialRecord(db); err != nil {
 		return fmt.Errorf("initial system info to database error, %s", err.Error())
@@ -127,5 +129,5 @@ func initialRecord(db *sql.DB) error {
 func init() {
 	RootCmd.AddCommand(databaseCmd)
 
-	databaseCmd.Flags().StringVarP(&sqlFile, "sqlfile", "s", "conf/dbsql/keyauthv01.sql", "[Required] the initial database sql file")
+	databaseCmd.Flags().StringVarP(&sqlFile, "sqlfile", "s", "conf/dbsql/openauthv01.sql", "the initial database sql file")
 }

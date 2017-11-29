@@ -48,7 +48,6 @@ to quickly create a Cobra application.`,
 }
 
 func checkConfType(configType string) (conf *config.Config, err error) {
-
 	switch configType {
 	case "file":
 		envconf := file.NewFileConf(confFile)
@@ -67,8 +66,7 @@ func checkConfType(configType string) (conf *config.Config, err error) {
 	default:
 		return nil, errors.New("unknow config type")
 	}
-
-	return
+	return conf, nil
 }
 
 // CheckDBInit use to check the mysql db is initial

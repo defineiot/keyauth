@@ -57,7 +57,7 @@ func initConfig(configpath string) error {
 		return fmt.Errorf("open openauth config file error, %s", err.Error())
 	}
 
-	conf := &config.Config{}
+	conf = &config.Config{}
 	if err := toml.Unmarshal(fd, conf); err != nil {
 		return fmt.Errorf("load config file to json error, %s", err.Error())
 	}

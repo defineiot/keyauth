@@ -228,4 +228,4 @@ COMMENT = '数据库SQL版本管理表';
 /*
 初始化成功
 */
-INSERT INTO `dbmanager` (`version`, `description`) VALUES ('01', '初始版本');
+INSERT INTO `dbmanager` (`version`, `description`) VALUES ('1', '初始版本');

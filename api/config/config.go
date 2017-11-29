@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
+
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
 )
@@ -24,24 +26,24 @@ type Configer interface {
 
 // Config is service conf
 type Config struct {
-	APP   *appConf
-	MySQL *mysqlConf
+	APP   *appConf   `toml:"app"`
+	MySQL *mysqlConf `toml:"mysql"`
 }
 
 type appConf struct {
-	Host string
-	Port string
+	Host string `toml:"host"`
+	Port string `toml:"port"`
 }
 
 type mysqlConf struct {
-	Host        string
-	Port        string
-	User        string
-	Pass        string
-	DB          string
-	MaxOpenConn int `toml:"max_open_conn"`
-	MaxIdleConn int `toml:"max_idle_conn"`
-	MaxLifeTime int `toml:"max_life_time"`
+	Host        string `toml:"host"`
+	Port        string `toml:"port"`
+	User        string `toml:"user"`
+	Pass        string `toml:"pass"`
+	DB          string `toml:"db"`
+	MaxOpenConn int    `toml:"max_open_conn"`
+	MaxIdleConn int    `toml:"max_idle_conn"`
+	MaxLifeTime int    `toml:"max_life_time"`
 }
 
 // Validate use to check the service config
