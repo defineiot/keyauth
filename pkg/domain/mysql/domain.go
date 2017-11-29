@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"openauth/pkg/domain"
+	"github.com/satori/go.uuid"
 
-	uuid "github.com/satori/go.uuid"
+	"openauth/pkg/domain"
 )
 
 // NewDomainManager use to create domain storage service

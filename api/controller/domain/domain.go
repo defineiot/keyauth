@@ -3,6 +3,7 @@ package domain
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/sirupsen/logrus"
@@ -42,8 +43,12 @@ type Controller struct {
 }
 
 // CreateDomain use to create domain
-func (c *Controller) CreateDomain(name, description, verbose string, cert user.Credential) (*domain.Domain, error) {
-	return nil, nil
+func (c *Controller) CreateDomain(name, description, displayName string, cert user.Credential) (*domain.Domain, error) {
+	dom, err := c.dm.CreateDomain(name, description, displayName)
+	if err != nil {
+		return nil, fmt.Errorf("create domain error, %s", err)
+	}
+	return dom, nil
 }
 
 // ListDomain use to list all domains
