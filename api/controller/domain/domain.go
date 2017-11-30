@@ -4,10 +4,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/http"
 	"sync"
 
 	"github.com/sirupsen/logrus"
 
+	"openauth/api/exception"
 	"openauth/pkg/domain"
 	"openauth/pkg/user"
 )
@@ -44,20 +46,35 @@ type Controller struct {
 
 // CreateDomain use to create domain
 func (c *Controller) CreateDomain(name, description, displayName string, cert user.Credential) (*domain.Domain, error) {
-	dom, err := c.dm.CreateDomain(name, description, displayName)
+	dom, err := c.dm.CreateDomain(name, description, displayName, false)
 	if err != nil {
 		return nil, fmt.Errorf("create domain error, %s", err)
 	}
+
 	return dom, nil
 }
 
 // ListDomain use to list all domains
-func (c *Controller) ListDomain() {
+func (c *Controller) ListDomain() ([]*domain.Domain, error) {
+	doms, err := c.dm.ListDomain()
+	if err != nil {
+		return nil, fmt.Errorf("list domain error, %s", err)
+	}
 
+	return doms, nil
 }
 
 // GetDomain use to get an domain
-func (c *Controller) GetDomain() {
+func (c *Controller) GetDomain(domainID string) (*domain.Domain, error) {
+	dom, err := c.dm.GetDomain(domainID)
+	if err != nil {
+		return nil, err
+	}
+	if dom == nil {
+		return nil, exception.NewAPIException(fmt.Sprintf("domain %s not find", domainID), http.StatusNotFound)
+	}
+
+	return dom, nil
 
 }
 
@@ -67,6 +84,10 @@ func (c *Controller) UpdateDomain() {
 }
 
 // DestoryDomain use to delete an domain
-func (c *Controller) DestoryDomain() {
+func (c *Controller) DestoryDomain(domainID string) error {
+	if err := c.dm.DeleteDomain(domainID); err != nil {
+		return fmt.Errorf("delete domain error, %s", err)
+	}
 
+	return nil
 }

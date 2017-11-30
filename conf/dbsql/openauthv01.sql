@@ -18,12 +18,12 @@ CREATE TABLE `user` (
 `id` varchar(255) NOT NULL,
 `name` varchar(255) NOT NULL,
 `enabled` int(1) NOT NULL DEFAULT 0,
-`last_active_time` timestamp NULL,
+`last_active_time` int(64) NULL,
 `extra` text NOT NULL DEFAULT '',
 `domain_id` varchar(255) NOT NULL,
 `client_id` varchar(64) NULL,
 `password_id` int(16) NULL,
-`create_at` timestamp NOT NULL,
+`create_at` int(64) NOT NULL,
 `expires_active_days` int(16) NOT NUll,
 PRIMARY KEY (`id`) 
 )
@@ -40,7 +40,7 @@ CREATE TABLE `project` (
 `enabled` int(1) NOT NULL DEFAULT 0,
 `domain_id` varchar(255) NOT NULL,
 `extra` text NOT NULL DEFAULT '',
-`create_at` timestamp NOT NULL,
+`create_at` int(64) NOT NULL,
 PRIMARY KEY (`id`) 
 )
 ENGINE = InnoDB
@@ -51,10 +51,10 @@ COMMENT = '项目表';
 CREATE TABLE `password` (
 `id` int(11) NOT NULL AUTO_INCREMENT,
 `password` varchar(255) NOT NULL,
-`expires_at` timestamp NULL,
-`create_at` timestamp NOT NULL,
+`expires_at` int(64) NULL DEFAULT 0,
+`create_at` int(64) NOT NULL DEFAULT 0,
 `extra` text NOT NULL DEFAULT '',
-`update_at` timestamp NULL,
+`update_at` int(64) NOT NULL DEFAULT 0,
 PRIMARY KEY (`id`) 
 )
 ENGINE = InnoDB
@@ -65,14 +65,14 @@ COMMENT = '用户密码表';
 
 CREATE TABLE `token` (
 `id` int(11) NOT NULL AUTO_INCREMENT,
-`expire_at` timestamp NOT NULL,
+`expire_at` int(64) NOT NULL DEFAULT 0,
 `token` varchar(255) NOT NULL,
 `type` int(2) NOT NULL,
 `purpose` int(2) NULL,
 `client_id` varchar(64) NULL,
 `user_id` varchar(11) NULL,
 `extra` text NOT NULL DEFAULT '',
-`create_at` timestamp NOT NULL,
+`create_at` int(64) NOT NULL DEFAULT 0,
 PRIMARY KEY (`id`) 
 )
 ENGINE = InnoDB
@@ -88,7 +88,8 @@ CREATE TABLE `domain` (
 `description` text NOT NULL DEFAULT '',
 `enabled` int(1) NOT NULL,
 `extra` text NOT NULL DEFAULT '',
-`create_at` timestamp NOT NULL,
+`create_at` int(64) NOT NULL DEFAULT 0,
+`update_at` int(64) NOT NULL DEFAULT 0,
 PRIMARY KEY (`id`)
 )
 ENGINE = InnoDB
@@ -102,7 +103,7 @@ CREATE TABLE `role` (
 `domain_id` varchar(64) NULL,
 `description` text NOT NULL DEFAULT '',
 `extra` text NOT NULL DEFAULT '',
-`create_at` timestamp NOT NULL,
+`create_at` int(64) NOT NULL DEFAULT 0,
 PRIMARY KEY (`id`) 
 )
 ENGINE = InnoDB
@@ -119,7 +120,7 @@ CREATE TABLE `client` (
 `type` int(1) NOT NULL,
 `redirect_uri` varchar(255) NULL,
 `extra` text NOT NULL DEFAULT '',
-`create_at` timestamp NOT NULL,
+`create_at` int(64) NOT NULL DEFAULT 0,
 PRIMARY KEY (`id`) 
 )
 ENGINE = InnoDB
@@ -132,8 +133,8 @@ CREATE TABLE `auth` (
 `code` varchar(255) NOT NULL,
 `user_id` varchar(255) NOT NULL,
 `used` int(1) NOT NULL,
-`create_at` timestamp NOT NULL,
-`expires_at` timestamp NOT NULL,
+`create_at` int(64) NOT NULL DEFAULT 0,
+`expires_at` int(64) NOT NULL DEFAULT 0,
 PRIMARY KEY (`id`) 
 )
 ENGINE = InnoDB
@@ -148,7 +149,7 @@ CREATE TABLE `group` (
 `domain_id` varchar(255) NOT NULL,
 `description` varchar(255) NOT NULL DEFAULT '',
 `extra` text NOT NULL DEFAULT '',
-`create_at` timestamp NOT NULL,
+`create_at` int(64) NOT NULL DEFAULT 0,
 PRIMARY KEY (`id`) 
 )
 ENGINE = InnoDB
@@ -161,7 +162,7 @@ CREATE TABLE `function` (
 `name` varchar(255) NOT NULL,
 `service` varchar(255) NOT NULL,
 `extra` text NOT NULL DEFAULT '',
-`create_at` timestamp NOT NULL,
+`create_at` int(64) NOT NULL DEFAULT 0,
 PRIMARY KEY (`id`) 
 )
 ENGINE = InnoDB

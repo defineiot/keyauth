@@ -7,6 +7,8 @@ import (
 	"github.com/json-iterator/go"
 
 	"openauth/api/controller/domain"
+	"openauth/api/exception"
+	"openauth/api/http/context"
 	"openauth/api/http/response"
 	"openauth/pkg/user"
 )
@@ -65,15 +67,62 @@ func CreateDomain(w http.ResponseWriter, r *http.Request) {
 
 // GetDomain use to get domain
 func GetDomain(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	did := ps.ByName("did")
 
+	// TODO: get token from context, and check permission
+	dm, err := domain.GetController()
+	if err != nil {
+		response.Failed(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	dom, err := dm.GetDomain(did)
+	if apiErr, ok := err.(*exception.APIException); ok {
+		response.Failed(w, apiErr.Code, apiErr.Error())
+		return
+	}
+
+	response.Success(w, http.StatusOK, dom)
+	return
 }
 
 // ListDomain domain list
 func ListDomain(w http.ResponseWriter, r *http.Request) {
+	// TODO: get token from context, and check permission
+	dm, err := domain.GetController()
+	if err != nil {
+		response.Failed(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 
+	doms, err := dm.ListDomain()
+	if err != nil {
+		response.Failed(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response.Success(w, http.StatusOK, doms)
+	return
 }
 
 // DeleteDomain destory an domain
 func DeleteDomain(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	did := ps.ByName("did")
 
+	// TODO: get token from context, and check permission
+	dm, err := domain.GetController()
+	if err != nil {
+		response.Failed(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if err := dm.DestoryDomain(did); err != nil {
+		response.Failed(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response.Success(w, http.StatusNoContent, "")
+	return
 }

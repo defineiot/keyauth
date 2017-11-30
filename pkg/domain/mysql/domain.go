@@ -13,7 +13,7 @@ import (
 
 var (
 	createPrepare *sql.Stmt
-	once          sync.Once
+	deletePrepare *sql.Stmt
 )
 
 // NewDomainManager use to create domain storage service
@@ -27,30 +27,62 @@ type manager struct {
 }
 
 // CreateDomain use to create an domain
-func (m *manager) CreateDomain(name, description, displayName string) (*domain.Domain, error) {
-	var err error
+func (m *manager) CreateDomain(name, description, displayName string, enabled bool) (*domain.Domain, error) {
+	var (
+		once sync.Once
+		err  error
+	)
+
 	once.Do(func() {
-		createPrepare, err = m.db.Prepare("INSERT INTO `domain` (id, name, display_name, description, enable, extra, create_at, update_at) VALUES (?,?,?,?,?,?,?)")
+		createPrepare, err = m.db.Prepare("INSERT INTO `domain` (id, name, display_name, description, enabled, extra, create_at) VALUES (?,?,?,?,?,?,?)")
 	})
 	if err != nil {
-		return nil, fmt.Errorf("insert domain: %s error, %s", name, err)
+		return nil, fmt.Errorf("prepare insert domain stmt error, domain: %s, %s", name, err)
 	}
 
-	_, err = createPrepare.Exec(uuid.NewV4().String(), name, displayName, description, 1, "", time.Now().Unix(), 0)
+	dom := domain.Domain{DomainID: uuid.NewV4().String(), Name: name, DisplayName: displayName, Description: description, CreateAt: time.Now().Unix(), Enabled: enabled}
+	_, err = createPrepare.Exec(dom.DomainID, dom.Name, dom.DisplayName, dom.Description, dom.Enabled, "", dom.CreateAt)
 	if err != nil {
-		return nil, fmt.Errorf("insert device exec sql err, %s", err.Error())
+		return nil, fmt.Errorf("insert domain exec sql err, %s", err)
 	}
-	return nil, nil
+	return &dom, nil
 }
 
 // GetDomain use to get domain detail
+// Notice: if there is no domain find, return nil
 func (m *manager) GetDomain(domainID string) (*domain.Domain, error) {
-	return nil, nil
+	dom := domain.Domain{}
+	err := m.db.QueryRow("SELECT id,name,display_name,description,enabled,create_at,update_at FROM domain WHERE id = ?", domainID).Scan(
+		&dom.DomainID, &dom.Name, &dom.DisplayName, &dom.Description, &dom.Enabled, &dom.CreateAt, &dom.UpdateAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("query single domain error, %s", err)
+	}
+
+	return &dom, nil
 }
 
 // ListDomain use to list all domains
-func (m *manager) ListDomain() (*[]domain.Domain, error) {
-	return nil, nil
+func (m *manager) ListDomain() ([]*domain.Domain, error) {
+	rows, err := m.db.Query("SELECT id,name,display_name,description,enabled,create_at,update_at FROM domain")
+	if err != nil {
+		return nil, fmt.Errorf("query domain list error, %s", err)
+	}
+	defer rows.Close()
+
+	domains := []*domain.Domain{}
+	for rows.Next() {
+		dom := domain.Domain{}
+		if err := rows.Scan(&dom.DomainID, &dom.Name, &dom.DisplayName, &dom.Description, &dom.Enabled, &dom.CreateAt, &dom.UpdateAt); err != nil {
+			return nil, fmt.Errorf("scan domain record error, %s", err)
+		}
+		domains = append(domains, &dom)
+	}
+
+	return domains, nil
 }
 
 // UpdateDomain use to update an domain
@@ -60,5 +92,21 @@ func (m *manager) UpdateDomain(id, name, description string) (*domain.Domain, er
 
 // DeleteDomain use to delete an domain from db
 func (m *manager) DeleteDomain(id string) error {
+	var (
+		once sync.Once
+		err  error
+	)
+
+	once.Do(func() {
+		deletePrepare, err = m.db.Prepare("DELETE FROM domain WHERE id = ?")
+	})
+	if err != nil {
+		return fmt.Errorf("prepare delete domain stmt error, %s", err)
+	}
+
+	if _, err := deletePrepare.Exec(id); err != nil {
+		return fmt.Errorf("delete domain exec sql error, %s", err)
+	}
+
 	return nil
 }
