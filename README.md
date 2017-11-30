@@ -12,11 +12,17 @@ the detail of openauth design is here: [openauth design summary](./docs/design.m
 + acl for fuctions
 
 ## Usage
-first you must initial dababase
+1. first you must initial dababase
 ```bash
-
+maojun@maojun-mbp  ~/GoWorkDir/src/openauth $ go build -o openauth  cmd/openauth/main.go
+maojun@maojun-mbp ~/GoWorkDir/src/openauth $ ./openauth database init
+initial database successful
 ```
-second start the service
+2. second start the service
 ```bash
-
+maojun@maojun-mbp  ~/GoWorkDir/src/openauth $ ./openauth service start
+DEBU[0000] the database version: 1, desc: 初始版本           source="cmd/service.go:55"
+INFO[0000] loading http middleware success               source="http/server.go:59"
+INFO[0000] loading router success                        source="http/server.go:63"
+INFO[0000] starting openauth service at 0.0.0.0:8080     source="http/server.go:75"
 ```
