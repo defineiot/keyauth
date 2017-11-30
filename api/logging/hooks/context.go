@@ -15,8 +15,8 @@ type contextHook struct {
 	levels []logrus.Level
 }
 
-// NewHook use to make an hook
-func NewHook(levels ...logrus.Level) logrus.Hook {
+// NewContextHook use to make an hook
+func NewContextHook(levels ...logrus.Level) logrus.Hook {
 	hook := contextHook{
 		Field:  "source",
 		Skip:   5,

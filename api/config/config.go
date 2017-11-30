@@ -8,7 +8,6 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
 
 	"openauth/api/logging"
@@ -50,7 +49,7 @@ type mysqlConf struct {
 type logConf struct {
 	Name     string `toml:"name"`
 	Level    string `toml:"level"`
-	FilePath string `toml:"file_path"`
+	FilePath string `toml:"path"`
 }
 
 // Validate use to check the service config
@@ -153,21 +152,6 @@ func (c *Config) initDBConn() error {
 	if err := db.Ping(); err != nil {
 		return fmt.Errorf("ping mysql<%s> error, %s", dsn, err.Error())
 	}
-
-	return nil
-}
-
-func (c *Config) initLogger() error {
-	logrus.SetFormatter(&logrus.JSONFormatter{})
-
-	logger = logrus.New()
-	logger.SetLevel(logrus.DebugLevel)
-
-	// if filepath is not set, use stdout to input
-	logger.AddHook(lfshook.NewHook(lfshook.PathMap{
-		logrus.DebugLevel: "/tmp/debug.log",
-		logrus.InfoLevel:  "/tmp/debug.log",
-	}))
 
 	return nil
 }
