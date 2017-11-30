@@ -43,7 +43,7 @@ func CreateDomain(w http.ResponseWriter, r *http.Request) {
 	disp := val.Get("display_name").ToString()
 
 	if name == "" || disp == "" {
-		response.Failed(w, http.StatusBadRequest, "name or disp missed")
+		response.Failed(w, http.StatusBadRequest, "name or display_name missed")
 		return
 	}
 

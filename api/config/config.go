@@ -8,9 +8,10 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
+
+	"openauth/api/logging"
 )
 
 var (
@@ -27,6 +28,7 @@ type Configer interface {
 type Config struct {
 	APP   *appConf   `toml:"app"`
 	MySQL *mysqlConf `toml:"mysql"`
+	Log   *logConf   `toml:"log"`
 }
 
 type appConf struct {
@@ -43,6 +45,12 @@ type mysqlConf struct {
 	MaxOpenConn int    `toml:"max_open_conn"`
 	MaxIdleConn int    `toml:"max_idle_conn"`
 	MaxLifeTime int    `toml:"max_life_time"`
+}
+
+type logConf struct {
+	Name     string `toml:"name"`
+	Level    string `toml:"level"`
+	FilePath string `toml:"file_path"`
 }
 
 // Validate use to check the service config
@@ -118,8 +126,9 @@ func (c *Config) GetLogger() (*logrus.Logger, error) {
 		once sync.Once
 	)
 
+	opts := logging.Opts{Name: c.Log.Name, Level: c.Log.Level, FilePath: c.Log.FilePath}
 	once.Do(func() {
-		err = c.initLogger()
+		logger, err = logging.NewLogger(&opts)
 	})
 
 	if err != nil {
@@ -150,9 +159,9 @@ func (c *Config) initDBConn() error {
 
 func (c *Config) initLogger() error {
 	logrus.SetFormatter(&logrus.JSONFormatter{})
-	logrus.SetLevel(logrus.DebugLevel)
 
 	logger = logrus.New()
+	logger.SetLevel(logrus.DebugLevel)
 
 	// if filepath is not set, use stdout to input
 	logger.AddHook(lfshook.NewHook(lfshook.PathMap{

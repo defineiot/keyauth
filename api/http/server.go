@@ -67,12 +67,12 @@ func (s *Service) Start() error {
 	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL, syscall.SIGHUP, syscall.SIGQUIT)
 	go func() {
 		sg := <-ch
-		s.logger.Info(fmt.Sprintf("receive signal '%v'", sg))
+		s.logger.Infof("receive signal '%v'", sg)
 		os.Exit(1)
 	}()
 
 	addr := fmt.Sprintf("%s:%s", s.conf.APP.Host, s.conf.APP.Port)
-	s.logger.Info(fmt.Sprintf("starting openauth service at %s", addr))
+	s.logger.Infof("starting openauth service at %s", addr)
 	if err := http.ListenAndServe(addr, n); err != nil {
 		return fmt.Errorf("start openauth error, %s", err.Error())
 	}

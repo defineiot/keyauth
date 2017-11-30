@@ -3,11 +3,17 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/satori/go.uuid"
 
 	"openauth/pkg/domain"
+)
+
+var (
+	createPrepare *sql.Stmt
+	once          sync.Once
 )
 
 // NewDomainManager use to create domain storage service
@@ -22,12 +28,15 @@ type manager struct {
 
 // CreateDomain use to create an domain
 func (m *manager) CreateDomain(name, description, displayName string) (*domain.Domain, error) {
-	stmt, err := m.db.Prepare("INSERT INTO `domain` (id, name, display_name, description, enable, extra, create_at, update_at) VALUES (?,?,?,?,?,?,?)")
+	var err error
+	once.Do(func() {
+		createPrepare, err = m.db.Prepare("INSERT INTO `domain` (id, name, display_name, description, enable, extra, create_at, update_at) VALUES (?,?,?,?,?,?,?)")
+	})
 	if err != nil {
 		return nil, fmt.Errorf("insert domain: %s error, %s", name, err)
 	}
 
-	_, err = stmt.Exec(uuid.NewV4().String(), name, displayName, description, 1, "", time.Now().Unix(), 0)
+	_, err = createPrepare.Exec(uuid.NewV4().String(), name, displayName, description, 1, "", time.Now().Unix(), 0)
 	if err != nil {
 		return nil, fmt.Errorf("insert device exec sql err, %s", err.Error())
 	}
