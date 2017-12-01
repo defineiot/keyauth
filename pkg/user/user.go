@@ -1,52 +1,55 @@
 package user
 
-import (
-	"time"
-)
-
 // User info
 type User struct {
-	// user id, UUID as a unique logo
-	ID string
-	// user name, not allow repeat
-	Name string
-	// Default Project ID
-	DefaultProjectID string
-	// Whether to enable
-	Enabled bool
+	ID               string   `json:"id"`
+	Name             string   `json:"name"`
+	LastActiveTime   int64    `json:"last_active_time"`
+	Enabled          bool     `json:"enabled"`
+	CreateAt         int64    `json:"create_at"`
+	Password         Password `json:"password"`
+	Phones           []*Phone `json:"phones,omitempty"`
+	Emails           []*Email `json:"emails,omitempty"`
+	DomainID         string   `json:"domain_id"`
+	DefaultProjectID string   `json:"default_project_id"`
+	ExpireActiveDays int64    `json:"expires_active_days"`
+
 	// Extend fields to facilitate the expansion of database tables
-	Extra string
+	Extra string `json:"-"`
 }
 
 // Phone user's phone
 type Phone struct {
-	ID          uint
-	UserID      string
-	Number      string
-	Type        string
-	Description string
+	ID          int64  `json:"-"`
+	UserID      string `json:"-"`
+	Number      string `json:"number"`
+	Primary     bool   `json:"primary"`
+	Description string `json:"descrption"`
 	// Extend fields to facilitate the expansion of database tables
-	Extra string
+	Extra string `json:"-"`
 }
 
 // Email use's email
 type Email struct {
-	ID          uint
-	UserID      string
-	Address     string
-	Primary     bool
-	Description string
+	ID          int64  `json:"-"`
+	UserID      string `json:"-"`
+	Address     string `json:"address"`
+	Primary     bool   `json:"primary"`
+	Description string `json:"description"`
 	// Extend fields to facilitate the expansion of database tables
-	Extra string
+	Extra string `json:"-"`
 }
 
 // Password user's password
 type Password struct {
-	UserID    string
-	Password  string
-	ExpiredAt time.Time
+	ID       int64  `json:"-"`
+	Password string `json:"-"`
+	ExpireAt int64  `json:"expire_at"`
+	CreateAt int64  `json:"create_at"`
+	UpdateAt int64  `json:"update_at,omitempty"`
+
 	// Extend fields to facilitate the expansion of database tables
-	Extra string
+	Extra string `json:"-"`
 }
 
 // Credential is user's credential
@@ -61,7 +64,7 @@ type Credential struct {
 // Manager is user service
 type Manager interface {
 	// Create user, in the same domain, user can not be renamed
-	CreateUser(projectID, userName, password string) (*User, error)
+	CreateUser(domainID, projectID, userName, password string, enabled bool, userExpires, passExpires int) (*User, error)
 	// Get user with User name & user password
 	GetUserByName(domainID, userName, userPassword string) (*User, error)
 	// Get user with User id & user password

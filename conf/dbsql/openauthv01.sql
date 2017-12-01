@@ -21,7 +21,6 @@ CREATE TABLE `user` (
 `last_active_time` int(64) NULL,
 `extra` text NOT NULL DEFAULT '',
 `domain_id` varchar(255) NOT NULL,
-`client_id` varchar(64) NULL,
 `password_id` int(16) NULL,
 `create_at` int(64) NOT NULL,
 `expires_active_days` int(16) NOT NUll,
@@ -112,8 +111,10 @@ DEFAULT CHARACTER SET = utf8
 COLLATE = utf8_general_ci
 COMMENT = '用户角色表';
 
-CREATE TABLE `client` (
+CREATE TABLE `application` (
 `id` varchar(64) NOT NULL,
+`name` varchar(255) NOT NULL,
+`user_id` varchar(64) NULL,
 `app_key` varchar(255) NOT NULL,
 `app_secret` varchar(255) NOT NULL,
 `description` text NOT NULL DEFAULT '',
@@ -188,7 +189,7 @@ COMMENT = '用户邮件表';
 CREATE TABLE `phone` (
 `id` int(11) NOT NULL AUTO_INCREMENT,
 `numbers` int(32) NULL,
-`type` int(1) NULL,
+`primary` int(1) NULL,
 `description` varchar(255) NOT NULL DEFAULT '',
 `user_id` varchar(255) NOT NULL,
 PRIMARY KEY (`id`) 
