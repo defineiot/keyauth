@@ -17,10 +17,7 @@ func InitAllController(conf *config.Config) error {
 		return err
 	}
 
-	dm, err := mysql.NewDomainManager(db)
-	if err != nil {
-		return err
-	}
+	dm := mysql.NewDomainManager(db)
 
 	if err := domain.InitController(db, logger, dm); err != nil {
 		return err

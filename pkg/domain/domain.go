@@ -2,7 +2,7 @@ package domain
 
 // Domain is tenant container.
 type Domain struct {
-	DomainID string `json:"id"`
+	ID string `json:"id"`
 	// domain name, allow repeat
 	Name string `json:"name"`
 	// DisplayName is to show
@@ -34,4 +34,6 @@ type Manager interface {
 	UpdateDomain(id, name, description string) (*Domain, error)
 	// Soft Delete a Domain, Domain still in persistence storage, Only super admin are allowed to operate
 	DeleteDomain(id string) error
+	// IsExists use to check the domain is exist by domain id
+	IsExist(domainID string) (bool, error)
 }

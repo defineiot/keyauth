@@ -17,8 +17,8 @@ var (
 )
 
 // NewDomainManager use to create domain storage service
-func NewDomainManager(db *sql.DB) (domain.Manager, error) {
-	return &manager{db: db}, nil
+func NewDomainManager(db *sql.DB) domain.Manager {
+	return &manager{db: db}
 }
 
 // DomainManager is use mongodb as storage
@@ -40,8 +40,8 @@ func (m *manager) CreateDomain(name, description, displayName string, enabled bo
 		return nil, fmt.Errorf("prepare insert domain stmt error, domain: %s, %s", name, err)
 	}
 
-	dom := domain.Domain{DomainID: uuid.NewV4().String(), Name: name, DisplayName: displayName, Description: description, CreateAt: time.Now().Unix(), Enabled: enabled}
-	_, err = createPrepare.Exec(dom.DomainID, dom.Name, dom.DisplayName, dom.Description, dom.Enabled, "", dom.CreateAt)
+	dom := domain.Domain{ID: uuid.NewV4().String(), Name: name, DisplayName: displayName, Description: description, CreateAt: time.Now().Unix(), Enabled: enabled}
+	_, err = createPrepare.Exec(dom.ID, dom.Name, dom.DisplayName, dom.Description, dom.Enabled, "", dom.CreateAt)
 	if err != nil {
 		return nil, fmt.Errorf("insert domain exec sql err, %s", err)
 	}
@@ -53,7 +53,7 @@ func (m *manager) CreateDomain(name, description, displayName string, enabled bo
 func (m *manager) GetDomain(domainID string) (*domain.Domain, error) {
 	dom := domain.Domain{}
 	err := m.db.QueryRow("SELECT id,name,display_name,description,enabled,create_at,update_at FROM domain WHERE id = ?", domainID).Scan(
-		&dom.DomainID, &dom.Name, &dom.DisplayName, &dom.Description, &dom.Enabled, &dom.CreateAt, &dom.UpdateAt)
+		&dom.ID, &dom.Name, &dom.DisplayName, &dom.Description, &dom.Enabled, &dom.CreateAt, &dom.UpdateAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -76,7 +76,7 @@ func (m *manager) ListDomain() ([]*domain.Domain, error) {
 	domains := []*domain.Domain{}
 	for rows.Next() {
 		dom := domain.Domain{}
-		if err := rows.Scan(&dom.DomainID, &dom.Name, &dom.DisplayName, &dom.Description, &dom.Enabled, &dom.CreateAt, &dom.UpdateAt); err != nil {
+		if err := rows.Scan(&dom.ID, &dom.Name, &dom.DisplayName, &dom.Description, &dom.Enabled, &dom.CreateAt, &dom.UpdateAt); err != nil {
 			return nil, fmt.Errorf("scan domain record error, %s", err)
 		}
 		domains = append(domains, &dom)
@@ -109,4 +109,17 @@ func (m *manager) DeleteDomain(id string) error {
 	}
 
 	return nil
+}
+
+func (m *manager) IsExist(domainID string) (bool, error) {
+	var id string
+	if err := m.db.QueryRow("SELECT id FROM domain WHERE id = ?", domainID).Scan(&id); err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("query single domain error, %s", err)
+	}
+
+	return true, nil
 }

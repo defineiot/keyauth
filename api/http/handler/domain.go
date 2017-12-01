@@ -71,15 +71,20 @@ func GetDomain(w http.ResponseWriter, r *http.Request) {
 	did := ps.ByName("did")
 
 	// TODO: get token from context, and check permission
-	dm, err := domain.GetController()
+	dc, err := domain.GetController()
 	if err != nil {
 		response.Failed(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	dom, err := dm.GetDomain(did)
-	if apiErr, ok := err.(*exception.APIException); ok {
-		response.Failed(w, apiErr.Code, apiErr.Error())
+	dom, err := dc.GetDomain(did)
+	if err != nil {
+		if apiErr, ok := err.(*exception.APIException); ok {
+			response.Failed(w, apiErr.Code, apiErr.Error())
+			return
+		}
+
+		response.Failed(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 

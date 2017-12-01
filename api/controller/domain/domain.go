@@ -46,7 +46,7 @@ type Controller struct {
 
 // CreateDomain use to create domain
 func (c *Controller) CreateDomain(name, description, displayName string, cert user.Credential) (*domain.Domain, error) {
-	dom, err := c.dm.CreateDomain(name, description, displayName, false)
+	dom, err := c.dm.CreateDomain(name, description, displayName, true)
 	if err != nil {
 		return nil, fmt.Errorf("create domain error, %s", err)
 	}
