@@ -20,7 +20,7 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get did from token
-	did := "domain-test-did"
+	did := "08b6d234-c06f-4acb-8ca4-fd3bd841f607"
 
 	name := val.Get("name").ToString()
 	desc := val.Get("description").ToString()
@@ -82,7 +82,7 @@ func ListProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	projects, err := pc.ListProject("domain-test-did")
+	projects, err := pc.ListProject("08b6d234-c06f-4acb-8ca4-fd3bd841f607")
 	if err != nil {
 		response.Failed(w, http.StatusInternalServerError, err.Error())
 		return

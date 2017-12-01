@@ -2,8 +2,7 @@ package project
 
 // Project tenant resource container
 type Project struct {
-	// the project's domain id
-	DomainID string `json:"domain_id"`
+
 	// Project id, UUID as a unique logo
 	ID string `json:"id"`
 	// Project name, allow repeat
@@ -14,6 +13,8 @@ type Project struct {
 	Enabled bool `json:"enabled"`
 	// CrateAt create time
 	CreateAt int64 `json:"create_at"`
+	// the project's domain id
+	DomainID string `json:"domain_id"`
 	// Extend fields to facilitate the expansion of database tables
 	Extra string `json:"-"`
 }

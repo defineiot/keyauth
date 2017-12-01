@@ -3,7 +3,10 @@ package controller
 import (
 	"openauth/api/config"
 	"openauth/api/controller/domain"
-	"openauth/pkg/domain/mysql"
+	"openauth/api/controller/project"
+
+	domsql "openauth/pkg/domain/mysql"
+	prosql "openauth/pkg/project/mysql"
 )
 
 // InitAllController use to initial all controllers
@@ -17,9 +20,13 @@ func InitAllController(conf *config.Config) error {
 		return err
 	}
 
-	dm := mysql.NewDomainManager(db)
+	dm := domsql.NewDomainManager(db)
+	pm := prosql.NewProjectManager(db)
 
 	if err := domain.InitController(db, logger, dm); err != nil {
+		return err
+	}
+	if err := project.InitController(db, logger, pm, dm); err != nil {
 		return err
 	}
 

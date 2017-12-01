@@ -45,6 +45,7 @@ func (s *Service) Start() error {
 
 	r := router.NewRouter()
 	r.RouteToDomain()
+	r.RouteToProject()
 
 	// includes some default middlewares
 	corsM := cors.New(cors.Options{

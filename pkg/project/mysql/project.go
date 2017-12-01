@@ -50,7 +50,7 @@ func (m *manager) CreateProject(domainID, name, description string, enabled bool
 // Notice: if project not exits return nil
 func (m *manager) GetProject(id string) (*project.Project, error) {
 	proj := project.Project{}
-	err := m.db.QueryRow("SELECT id,name,description,enabled,domain_id,create_at FROM project WHERE id = ?", projectID).Scan(
+	err := m.db.QueryRow("SELECT id,name,description,enabled,create_at,domain_id FROM project WHERE id = ?", id).Scan(
 		&proj.ID, &proj.Name, &proj.Description, &proj.Enabled, &proj.CreateAt, &proj.DomainID)
 	if err != nil {
 		if err == sql.ErrNoRows {
