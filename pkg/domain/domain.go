@@ -16,7 +16,7 @@ type Domain struct {
 	// CreateAt create domain at
 	CreateAt int64 `json:"create_at"`
 	// UpdateAt update domain time
-	UpdateAt int64 `json:"update_at"`
+	UpdateAt int64 `json:"update_at,omitempty"`
 }
 
 // Manager is an domain service

@@ -3,19 +3,19 @@ package project
 // Project tenant resource container
 type Project struct {
 	// the project's domain id
-	DomainID string
+	DomainID string `json:"domain_id"`
 	// Project id, UUID as a unique logo
-	ID string
+	ID string `json:"id"`
 	// Project name, allow repeat
-	Name string
+	Name string `json:"name"`
 	// Project description
-	Description string
+	Description string `json:"description"`
 	// Whether to enable
-	Enabled bool
+	Enabled bool `json:"enabled"`
 	// CrateAt create time
-	CreateAt int64
+	CreateAt int64 `json:"create_at"`
 	// Extend fields to facilitate the expansion of database tables
-	Extra string
+	Extra string `json:"-"`
 }
 
 // Manager is project service
