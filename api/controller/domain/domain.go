@@ -7,9 +7,8 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/sirupsen/logrus"
-
 	"openauth/api/exception"
+	"openauth/api/logger"
 	"openauth/pkg/domain"
 	"openauth/pkg/user"
 )
@@ -29,7 +28,7 @@ func GetController() (*Controller, error) {
 }
 
 // InitController use to initial an domain controller instance
-func InitController(db *sql.DB, logger *logrus.Logger, domain domain.Manager) error {
+func InitController(db *sql.DB, logger logger.OpenAuthLogger, domain domain.Manager) error {
 	once.Do(func() {
 		controller = &Controller{db: db, logger: logger, dm: domain}
 	})
@@ -40,7 +39,7 @@ func InitController(db *sql.DB, logger *logrus.Logger, domain domain.Manager) er
 // Controller is domain controller
 type Controller struct {
 	db     *sql.DB
-	logger *logrus.Logger
+	logger logger.OpenAuthLogger
 	dm     domain.Manager
 }
 

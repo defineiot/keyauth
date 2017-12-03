@@ -8,14 +8,14 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/sirupsen/logrus"
 
-	"openauth/api/logging"
+	"openauth/api/logger"
+	"openauth/api/logger/logrus"
 )
 
 var (
-	db     *sql.DB
-	logger *logrus.Logger
+	db       *sql.DB
+	oalogger logger.OpenAuthLogger
 )
 
 // Configer use to get conf
@@ -119,22 +119,22 @@ func (c *Config) GetDBConn() (*sql.DB, error) {
 }
 
 // GetLogger use to get logger instance
-func (c *Config) GetLogger() (*logrus.Logger, error) {
+func (c *Config) GetLogger() (logger.OpenAuthLogger, error) {
 	var (
 		err  error
 		once sync.Once
 	)
 
-	opts := logging.Opts{Name: c.Log.Name, Level: c.Log.Level, FilePath: c.Log.FilePath}
+	opts := logger.Opts{Name: c.Log.Name, Level: c.Log.Level, FilePath: c.Log.FilePath}
 	once.Do(func() {
-		logger, err = logging.NewLogger(&opts)
+		oalogger, err = logrus.NewLogrusLogger(&opts)
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	return logger, nil
+	return oalogger, nil
 
 }
 

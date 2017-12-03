@@ -27,7 +27,7 @@ type Manager interface {
 	// Get a project with project id
 	GetProject(id string) (*Project, error)
 	// List all Project in domain_id, else all project
-	ListProject(domainID string) ([]*Project, error)
+	ListDomainProjects(domainID string) ([]*Project, error)
 	// Update a Project, super admin & domain admin are allowed to operate
 	UpdateProject(id, name, description string) (*Project, error)
 	// Soft Delete a Project,project still in persistence storage, super admin & domain admin are allowed to operate

@@ -63,12 +63,17 @@ type Credential struct {
 
 // Manager is user service
 type Manager interface {
-	// Create user, in the same domain, user can not be renamed
-	CreateUser(domainID, projectID, userName, password string, enabled bool, userExpires, passExpires int) (*User, error)
-	// Get user with User name & user password
-	GetUserByName(domainID, userName, userPassword string) (*User, error)
+	// create user, in the same domain, user can not be renamed
+	CreateUser(domainID, userName, password string, enabled bool, userExpires, passExpires int) (*User, error)
+	// add projects to user, here will check user is exist, but not check project is exists
+	// you can use project pkg to check the project is exist
+	AddProjectsToUser(userID string, projectIDs ...string) error
+	// remove projects from user
+	RemoveProjectsFromUser(userID string, projectIDs ...string) error
 	// Get user with User id & user password
 	GetUserByID(userID, userPassword string) (*User, error)
+	// Get user with User name & user password
+	GetUserByName(domainID, userName, userPassword string) (*User, error)
 	// GetUser get an user
 	GetUser(cert Credential) (*User, error)
 	// Delete user from persistence storage

@@ -1,29 +1,20 @@
-package logging
+package logrus
 
 import (
-	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/lestrrat/go-file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
 
-	"openauth/api/logging/hooks"
+	"openauth/api/logger"
+	"openauth/api/logger/logrus/hooks"
 )
 
-// Opts is an options for get logger
-type Opts struct {
-	Name     string
-	Level    string
-	FilePath string
-}
-
-// NewLogger use to get an logger instance
-func NewLogger(opts *Opts) (*logrus.Logger, error) {
-	if err := opts.validate(); err != nil {
+// NewLogrusLogger use to get an logger instance
+func NewLogrusLogger(opts *logger.Opts) (logger.OpenAuthLogger, error) {
+	if err := opts.Validate(); err != nil {
 		return nil, fmt.Errorf("validate logger options error, %s", err)
 	}
 
@@ -66,34 +57,4 @@ func NewLogger(opts *Opts) (*logrus.Logger, error) {
 	}
 
 	return logger, nil
-}
-
-func (o *Opts) validate() error {
-	if o.Name == "" {
-		return errors.New("the logger name missed")
-	}
-	if o.Level == "" {
-		o.Level = "info"
-	}
-
-	if o.FilePath != "" {
-		var err error
-		// get the absolute path
-		if !filepath.IsAbs(o.FilePath) {
-			o.FilePath, err = filepath.Abs(o.FilePath)
-			if err != nil {
-				return fmt.Errorf("get the file absolute path error, %s", err)
-			}
-		}
-		// if file not exits make all
-		dirp := filepath.Dir(o.FilePath)
-		_, err = os.Stat(dirp)
-		if err != nil && os.IsNotExist(err) {
-			if err := os.MkdirAll(dirp, os.ModePerm); err != nil {
-				return fmt.Errorf("mkdir for log path error, %s", err)
-			}
-		}
-	}
-
-	return nil
 }

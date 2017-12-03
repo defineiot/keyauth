@@ -8,12 +8,12 @@ import (
 	"syscall"
 
 	"github.com/rs/cors"
-	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 
 	"openauth/api/config"
 	"openauth/api/controller"
 	"openauth/api/http/router"
+	"openauth/api/logger"
 )
 
 var stopSignal = make(chan bool, 1)
@@ -21,7 +21,7 @@ var stopSignal = make(chan bool, 1)
 // Service is gateway service
 type Service struct {
 	conf   *config.Config
-	logger *logrus.Logger
+	logger logger.OpenAuthLogger
 }
 
 // NewService use to new an gateway service

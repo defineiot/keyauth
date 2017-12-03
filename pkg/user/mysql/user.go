@@ -8,9 +8,9 @@ import (
 	"io"
 	"time"
 
-	"openauth/pkg/user"
+	"github.com/satori/go.uuid"
 
-	uuid "github.com/satori/go.uuid"
+	"openauth/pkg/user"
 )
 
 var (
@@ -27,18 +27,18 @@ type manager struct {
 	key string
 }
 
-func (m *manager) CreateUser(domainID, projectID, name, password string, enabled bool, userExpires, passExpires int) (*user.User, error) {
+func (m *manager) CreateUser(domainID, name, password string, enabled bool, userExpires, passExpires int) (*user.User, error) {
 	tx, err := m.db.Begin()
 	if err != nil {
 		return nil, fmt.Errorf("start create user transaction error, %s", err)
 	}
 
+	// insert password
 	passPre, err := tx.Prepare("INSERT INTO `password` (password, expires_at, create_at) VALUES (?,?,?)")
 	if err != nil {
 		return nil, fmt.Errorf("prepare insert user password error, user: %s, %s", name, err)
 	}
 
-	// insert password
 	now := time.Now()
 	delta, err := time.ParseDuration(fmt.Sprintf("%dh", passExpires))
 	if err != nil {
@@ -61,12 +61,12 @@ func (m *manager) CreateUser(domainID, projectID, name, password string, enabled
 	pass.ID = id
 	passPre.Close()
 
+	// insert user
 	userPre, err := tx.Prepare("INSERT INTO `user` (id, name, enabled, domain_id, create_at, password_id, expires_active_days) VALUES (?,?,?,?,?,?,?)")
 	if err != nil {
 		return nil, fmt.Errorf("prepare insert user stmt error, user: %s, %s", name, err)
 	}
 
-	// insert user
 	deltaU, err := time.ParseDuration(fmt.Sprintf("%dh", userExpires))
 	if err != nil {
 		userPre.Close()
@@ -81,6 +81,7 @@ func (m *manager) CreateUser(domainID, projectID, name, password string, enabled
 	}
 	userPre.Close()
 
+	// commit transaction
 	if err := tx.Commit(); err != nil {
 		if err := tx.Rollback(); err != nil {
 			return nil, fmt.Errorf("insert user transaction rollback error, %s", err)
@@ -91,11 +92,56 @@ func (m *manager) CreateUser(domainID, projectID, name, password string, enabled
 	return &user, nil
 }
 
+func (m *manager) AddProjectsToUser(userID string, projectIDs ...string) error {
+	mappPre, err := m.db.Prepare("INSERT INTO `mapping` (user_id, project_id) VALUES (?,?)")
+	if err != nil {
+		return fmt.Errorf("prepare add projects to user mapping stmt error, user: %s, project: %s, %s", userID, projectIDs, err)
+	}
+
+	for _, projectID := range projectIDs {
+		_, err = mappPre.Exec(userID, projectID)
+		if err != nil {
+			mappPre.Close()
+			return fmt.Errorf("insert add projects to user mapping exec sql err, %s", err)
+		}
+	}
+	mappPre.Close()
+
+	return nil
+}
+
+func (m *manager) RemoveProjectsFromUser(userID string, projectIDs ...string) error {
+	mappPre, err := m.db.Prepare("DELETE FROM `mapping` WHERE user_id = ? AND project_id = ?")
+	if err != nil {
+		return fmt.Errorf("prepare remove projects to user mapping stmt error, user: %s, project: %s, %s", userID, projectIDs, err)
+	}
+
+	for _, projectID := range projectIDs {
+		_, err = mappPre.Exec(userID, projectID)
+		if err != nil {
+			mappPre.Close()
+			return fmt.Errorf("insert remove projects to user mapping exec sql err, %s", err)
+		}
+	}
+	mappPre.Close()
+
+	return nil
+}
+
 func (m *manager) GetUserByName(domainID, userName, userPassword string) (*user.User, error) {
 	return nil, nil
 }
 
 func (m *manager) GetUserByID(userID, userPassword string) (*user.User, error) {
+	// get user by id
+
+	// get user's project by mapping
+
+	// get user's emails
+
+	// get user's phones
+
+	// get user's password
 	return nil, nil
 }
 

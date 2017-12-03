@@ -2,13 +2,15 @@ package mysql
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 
+	"openauth/pkg/domain"
 	"openauth/pkg/project"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 )
 
 var (
@@ -17,12 +19,13 @@ var (
 )
 
 // NewProjectManager is use mysql as storage
-func NewProjectManager(db *sql.DB) project.Manager {
-	return &manager{db: db}
+func NewProjectManager(db *sql.DB, dm domain.Manager) project.Manager {
+	return &manager{db: db, dm: dm}
 }
 
 type manager struct {
 	db *sql.DB
+	dm domain.Manager
 }
 
 func (m *manager) CreateProject(domainID, name, description string, enabled bool) (*project.Project, error) {
@@ -30,6 +33,22 @@ func (m *manager) CreateProject(domainID, name, description string, enabled bool
 		once sync.Once
 		err  error
 	)
+
+	ok, err := m.dm.IsExist(domainID)
+	if err != nil {
+		return nil, fmt.Errorf("check domain exists error: %s ", err)
+	}
+	if !ok {
+		return nil, errors.New("domain %s not exist")
+	}
+
+	ok, err = m.projectNameExist(domainID, name)
+	if err != nil {
+		return nil, fmt.Errorf("check project name exist error, %s", err)
+	}
+	if ok {
+		return nil, fmt.Errorf("project name in this domain is exists")
+	}
 
 	once.Do(func() {
 		createPrepare, err = m.db.Prepare("INSERT INTO `project` (id, name, description, enabled, domain_id, create_at) VALUES (?,?,?,?,?,?)")
@@ -63,7 +82,7 @@ func (m *manager) GetProject(id string) (*project.Project, error) {
 	return &proj, nil
 }
 
-func (m *manager) ListProject(domainID string) ([]*project.Project, error) {
+func (m *manager) ListDomainProjects(domainID string) ([]*project.Project, error) {
 	rows, err := m.db.Query("SELECT id,name,description,enabled,domain_id,create_at FROM project")
 	if err != nil {
 		return nil, fmt.Errorf("query project list error, %s", err)
@@ -117,4 +136,26 @@ func (m *manager) IsExist(id string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (m *manager) projectNameExist(domainID, projectName string) (bool, error) {
+	rows, err := m.db.Query("SELECT name FROM project WHERE name = ? AND domain_id = ?", projectName, domainID)
+	if err != nil {
+		return false, fmt.Errorf("query project name exist error, %s", err)
+	}
+	defer rows.Close()
+
+	projects := []string{}
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return false, fmt.Errorf("scan project name exist record error, %s", err)
+		}
+		projects = append(projects, name)
+	}
+	if len(projects) != 0 {
+		return true, nil
+	}
+
+	return false, nil
 }

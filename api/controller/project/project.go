@@ -7,9 +7,8 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/sirupsen/logrus"
-
 	"openauth/api/exception"
+	"openauth/api/logger"
 	"openauth/pkg/domain"
 	"openauth/pkg/project"
 	"openauth/pkg/user"
@@ -30,9 +29,9 @@ func GetController() (*Controller, error) {
 }
 
 // InitController use to initial an domain controller instance
-func InitController(db *sql.DB, logger *logrus.Logger, pm project.Manager, dm domain.Manager) error {
+func InitController(db *sql.DB, logger logger.OpenAuthLogger, pm project.Manager) error {
 	once.Do(func() {
-		controller = &Controller{db: db, logger: logger, pm: pm, dm: dm}
+		controller = &Controller{db: db, logger: logger, pm: pm}
 	})
 
 	return nil
@@ -41,7 +40,7 @@ func InitController(db *sql.DB, logger *logrus.Logger, pm project.Manager, dm do
 // Controller is domain controller
 type Controller struct {
 	db     *sql.DB
-	logger *logrus.Logger
+	logger logger.OpenAuthLogger
 	pm     project.Manager
 	dm     domain.Manager
 }
@@ -68,7 +67,7 @@ func (c *Controller) ListProject(domainID string) ([]*project.Project, error) {
 		return nil, err
 	}
 
-	projects, err := c.pm.ListProject(domainID)
+	projects, err := c.pm.ListDomainProjects(domainID)
 	if err != nil {
 		return nil, fmt.Errorf("list domain project error, %s", err)
 	}
@@ -85,6 +84,8 @@ func (c *Controller) GetProject(id string, cred user.Credential) (*project.Proje
 	if proj == nil {
 		return nil, exception.NewAPIException(fmt.Sprintf("project %s not find", id), http.StatusNotFound)
 	}
+
+	// TODO: check the project is for this user
 
 	return proj, nil
 }
@@ -103,6 +104,8 @@ func (c *Controller) DestroyProject(id string, cred user.Credential) error {
 	if !ok {
 		return exception.NewAPIException(fmt.Sprintf("project %s not find", id), http.StatusNotFound)
 	}
+
+	// TODO: check the projcet is for this user
 
 	if err := c.pm.DeleteProject(id); err != nil {
 		return fmt.Errorf("delete project error, %s", err)

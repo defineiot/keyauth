@@ -21,12 +21,12 @@ func InitAllController(conf *config.Config) error {
 	}
 
 	dm := domsql.NewDomainManager(db)
-	pm := prosql.NewProjectManager(db)
+	pm := prosql.NewProjectManager(db, dm)
 
 	if err := domain.InitController(db, logger, dm); err != nil {
 		return err
 	}
-	if err := project.InitController(db, logger, pm, dm); err != nil {
+	if err := project.InitController(db, logger, pm); err != nil {
 		return err
 	}
 
