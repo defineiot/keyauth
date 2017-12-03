@@ -2,15 +2,15 @@ package mysql
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
 
+	"github.com/satori/go.uuid"
+
+	"openauth/api/exception"
 	"openauth/pkg/domain"
 	"openauth/pkg/project"
-
-	"github.com/satori/go.uuid"
 )
 
 var (
@@ -30,37 +30,39 @@ type manager struct {
 
 func (m *manager) CreateProject(domainID, name, description string, enabled bool) (*project.Project, error) {
 	var (
-		once sync.Once
-		err  error
+		once   sync.Once
+		preErr error
 	)
 
-	ok, err := m.dm.IsExist(domainID)
+	err := m.dm.CheckDomainIsExist(domainID)
 	if err != nil {
-		return nil, fmt.Errorf("check domain exists error: %s ", err)
-	}
-	if !ok {
-		return nil, errors.New("domain %s not exist")
+		switch err.(type) {
+		case exception.NotFound:
+			return nil, exception.NewBadRequest("check domain exists error: %s ", err)
+		default:
+			return nil, exception.NewInternalServerError("check domain exists error: %s", err)
+		}
 	}
 
-	ok, err = m.projectNameExist(domainID, name)
+	ok, err := m.projectNameExist(domainID, name)
 	if err != nil {
-		return nil, fmt.Errorf("check project name exist error, %s", err)
+		return nil, exception.NewInternalServerError("check project name exist error, %s", err)
 	}
 	if ok {
-		return nil, fmt.Errorf("project name in this domain is exists")
+		return nil, exception.NewBadRequest("project name %s in this domain is exists", name)
 	}
 
 	once.Do(func() {
-		createPrepare, err = m.db.Prepare("INSERT INTO `project` (id, name, description, enabled, domain_id, create_at) VALUES (?,?,?,?,?,?)")
+		createPrepare, preErr = m.db.Prepare("INSERT INTO `project` (id, name, description, enabled, domain_id, create_at) VALUES (?,?,?,?,?,?)")
 	})
-	if err != nil {
-		return nil, fmt.Errorf("prepare insert project stmt error, project: %s, %s", name, err)
+	if preErr != nil {
+		return nil, exception.NewInternalServerError("prepare insert project stmt error, project: %s, %s", name, err)
 	}
 
 	proj := project.Project{ID: uuid.NewV4().String(), Name: name, Description: description, CreateAt: time.Now().Unix(), Enabled: enabled, DomainID: domainID}
 	_, err = createPrepare.Exec(proj.ID, proj.Name, proj.Description, proj.Enabled, proj.DomainID, proj.CreateAt)
 	if err != nil {
-		return nil, fmt.Errorf("insert project exec sql err, %s", err)
+		return nil, exception.NewInternalServerError("insert project exec sql err, %s", err)
 	}
 
 	return &proj, nil
@@ -73,10 +75,10 @@ func (m *manager) GetProject(id string) (*project.Project, error) {
 		&proj.ID, &proj.Name, &proj.Description, &proj.Enabled, &proj.CreateAt, &proj.DomainID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil
+			return nil, exception.NewNotFound("project %s not find", id)
 		}
 
-		return nil, fmt.Errorf("query single project error, %s", err)
+		return nil, exception.NewInternalServerError("query single project error, %s", err)
 	}
 
 	return &proj, nil
@@ -85,7 +87,7 @@ func (m *manager) GetProject(id string) (*project.Project, error) {
 func (m *manager) ListDomainProjects(domainID string) ([]*project.Project, error) {
 	rows, err := m.db.Query("SELECT id,name,description,enabled,domain_id,create_at FROM project")
 	if err != nil {
-		return nil, fmt.Errorf("query project list error, %s", err)
+		return nil, exception.NewInternalServerError("query project list error, %s", err)
 	}
 	defer rows.Close()
 
@@ -93,7 +95,7 @@ func (m *manager) ListDomainProjects(domainID string) ([]*project.Project, error
 	for rows.Next() {
 		proj := project.Project{}
 		if err := rows.Scan(&proj.ID, &proj.Name, &proj.Description, &proj.Enabled, &proj.DomainID, &proj.CreateAt); err != nil {
-			return nil, fmt.Errorf("scan project record error, %s", err)
+			return nil, exception.NewInternalServerError("scan project record error, %s", err)
 		}
 		projects = append(projects, &proj)
 	}
@@ -115,27 +117,27 @@ func (m *manager) DeleteProject(id string) error {
 		deletePrepare, err = m.db.Prepare("DELETE FROM project WHERE id = ?")
 	})
 	if err != nil {
-		return fmt.Errorf("prepare delete project stmt error, %s", err)
+		return exception.NewInternalServerError("prepare delete project stmt error, %s", err)
 	}
 
 	if _, err := deletePrepare.Exec(id); err != nil {
-		return fmt.Errorf("delete project exec sql error, %s", err)
+		return exception.NewInternalServerError("delete project exec sql error, %s", err)
 	}
 	return nil
 }
 
-func (m *manager) IsExist(id string) (bool, error) {
+func (m *manager) CheckProjectIsExist(id string) error {
 	var pid string
 	err := m.db.QueryRow("SELECT id FROM project WHERE id = ?", id).Scan(&pid)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return false, nil
+			return exception.NewNotFound("project %s not find", id)
 		}
 
-		return false, fmt.Errorf("check project exist error, %s", err)
+		return exception.NewInternalServerError("check project exist error, %s", err)
 	}
 
-	return true, nil
+	return nil
 }
 
 func (m *manager) projectNameExist(domainID, projectName string) (bool, error) {
