@@ -10,6 +10,9 @@ import (
 	"openauth/pkg/user"
 )
 
+// TestDomainID Just for test
+const TestDomainID = "fa735972-b059-44f3-b95f-78f0aaa1306e"
+
 // CreateProject use to create an project
 func CreateProject(w http.ResponseWriter, r *http.Request) {
 	val, err := request.CheckObjectBody(r)
@@ -19,7 +22,7 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get did from token
-	did := "08b6d234-c06f-4acb-8ca4-fd3bd841f607"
+	did := TestDomainID
 
 	name := val.Get("name").ToString()
 	desc := val.Get("description").ToString()
@@ -76,7 +79,7 @@ func ListProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	projects, err := pc.ListProject("08b6d234-c06f-4acb-8ca4-fd3bd841f607")
+	projects, err := pc.ListProject(TestDomainID)
 	if err != nil {
 		response.Failed(w, err)
 		return

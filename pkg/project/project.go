@@ -33,5 +33,5 @@ type Manager interface {
 	// Soft Delete a Project,project still in persistence storage, super admin & domain admin are allowed to operate
 	DeleteProject(id string) error
 	// CheckProjectIsExist use to check the project is exist by project id
-	CheckProjectIsExist(id string) error
+	CheckProjectIsExistByID(id string) (bool, error)
 }

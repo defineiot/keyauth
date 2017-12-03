@@ -34,17 +34,15 @@ func (m *manager) CreateProject(domainID, name, description string, enabled bool
 		preErr error
 	)
 
-	err := m.dm.CheckDomainIsExist(domainID)
+	ok, err := m.dm.CheckDomainIsExistByID(domainID)
 	if err != nil {
-		switch err.(type) {
-		case exception.NotFound:
-			return nil, exception.NewBadRequest("check domain exists error: %s ", err)
-		default:
-			return nil, exception.NewInternalServerError("check domain exists error: %s", err)
-		}
+		return nil, err
+	}
+	if !ok {
+		return nil, exception.NewBadRequest("domain %s not exist", domainID)
 	}
 
-	ok, err := m.projectNameExist(domainID, name)
+	ok, err = m.projectNameExist(domainID, name)
 	if err != nil {
 		return nil, exception.NewInternalServerError("check project name exist error, %s", err)
 	}
@@ -85,17 +83,15 @@ func (m *manager) GetProject(id string) (*project.Project, error) {
 }
 
 func (m *manager) ListDomainProjects(domainID string) ([]*project.Project, error) {
-	err := m.dm.CheckDomainIsExist(domainID)
+	ok, err := m.dm.CheckDomainIsExistByID(domainID)
 	if err != nil {
-		switch err.(type) {
-		case exception.NotFound:
-			return nil, exception.NewBadRequest("check domain exists error: %s ", err)
-		default:
-			return nil, exception.NewInternalServerError("check domain exists error: %s", err)
-		}
+		return nil, err
+	}
+	if !ok {
+		return nil, exception.NewBadRequest("domain %s not exist", domainID)
 	}
 
-	rows, err := m.db.Query("SELECT id,name,description,enabled,domain_id,create_at FROM project")
+	rows, err := m.db.Query("SELECT id,name,description,enabled,domain_id,create_at FROM project WHERE domain_id = ? ORDER BY create_at DESC", domainID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query project list error, %s", err)
 	}
@@ -123,13 +119,12 @@ func (m *manager) DeleteProject(id string) error {
 		err  error
 	)
 
-	if err := m.CheckProjectIsExist(id); err != nil {
-		switch err.(type) {
-		case *exception.NotFound:
-			return exception.NewBadRequest(err.Error())
-		default:
-			return exception.NewInternalServerError("check project exists error: %s", err)
-		}
+	ok, err := m.CheckProjectIsExistByID(id)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return exception.NewBadRequest("project %s not exist", id)
 	}
 
 	once.Do(func() {
@@ -145,18 +140,18 @@ func (m *manager) DeleteProject(id string) error {
 	return nil
 }
 
-func (m *manager) CheckProjectIsExist(id string) error {
+func (m *manager) CheckProjectIsExistByID(id string) (bool, error) {
 	var pid string
 	err := m.db.QueryRow("SELECT id FROM project WHERE id = ?", id).Scan(&pid)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return exception.NewNotFound("project %s not find", id)
+			return false, nil
 		}
 
-		return exception.NewInternalServerError("check project exist error, %s", err)
+		return false, exception.NewInternalServerError("check project exist error, %s", err)
 	}
 
-	return nil
+	return true, nil
 }
 
 func (m *manager) projectNameExist(domainID, projectName string) (bool, error) {

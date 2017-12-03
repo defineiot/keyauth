@@ -33,6 +33,14 @@ func (m *manager) CreateDomain(name, description, displayName string, enabled bo
 		err  error
 	)
 
+	ok, err := m.CheckDomainIsExistByName(name)
+	if err != nil {
+		return nil, err
+	}
+	if ok {
+		return nil, exception.NewBadRequest("domain %s exist", name)
+	}
+
 	once.Do(func() {
 		createPrepare, err = m.db.Prepare("INSERT INTO `domain` (id, name, display_name, description, enabled, extra, create_at) VALUES (?,?,?,?,?,?,?)")
 	})
@@ -66,7 +74,7 @@ func (m *manager) GetDomain(domainID string) (*domain.Domain, error) {
 
 // ListDomain use to list all domains
 func (m *manager) ListDomain() ([]*domain.Domain, error) {
-	rows, err := m.db.Query("SELECT id,name,display_name,description,enabled,create_at,update_at FROM domain")
+	rows, err := m.db.Query("SELECT id,name,display_name,description,enabled,create_at,update_at FROM domain ORDER BY create_at DESC")
 	if err != nil {
 		return nil, exception.NewInternalServerError("query domain list error, %s", err)
 	}
@@ -96,13 +104,12 @@ func (m *manager) DeleteDomain(id string) error {
 		err  error
 	)
 
-	if err := m.CheckDomainIsExist(id); err != nil {
-		switch err.(type) {
-		case *exception.NotFound:
-			return exception.NewBadRequest(err.Error())
-		default:
-			return exception.NewInternalServerError("check project exists error: %s", err)
-		}
+	ok, err := m.CheckDomainIsExistByID(id)
+	if err != nil {
+		return nil
+	}
+	if !ok {
+		return exception.NewBadRequest("domain %s not exist", id)
 	}
 
 	once.Do(func() {
@@ -119,15 +126,28 @@ func (m *manager) DeleteDomain(id string) error {
 	return nil
 }
 
-func (m *manager) CheckDomainIsExist(domainID string) error {
+func (m *manager) CheckDomainIsExistByID(domainID string) (bool, error) {
 	var id string
 	if err := m.db.QueryRow("SELECT id FROM domain WHERE id = ?", domainID).Scan(&id); err != nil {
 		if err == sql.ErrNoRows {
-			return exception.NewNotFound("domain %s not find", domainID)
+			return false, nil
 		}
 
-		return exception.NewInternalServerError("query single domain error, %s", err)
+		return false, exception.NewInternalServerError("query single domain error, %s", err)
 	}
 
-	return nil
+	return true, nil
+}
+
+func (m *manager) CheckDomainIsExistByName(domainName string) (bool, error) {
+	var id string
+	if err := m.db.QueryRow("SELECT id FROM domain WHERE name = ?", domainName).Scan(&id); err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+
+		return false, exception.NewInternalServerError("query single domain error, %s", err)
+	}
+
+	return true, nil
 }

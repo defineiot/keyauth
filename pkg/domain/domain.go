@@ -35,5 +35,5 @@ type Manager interface {
 	// Soft Delete a Domain, Domain still in persistence storage, Only super admin are allowed to operate
 	DeleteDomain(id string) error
 	// CheckDomainIsExist use to check the domain is exist by domain id
-	CheckDomainIsExist(domainID string) error
+	CheckDomainIsExistByID(domainID string) (bool, error)
 }
