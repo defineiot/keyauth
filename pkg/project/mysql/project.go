@@ -85,6 +85,16 @@ func (m *manager) GetProject(id string) (*project.Project, error) {
 }
 
 func (m *manager) ListDomainProjects(domainID string) ([]*project.Project, error) {
+	err := m.dm.CheckDomainIsExist(domainID)
+	if err != nil {
+		switch err.(type) {
+		case exception.NotFound:
+			return nil, exception.NewBadRequest("check domain exists error: %s ", err)
+		default:
+			return nil, exception.NewInternalServerError("check domain exists error: %s", err)
+		}
+	}
+
 	rows, err := m.db.Query("SELECT id,name,description,enabled,domain_id,create_at FROM project")
 	if err != nil {
 		return nil, exception.NewInternalServerError("query project list error, %s", err)
@@ -112,6 +122,15 @@ func (m *manager) DeleteProject(id string) error {
 		once sync.Once
 		err  error
 	)
+
+	if err := m.CheckProjectIsExist(id); err != nil {
+		switch err.(type) {
+		case *exception.NotFound:
+			return exception.NewBadRequest(err.Error())
+		default:
+			return exception.NewInternalServerError("check project exists error: %s", err)
+		}
+	}
 
 	once.Do(func() {
 		deletePrepare, err = m.db.Prepare("DELETE FROM project WHERE id = ?")

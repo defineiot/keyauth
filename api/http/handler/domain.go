@@ -15,7 +15,7 @@ import (
 func CreateDomain(w http.ResponseWriter, r *http.Request) {
 	val, err := request.CheckObjectBody(r)
 	if err != nil {
-		response.Failed(w, http.StatusBadRequest, err.Error())
+		response.Failed(w, err)
 		return
 	}
 
@@ -25,19 +25,20 @@ func CreateDomain(w http.ResponseWriter, r *http.Request) {
 	disp := val.Get("display_name").ToString()
 
 	if name == "" || disp == "" {
-		response.Failed(w, http.StatusBadRequest, "name or display_name missed")
+		response.Failed(w, exception.NewBadRequest("name or display_name missed"))
 		return
 	}
 
 	// 交给业务控制层处理
 	dc, err := domain.GetController()
 	if err != nil {
-		response.Failed(w, http.StatusInternalServerError, err.Error())
+		response.Failed(w, err)
+		return
 	}
 
 	dom, err := dc.CreateDomain(name, desc, disp, user.Credential{})
 	if err != nil {
-		response.Failed(w, http.StatusInternalServerError, err.Error())
+		response.Failed(w, err)
 		return
 	}
 
@@ -53,18 +54,13 @@ func GetDomain(w http.ResponseWriter, r *http.Request) {
 	// TODO: get token from context, and check permission
 	dc, err := domain.GetController()
 	if err != nil {
-		response.Failed(w, http.StatusInternalServerError, err.Error())
+		response.Failed(w, err)
 		return
 	}
 
 	dom, err := dc.GetDomain(did)
 	if err != nil {
-		if apiErr, ok := err.(*exception.APIException); ok {
-			response.Failed(w, apiErr.Code, apiErr.Error())
-			return
-		}
-
-		response.Failed(w, http.StatusInternalServerError, err.Error())
+		response.Failed(w, err)
 		return
 	}
 
@@ -77,13 +73,13 @@ func ListDomain(w http.ResponseWriter, r *http.Request) {
 	// TODO: get token from context, and check permission
 	dm, err := domain.GetController()
 	if err != nil {
-		response.Failed(w, http.StatusInternalServerError, err.Error())
+		response.Failed(w, err)
 		return
 	}
 
 	doms, err := dm.ListDomain()
 	if err != nil {
-		response.Failed(w, http.StatusInternalServerError, err.Error())
+		response.Failed(w, err)
 		return
 	}
 
@@ -99,12 +95,12 @@ func DeleteDomain(w http.ResponseWriter, r *http.Request) {
 	// TODO: get token from context, and check permission
 	dm, err := domain.GetController()
 	if err != nil {
-		response.Failed(w, http.StatusInternalServerError, err.Error())
+		response.Failed(w, err)
 		return
 	}
 
 	if err := dm.DestoryDomain(did); err != nil {
-		response.Failed(w, http.StatusInternalServerError, err.Error())
+		response.Failed(w, err)
 		return
 	}
 

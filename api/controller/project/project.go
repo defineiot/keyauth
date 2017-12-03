@@ -2,9 +2,6 @@ package project
 
 import (
 	"database/sql"
-	"errors"
-	"fmt"
-	"net/http"
 	"sync"
 
 	"openauth/api/exception"
@@ -21,7 +18,7 @@ var (
 // GetController use to use an domain controller
 func GetController() (*Controller, error) {
 	if controller == nil {
-		return nil, errors.New("project controller isn't initial")
+		return nil, exception.NewInternalServerError("project controller isn't initial")
 	}
 
 	return controller, nil
@@ -47,7 +44,7 @@ type Controller struct {
 func (c *Controller) CreateProject(domainID, name, description string, cred user.Credential) (*project.Project, error) {
 	proj, err := c.pm.CreateProject(domainID, name, description, true)
 	if err != nil {
-		return nil, fmt.Errorf("create project error, %s", err)
+		return nil, err
 	}
 
 	return proj, nil
@@ -57,7 +54,7 @@ func (c *Controller) CreateProject(domainID, name, description string, cred user
 func (c *Controller) ListProject(domainID string) ([]*project.Project, error) {
 	projects, err := c.pm.ListDomainProjects(domainID)
 	if err != nil {
-		return nil, fmt.Errorf("list domain project error, %s", err)
+		return nil, err
 	}
 	return projects, nil
 }
@@ -67,10 +64,6 @@ func (c *Controller) GetProject(id string, cred user.Credential) (*project.Proje
 	proj, err := c.pm.GetProject(id)
 	if err != nil {
 		return nil, err
-	}
-
-	if proj == nil {
-		return nil, exception.NewAPIException(fmt.Sprintf("project %s not find", id), http.StatusNotFound)
 	}
 
 	// TODO: check the project is for this user
@@ -85,18 +78,10 @@ func (c *Controller) UpdateProject(cred user.Credential) (*project.Project, erro
 
 // DestroyProject use to delete one project
 func (c *Controller) DestroyProject(id string, cred user.Credential) error {
-	ok, err := c.pm.IsExist(id)
-	if err != nil {
-		return err
-	}
-	if !ok {
-		return exception.NewAPIException(fmt.Sprintf("project %s not find", id), http.StatusNotFound)
-	}
-
 	// TODO: check the projcet is for this user
 
 	if err := c.pm.DeleteProject(id); err != nil {
-		return fmt.Errorf("delete project error, %s", err)
+		return err
 	}
 
 	return nil

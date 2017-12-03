@@ -3,6 +3,7 @@ package response
 import (
 	"encoding/json"
 	"net/http"
+	"openauth/api/exception"
 )
 
 // Response to be used by controllers.
@@ -13,7 +14,21 @@ type Response struct {
 }
 
 // Failed use to response error messge
-func Failed(w http.ResponseWriter, code int, msg string) {
+func Failed(w http.ResponseWriter, err error) {
+	msg := err.Error()
+	code := http.StatusInternalServerError
+
+	switch t := err.(type) {
+	case *exception.BadRequest:
+		code = t.Code()
+	case *exception.NotFound:
+		code = t.Code()
+	case *exception.InternalServerError:
+		code = t.Code()
+	default:
+		code = http.StatusInternalServerError
+	}
+
 	resp := Response{
 		Status:  "error",
 		Message: msg,

@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"openauth/api/controller/project"
-	"openauth/api/exception"
 	"openauth/api/http/context"
 	"openauth/api/http/request"
 	"openauth/api/http/response"
@@ -15,7 +14,7 @@ import (
 func CreateProject(w http.ResponseWriter, r *http.Request) {
 	val, err := request.CheckObjectBody(r)
 	if err != nil {
-		response.Failed(w, http.StatusBadRequest, err.Error())
+		response.Failed(w, err)
 		return
 	}
 
@@ -26,19 +25,19 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 	desc := val.Get("description").ToString()
 
 	if name == "" {
-		response.Failed(w, http.StatusBadRequest, "name missed")
+		response.Failed(w, err)
 		return
 	}
 
 	// 交给业务控制层处理
 	pc, err := project.GetController()
 	if err != nil {
-		response.Failed(w, http.StatusInternalServerError, err.Error())
+		response.Failed(w, err)
 	}
 
 	proj, err := pc.CreateProject(did, name, desc, user.Credential{})
 	if err != nil {
-		response.Failed(w, http.StatusInternalServerError, err.Error())
+		response.Failed(w, err)
 		return
 	}
 
@@ -54,18 +53,13 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 	// TODO: get token from context, and check permission
 	pc, err := project.GetController()
 	if err != nil {
-		response.Failed(w, http.StatusInternalServerError, err.Error())
+		response.Failed(w, err)
 		return
 	}
 
 	proj, err := pc.GetProject(pid, user.Credential{})
 	if err != nil {
-		if apiErr, ok := err.(*exception.APIException); ok {
-			response.Failed(w, apiErr.Code, apiErr.Error())
-			return
-		}
-
-		response.Failed(w, http.StatusInternalServerError, err.Error())
+		response.Failed(w, err)
 		return
 	}
 
@@ -78,13 +72,13 @@ func ListProject(w http.ResponseWriter, r *http.Request) {
 	// TODO: get token from context, and check permission
 	pc, err := project.GetController()
 	if err != nil {
-		response.Failed(w, http.StatusInternalServerError, err.Error())
+		response.Failed(w, err)
 		return
 	}
 
 	projects, err := pc.ListProject("08b6d234-c06f-4acb-8ca4-fd3bd841f607")
 	if err != nil {
-		response.Failed(w, http.StatusInternalServerError, err.Error())
+		response.Failed(w, err)
 		return
 	}
 
@@ -100,12 +94,12 @@ func DeleteProject(w http.ResponseWriter, r *http.Request) {
 	// TODO: get token from context, and check permission
 	pc, err := project.GetController()
 	if err != nil {
-		response.Failed(w, http.StatusInternalServerError, err.Error())
+		response.Failed(w, err)
 		return
 	}
 
 	if err := pc.DestroyProject(pid, user.Credential{}); err != nil {
-		response.Failed(w, http.StatusInternalServerError, err.Error())
+		response.Failed(w, err)
 		return
 	}
 

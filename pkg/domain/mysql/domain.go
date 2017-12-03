@@ -96,6 +96,15 @@ func (m *manager) DeleteDomain(id string) error {
 		err  error
 	)
 
+	if err := m.CheckDomainIsExist(id); err != nil {
+		switch err.(type) {
+		case *exception.NotFound:
+			return exception.NewBadRequest(err.Error())
+		default:
+			return exception.NewInternalServerError("check project exists error: %s", err)
+		}
+	}
+
 	once.Do(func() {
 		deletePrepare, err = m.db.Prepare("DELETE FROM domain WHERE id = ?")
 	})

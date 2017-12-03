@@ -6,60 +6,57 @@ import (
 )
 
 // APIException is openauth error
-type APIException struct {
+type apiException struct {
 	msg  string
 	code int
 }
 
-func (e *APIException) Error() string {
+func (e *apiException) Error() string {
 	return e.msg
 }
 
 // Code exception's code
-func (e *APIException) Code() int {
+func (e *apiException) Code() int {
 	return e.code
 }
 
 // InternalServerError exception
 type InternalServerError struct {
-	*APIException
+	*apiException
 }
 
 // NotFound exception
 type NotFound struct {
-	*APIException
+	*apiException
 }
 
 // BadRequest exception
 type BadRequest struct {
-	*APIException
+	*apiException
 }
 
 // NewAPIException is openauth api error
 func NewAPIException(text string, code int) error {
-	return &APIException{msg: text, code: code}
+	return &apiException{msg: text, code: code}
 }
 
 // NewInternalServerError for 503
 func NewInternalServerError(format string, args ...interface{}) error {
 	excp := new(InternalServerError)
-	excp.msg = fmt.Sprintf(format, args...)
-	excp.code = http.StatusInternalServerError
+	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), code: http.StatusInternalServerError}
 	return excp
 }
 
 // NewNotFound for 404
 func NewNotFound(format string, args ...interface{}) error {
 	excp := new(NotFound)
-	excp.msg = fmt.Sprintf(format, args...)
-	excp.code = http.StatusNotFound
+	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), code: http.StatusNotFound}
 	return excp
 }
 
 // NewBadRequest for 400
 func NewBadRequest(format string, args ...interface{}) error {
 	excp := new(BadRequest)
-	excp.msg = fmt.Sprintf(format, args...)
-	excp.code = http.StatusBadRequest
+	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), code: http.StatusBadRequest}
 	return excp
 }
