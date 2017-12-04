@@ -10,7 +10,10 @@ import (
 
 	"github.com/satori/go.uuid"
 
-	"openauth/pkg/user"
+	"openauth/api/exception"
+	"openauth/storage/domain"
+	"openauth/storage/project"
+	"openauth/storage/user"
 )
 
 var (
@@ -18,16 +21,29 @@ var (
 )
 
 // NewUserManager use to new an use service with mysql
-func NewUserManager(db *sql.DB, key string) (user.Manager, error) {
-	return &manager{db: db, key: key}, nil
+func NewUserManager(db *sql.DB, key string, dm domain.Manager, pm project.Manager) (user.Manager, error) {
+	return &manager{db: db, key: key, dm: dm, pm: pm}, nil
 }
 
 type manager struct {
 	db  *sql.DB
 	key string
+	dm  domain.Manager
+	pm  project.Manager
 }
 
 func (m *manager) CreateUser(domainID, name, password string, enabled bool, userExpires, passExpires int) (*user.User, error) {
+	// check domain exist
+	ok, err := m.dm.CheckDomainIsExistByID(domainID)
+	if err != nil {
+		return nil, exception.NewInternalServerError("check domain exist error, ", err)
+	}
+	if !ok {
+		return nil, exception.NewBadRequest("domain %s not exist", domainID)
+	}
+
+	// check the domain user is exist
+
 	tx, err := m.db.Begin()
 	if err != nil {
 		return nil, fmt.Errorf("start create user transaction error, %s", err)

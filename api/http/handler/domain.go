@@ -3,12 +3,11 @@ package handler
 import (
 	"net/http"
 
-	"openauth/api/controller/domain"
 	"openauth/api/exception"
 	"openauth/api/http/context"
 	"openauth/api/http/request"
 	"openauth/api/http/response"
-	"openauth/pkg/user"
+	"openauth/storage/user"
 )
 
 // CreateDomain use to create domain
@@ -30,13 +29,7 @@ func CreateDomain(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 交给业务控制层处理
-	dc, err := domain.GetController()
-	if err != nil {
-		response.Failed(w, err)
-		return
-	}
-
-	dom, err := dc.CreateDomain(name, desc, disp, user.Credential{})
+	dom, err := domainctl.CreateDomain(name, desc, disp, user.Credential{})
 	if err != nil {
 		response.Failed(w, err)
 		return
@@ -51,14 +44,7 @@ func GetDomain(w http.ResponseWriter, r *http.Request) {
 	ps := context.GetParamsFromContext(r)
 	did := ps.ByName("did")
 
-	// TODO: get token from context, and check permission
-	dc, err := domain.GetController()
-	if err != nil {
-		response.Failed(w, err)
-		return
-	}
-
-	dom, err := dc.GetDomain(did)
+	dom, err := domainctl.GetDomain(did)
 	if err != nil {
 		response.Failed(w, err)
 		return
@@ -70,14 +56,7 @@ func GetDomain(w http.ResponseWriter, r *http.Request) {
 
 // ListDomain domain list
 func ListDomain(w http.ResponseWriter, r *http.Request) {
-	// TODO: get token from context, and check permission
-	dm, err := domain.GetController()
-	if err != nil {
-		response.Failed(w, err)
-		return
-	}
-
-	doms, err := dm.ListDomain()
+	doms, err := domainctl.ListDomain()
 	if err != nil {
 		response.Failed(w, err)
 		return
@@ -93,13 +72,8 @@ func DeleteDomain(w http.ResponseWriter, r *http.Request) {
 	did := ps.ByName("did")
 
 	// TODO: get token from context, and check permission
-	dm, err := domain.GetController()
-	if err != nil {
-		response.Failed(w, err)
-		return
-	}
 
-	if err := dm.DestoryDomain(did); err != nil {
+	if err := domainctl.DestoryDomain(did); err != nil {
 		response.Failed(w, err)
 		return
 	}

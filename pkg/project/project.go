@@ -1,37 +1,84 @@
 package project
 
-// Project tenant resource container
-type Project struct {
+import (
+	"openauth/api/exception"
+	"openauth/api/logger"
+	"openauth/storage/domain"
+	"openauth/storage/project"
+	"openauth/storage/user"
+)
 
-	// Project id, UUID as a unique logo
-	ID string `json:"id"`
-	// Project name, allow repeat
-	Name string `json:"name"`
-	// Project description
-	Description string `json:"description"`
-	// Whether to enable
-	Enabled bool `json:"enabled"`
-	// CrateAt create time
-	CreateAt int64 `json:"create_at"`
-	// the project's domain id
-	DomainID string `json:"domain_id"`
-	// Extend fields to facilitate the expansion of database tables
-	Extra string `json:"-"`
+// NewController use to new an controller
+func NewController(logger logger.OpenAuthLogger, ds domain.Storage, ps project.Storage) *Controller {
+	return &Controller{logger: logger, ds: ds, ps: ps}
 }
 
-// Manager is project service
-type Manager interface {
-	// Create a Project, super admin & domain admin are
-	// allowed to operate, Named in Domain, does not allow renaming
-	CreateProject(domainID, name, description string, enabled bool) (*Project, error)
-	// Get a project with project id
-	GetProject(id string) (*Project, error)
-	// List all Project in domain_id, else all project
-	ListDomainProjects(domainID string) ([]*Project, error)
-	// Update a Project, super admin & domain admin are allowed to operate
-	UpdateProject(id, name, description string) (*Project, error)
-	// Soft Delete a Project,project still in persistence storage, super admin & domain admin are allowed to operate
-	DeleteProject(id string) error
-	// CheckProjectIsExist use to check the project is exist by project id
-	CheckProjectIsExistByID(id string) (bool, error)
+// Controller is domain pkg
+type Controller struct {
+	logger logger.OpenAuthLogger
+	ps     project.Storage
+	ds     domain.Storage
+}
+
+// CreateProject use to create domain
+func (c *Controller) CreateProject(domainID, name, description string, cred user.Credential) (*project.Project, error) {
+	ok, err := c.ds.CheckDomainIsExistByID(domainID)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, exception.NewBadRequest("domain %s not exist", domainID)
+	}
+
+	proj, err := c.ps.CreateProject(domainID, name, description, true)
+	if err != nil {
+		return nil, err
+	}
+
+	return proj, nil
+}
+
+// ListProject list an domain's project
+func (c *Controller) ListProject(domainID string) ([]*project.Project, error) {
+	ok, err := c.ds.CheckDomainIsExistByID(domainID)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, exception.NewBadRequest("domain %s not exist", domainID)
+	}
+
+	projects, err := c.ps.ListDomainProjects(domainID)
+	if err != nil {
+		return nil, err
+	}
+	return projects, nil
+}
+
+// GetProject use to get one project
+func (c *Controller) GetProject(id string, cred user.Credential) (*project.Project, error) {
+	proj, err := c.ps.GetProject(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: check the project is for this user
+
+	return proj, nil
+}
+
+// UpdateProject use to update one project
+func (c *Controller) UpdateProject(cred user.Credential) (*project.Project, error) {
+	return nil, nil
+}
+
+// DestroyProject use to delete one project
+func (c *Controller) DestroyProject(id string, cred user.Credential) error {
+	// TODO: check the projcet is for this user
+
+	if err := c.ps.DeleteProject(id); err != nil {
+		return err
+	}
+
+	return nil
 }

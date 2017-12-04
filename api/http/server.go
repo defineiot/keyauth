@@ -11,7 +11,6 @@ import (
 	"github.com/urfave/negroni"
 
 	"openauth/api/config"
-	"openauth/api/controller"
 	"openauth/api/http/router"
 	"openauth/api/logger"
 )
@@ -60,10 +59,10 @@ func (s *Service) Start() error {
 	n.Use(recoverM)
 	s.logger.Info("loading http middleware success")
 
-	// initial controller
-	if err := controller.InitAllController(s.conf); err != nil {
-		return err
-	}
+	// initial pkg
+	// if err := pkg.InitAllController(s.conf); err != nil {
+	// 	return err
+	// }
 
 	// config router
 	n.UseHandler(r.Router)

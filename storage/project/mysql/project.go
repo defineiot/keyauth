@@ -9,8 +9,7 @@ import (
 	"github.com/satori/go.uuid"
 
 	"openauth/api/exception"
-	"openauth/pkg/domain"
-	"openauth/pkg/project"
+	"openauth/storage/project"
 )
 
 var (
@@ -18,14 +17,13 @@ var (
 	deletePrepare *sql.Stmt
 )
 
-// NewProjectManager is use mysql as storage
-func NewProjectManager(db *sql.DB, dm domain.Manager) project.Manager {
-	return &manager{db: db, dm: dm}
+// NewProjectStroage is use mysql as storage
+func NewProjectStroage(db *sql.DB) project.Storage {
+	return &manager{db: db}
 }
 
 type manager struct {
 	db *sql.DB
-	dm domain.Manager
 }
 
 func (m *manager) CreateProject(domainID, name, description string, enabled bool) (*project.Project, error) {
@@ -34,15 +32,7 @@ func (m *manager) CreateProject(domainID, name, description string, enabled bool
 		preErr error
 	)
 
-	ok, err := m.dm.CheckDomainIsExistByID(domainID)
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return nil, exception.NewBadRequest("domain %s not exist", domainID)
-	}
-
-	ok, err = m.projectNameExist(domainID, name)
+	ok, err := m.projectNameExist(domainID, name)
 	if err != nil {
 		return nil, exception.NewInternalServerError("check project name exist error, %s", err)
 	}
@@ -83,13 +73,6 @@ func (m *manager) GetProject(id string) (*project.Project, error) {
 }
 
 func (m *manager) ListDomainProjects(domainID string) ([]*project.Project, error) {
-	ok, err := m.dm.CheckDomainIsExistByID(domainID)
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return nil, exception.NewBadRequest("domain %s not exist", domainID)
-	}
 
 	rows, err := m.db.Query("SELECT id,name,description,enabled,domain_id,create_at FROM project WHERE domain_id = ? ORDER BY create_at DESC", domainID)
 	if err != nil {
@@ -174,4 +157,16 @@ func (m *manager) projectNameExist(domainID, projectName string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func (m *manager) ListProjectUsers(id string) ([]string, error) {
+	return nil, nil
+}
+
+func (m *manager) AddUsersToProject(projectID string, userIDs ...string) {
+	return
+}
+
+func (m *manager) RemoveUsersFromProject(projectID string, userIDs ...string) {
+
 }

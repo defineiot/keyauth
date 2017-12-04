@@ -8,7 +8,7 @@ import (
 	"github.com/satori/go.uuid"
 
 	"openauth/api/exception"
-	"openauth/pkg/domain"
+	"openauth/storage/domain"
 )
 
 var (
@@ -16,8 +16,8 @@ var (
 	deletePrepare *sql.Stmt
 )
 
-// NewDomainManager use to create domain storage service
-func NewDomainManager(db *sql.DB) domain.Manager {
+// NewDomainStorage use to create domain storage service
+func NewDomainStorage(db *sql.DB) domain.Storage {
 	return &manager{db: db}
 }
 

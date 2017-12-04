@@ -3,11 +3,10 @@ package handler
 import (
 	"net/http"
 
-	"openauth/api/controller/project"
 	"openauth/api/http/context"
 	"openauth/api/http/request"
 	"openauth/api/http/response"
-	"openauth/pkg/user"
+	"openauth/storage/user"
 )
 
 // TestDomainID Just for test
@@ -33,12 +32,8 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 交给业务控制层处理
-	pc, err := project.GetController()
-	if err != nil {
-		response.Failed(w, err)
-	}
 
-	proj, err := pc.CreateProject(did, name, desc, user.Credential{})
+	proj, err := projectctl.CreateProject(did, name, desc, user.Credential{})
 	if err != nil {
 		response.Failed(w, err)
 		return
@@ -54,13 +49,8 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 	pid := ps.ByName("pid")
 
 	// TODO: get token from context, and check permission
-	pc, err := project.GetController()
-	if err != nil {
-		response.Failed(w, err)
-		return
-	}
 
-	proj, err := pc.GetProject(pid, user.Credential{})
+	proj, err := projectctl.GetProject(pid, user.Credential{})
 	if err != nil {
 		response.Failed(w, err)
 		return
@@ -72,14 +62,8 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 
 // ListProject use to list all project
 func ListProject(w http.ResponseWriter, r *http.Request) {
-	// TODO: get token from context, and check permission
-	pc, err := project.GetController()
-	if err != nil {
-		response.Failed(w, err)
-		return
-	}
 
-	projects, err := pc.ListProject(TestDomainID)
+	projects, err := projectctl.ListProject(TestDomainID)
 	if err != nil {
 		response.Failed(w, err)
 		return
@@ -95,13 +79,8 @@ func DeleteProject(w http.ResponseWriter, r *http.Request) {
 	pid := ps.ByName("pid")
 
 	// TODO: get token from context, and check permission
-	pc, err := project.GetController()
-	if err != nil {
-		response.Failed(w, err)
-		return
-	}
 
-	if err := pc.DestroyProject(pid, user.Credential{}); err != nil {
+	if err := projectctl.DestroyProject(pid, user.Credential{}); err != nil {
 		response.Failed(w, err)
 		return
 	}
