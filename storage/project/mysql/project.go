@@ -73,7 +73,6 @@ func (m *manager) GetProject(id string) (*project.Project, error) {
 }
 
 func (m *manager) ListDomainProjects(domainID string) ([]*project.Project, error) {
-
 	rows, err := m.db.Query("SELECT id,name,description,enabled,domain_id,create_at FROM project WHERE domain_id = ? ORDER BY create_at DESC", domainID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query project list error, %s", err)
@@ -159,14 +158,56 @@ func (m *manager) projectNameExist(domainID, projectName string) (bool, error) {
 	return false, nil
 }
 
-func (m *manager) ListProjectUsers(id string) ([]string, error) {
-	return nil, nil
+func (m *manager) ListProjectUsers(projectID string) ([]string, error) {
+	rows, err := m.db.Query("SELECT user_id FROM mapping WHERE project_id = ?", projectID)
+	if err != nil {
+		return nil, exception.NewInternalServerError("query project user id error, %s", err)
+	}
+	defer rows.Close()
+
+	users := []string{}
+	for rows.Next() {
+		var userID string
+		if err := rows.Scan(&userID); err != nil {
+			return nil, exception.NewInternalServerError("scan project's user id error, %s", err)
+		}
+		users = append(users, userID)
+	}
+	return users, nil
 }
 
-func (m *manager) AddUsersToProject(projectID string, userIDs ...string) {
-	return
+func (m *manager) AddUsersToProject(projectID string, userIDs ...string) error {
+	mappPre, err := m.db.Prepare("INSERT INTO `mapping` (user_id, project_id) VALUES (?,?)")
+	if err != nil {
+		return fmt.Errorf("prepare add users to project mapping stmt error, project: %s, user: %s,  %s", projectID, userIDs, err)
+	}
+
+	for _, userID := range userIDs {
+		_, err = mappPre.Exec(userID, projectID)
+		if err != nil {
+			mappPre.Close()
+			return fmt.Errorf("insert add users to project mapping exec sql err, %s", err)
+		}
+	}
+	mappPre.Close()
+
+	return nil
 }
 
-func (m *manager) RemoveUsersFromProject(projectID string, userIDs ...string) {
+func (m *manager) RemoveUsersFromProject(projectID string, userIDs ...string) error {
+	mappPre, err := m.db.Prepare("DELETE FROM `mapping` WHERE user_id = ? AND project_id = ?")
+	if err != nil {
+		return fmt.Errorf("prepare remove users from project mapping stmt error, project: %s, user: %s,  %s", projectID, userIDs, err)
+	}
 
+	for _, userID := range userIDs {
+		_, err = mappPre.Exec(userID, projectID)
+		if err != nil {
+			mappPre.Close()
+			return fmt.Errorf("insert remove users from project mapping exec sql err, %s", err)
+		}
+	}
+	mappPre.Close()
+
+	return nil
 }

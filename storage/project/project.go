@@ -36,9 +36,9 @@ type Storage interface {
 	// CheckProjectIsExist use to check the project is exist by project id
 	CheckProjectIsExistByID(id string) (bool, error)
 	// ListProjectUsers use to list all users
-	ListProjectUsers(id string) ([]string, error)
+	ListProjectUsers(projectID string) ([]string, error)
 	// add users to prject
-	AddUsersToProject(projectID string, userIDs ...string)
+	AddUsersToProject(projectID string, userIDs ...string) error
 	// remove users from project
-	RemoveUsersFromProject(projectID string, userIDs ...string)
+	RemoveUsersFromProject(projectID string, userIDs ...string) error
 }

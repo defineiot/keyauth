@@ -23,7 +23,8 @@ CREATE TABLE `user` (
 `domain_id` varchar(255) NOT NULL,
 `password_id` int(16) NULL,
 `create_at` int(64) NOT NULL,
-`expires_active_days` int(16) NOT NUll,
+`expires_active_days` int(64) NOT NUll DEFAULT 0,
+`default_project_id` varchar(255) NOT NULL DEFAULT '',
 PRIMARY KEY (`id`) 
 )
 ENGINE = InnoDB
@@ -203,7 +204,7 @@ COMMENT = '用户电话号码表';
 CREATE TABLE `mapping` (
 `id` int(11) NOT NULL AUTO_INCREMENT,
 `user_id` varchar(255) NULL,
-`project_Id` varchar(255) NULL,
+`project_id` varchar(255) NULL,
 `group_id` varchar(255) NULL,
 `role_id` varchar(255) NULL,
 `function_id` int(11) NULL,

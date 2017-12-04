@@ -33,6 +33,7 @@ type Config struct {
 type appConf struct {
 	Host string `toml:"host"`
 	Port string `toml:"port"`
+	Key  string `toml:"key"`
 }
 
 type mysqlConf struct {
@@ -75,6 +76,10 @@ func (c *Config) validateAPP() error {
 	}
 	if c.APP.Port == "" {
 		c.APP.Port = "8080"
+	}
+
+	if c.APP.Key == "" {
+		return errors.New("app key isn't config")
 	}
 
 	return nil

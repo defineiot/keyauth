@@ -2,17 +2,17 @@ package user
 
 // User info
 type User struct {
-	ID               string   `json:"id"`
-	Name             string   `json:"name"`
-	LastActiveTime   int64    `json:"last_active_time"`
-	Enabled          bool     `json:"enabled"`
-	CreateAt         int64    `json:"create_at"`
-	Password         Password `json:"password"`
-	Phones           []*Phone `json:"phones,omitempty"`
-	Emails           []*Email `json:"emails,omitempty"`
-	DomainID         string   `json:"domain_id"`
-	DefaultProjectID string   `json:"default_project_id"`
-	ExpireActiveDays int64    `json:"expires_active_days"`
+	ID               string    `json:"id"`
+	Name             string    `json:"name"`
+	LastActiveTime   int64     `json:"last_active_time"`
+	Enabled          bool      `json:"enabled"`
+	CreateAt         int64     `json:"create_at"`
+	Password         *Password `json:"-"`
+	Phones           []*Phone  `json:"phones,omitempty"`
+	Emails           []*Email  `json:"emails,omitempty"`
+	DomainID         string    `json:"domain_id"`
+	DefaultProjectID string    `json:"default_project_id,omitempty"`
+	ExpireActiveDays int64     `json:"expires_active_days"`
 
 	// Extend fields to facilitate the expansion of database tables
 	Extra string `json:"-"`
@@ -61,9 +61,9 @@ type Credential struct {
 	UserName    string
 }
 
-// Manager is user service
-type Manager interface {
-	// create user, in the same domain, user can not be renamed
+// Storage is user service
+type Storage interface {
+	// create user, in the same domain, user can not be renamed, expires use h
 	CreateUser(domainID, userName, password string, enabled bool, userExpires, passExpires int) (*User, error)
 	// add projects to user, here will check user is exist, but not check project is exists
 	// you can use project pkg to check the project is exist
@@ -71,7 +71,7 @@ type Manager interface {
 	// remove projects from user
 	RemoveProjectsFromUser(userID string, projectIDs ...string) error
 	// Get user with User id & user password
-	GetUserByID(userID, userPassword string) (*User, error)
+	GetUserByID(userID string) (*User, error)
 	// Get user with User name & user password
 	GetUserByName(domainID, userName, userPassword string) (*User, error)
 	// GetUser get an user
@@ -99,13 +99,11 @@ type Manager interface {
 	// Verify user & feature
 	HasFeatures(cert Credential, features ...string) (bool, error)
 	// set user default project
-	SetDefaultProject(cert Credential, projectID string) error
+	SetDefaultProject(userID, projectID string) error
 	// add user to project, a user can add multiple project
 	AddUserToProject(cert Credential, projectID string) error
 	// remove user from project, when the user does not belong to any project, the user disable
 	RemoveUserFromProject(cert Credential, projectID string) error
-	// list user projects
-	ListUserProject(cert Credential) ([]string, error)
 	// get user default project
 	GetDefaultProject(cert Credential) (string, error)
 	// determine if the user has a super administrator role
