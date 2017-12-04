@@ -104,14 +104,6 @@ func (m *manager) DeleteDomain(id string) error {
 		err  error
 	)
 
-	ok, err := m.CheckDomainIsExistByID(id)
-	if err != nil {
-		return nil
-	}
-	if !ok {
-		return exception.NewBadRequest("domain %s not exist", id)
-	}
-
 	once.Do(func() {
 		deletePrepare, err = m.db.Prepare("DELETE FROM domain WHERE id = ?")
 	})
@@ -119,8 +111,16 @@ func (m *manager) DeleteDomain(id string) error {
 		return exception.NewInternalServerError("prepare delete domain stmt error, %s", err)
 	}
 
-	if _, err := deletePrepare.Exec(id); err != nil {
+	ret, err := deletePrepare.Exec(id)
+	if err != nil {
 		return exception.NewInternalServerError("delete domain exec sql error, %s", err)
+	}
+	count, err := ret.RowsAffected()
+	if err != nil {
+		return exception.NewInternalServerError("get delete row affected error, %s", err)
+	}
+	if count == 0 {
+		return exception.NewBadRequest("domian %s not exist", id)
 	}
 
 	return nil

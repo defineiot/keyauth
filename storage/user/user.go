@@ -47,6 +47,7 @@ type Password struct {
 	ExpireAt int64  `json:"expire_at"`
 	CreateAt int64  `json:"create_at"`
 	UpdateAt int64  `json:"update_at,omitempty"`
+	UserID   string `json:"user_id"`
 
 	// Extend fields to facilitate the expansion of database tables
 	Extra string `json:"-"`
@@ -72,24 +73,23 @@ type Storage interface {
 	RemoveProjectsFromUser(userID string, projectIDs ...string) error
 	// Get user with User id & user password
 	GetUserByID(userID string) (*User, error)
+	DeleteUser(userID string) error
+	ListUser(domainID string) ([]*User, error)
+
 	// Get user with User name & user password
 	GetUserByName(domainID, userName, userPassword string) (*User, error)
 	// GetUser get an user
 	GetUser(cert Credential) (*User, error)
 	// Delete user from persistence storage
-	DeleteUser(cert Credential) error
+
 	// Add Phone to User
 	AddPhone(cert Credential, number, phoneType, description string) error
 	// Remove Phone from User
 	RemovePhone(cert Credential, number string) error
-	// Query user phones
-	QueryPhone(cert Credential) (*[]Phone, error)
 	// Add email to User
 	AddEmail(cert Credential, address, description string, primary bool) error
 	// Remove Email from User
 	RemoveEmail(cert Credential, address string) error
-	// Query user emails
-	QueryEmail(cert Credential) (*[]Email, error)
 	// Add role to user
 	AddRoleToUser(cert Credential, roleID string) error
 	// remove role from user

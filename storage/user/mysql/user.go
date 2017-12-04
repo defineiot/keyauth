@@ -37,13 +37,34 @@ func (m *manager) CreateUser(domainID, name, password string, enabled bool, user
 		return nil, fmt.Errorf("start create user transaction error, %s", err)
 	}
 
+	now := time.Now()
+
+	// insert user
+	userPre, err := tx.Prepare("INSERT INTO `user` (id, name, enabled, domain_id, create_at, expires_active_days) VALUES (?,?,?,?,?,?)")
+	if err != nil {
+		return nil, exception.NewInternalServerError("prepare insert user stmt error, user: %s, %s", name, err)
+	}
+
+	deltaU, err := time.ParseDuration(fmt.Sprintf("%dh", userExpires))
+	if err != nil {
+		userPre.Close()
+		return nil, exception.NewBadRequest("parse user time delta error, expires: %d, %s", userExpires, err)
+	}
+	expU := now.Add(deltaU)
+	userI := user.User{ID: uuid.NewV4().String(), Name: name, Enabled: enabled, DomainID: domainID, CreateAt: time.Now().Unix(), ExpireActiveDays: expU.Unix()}
+	_, err = userPre.Exec(userI.ID, userI.Name, userI.Enabled, userI.DomainID, userI.CreateAt, userI.ExpireActiveDays)
+	if err != nil {
+		userPre.Close()
+		return nil, exception.NewInternalServerError("insert user exec sql err, %s", err)
+	}
+	userPre.Close()
+
 	// insert password
-	passPre, err := tx.Prepare("INSERT INTO `password` (password, expires_at, create_at) VALUES (?,?,?)")
+	passPre, err := tx.Prepare("INSERT INTO `password` (password, expires_at, create_at, user_id) VALUES (?,?,?,?)")
 	if err != nil {
 		return nil, exception.NewInternalServerError("prepare insert user password error, user: %s, %s", name, err)
 	}
 
-	now := time.Now()
 	delta, err := time.ParseDuration(fmt.Sprintf("%dh", passExpires))
 	if err != nil {
 		passPre.Close()
@@ -51,8 +72,8 @@ func (m *manager) CreateUser(domainID, name, password string, enabled bool, user
 	}
 	exp := now.Add(delta)
 	hashPW := m.hmacHash(password)
-	pass := user.Password{CreateAt: now.Unix(), ExpireAt: exp.Unix(), Password: hashPW}
-	ret, err := passPre.Exec(pass.Password, pass.ExpireAt, pass.CreateAt)
+	pass := user.Password{CreateAt: now.Unix(), ExpireAt: exp.Unix(), Password: hashPW, UserID: userI.ID}
+	ret, err := passPre.Exec(pass.Password, pass.ExpireAt, pass.CreateAt, pass.UserID)
 	if err != nil {
 		passPre.Close()
 		return nil, exception.NewInternalServerError("insert password exec sql err, %s", err)
@@ -65,26 +86,6 @@ func (m *manager) CreateUser(domainID, name, password string, enabled bool, user
 	pass.ID = id
 	passPre.Close()
 
-	// insert user
-	userPre, err := tx.Prepare("INSERT INTO `user` (id, name, enabled, domain_id, create_at, password_id, expires_active_days) VALUES (?,?,?,?,?,?,?)")
-	if err != nil {
-		return nil, exception.NewInternalServerError("prepare insert user stmt error, user: %s, %s", name, err)
-	}
-
-	deltaU, err := time.ParseDuration(fmt.Sprintf("%dh", userExpires))
-	if err != nil {
-		userPre.Close()
-		return nil, exception.NewBadRequest("parse user time delta error, expires: %d, %s", userExpires, err)
-	}
-	expU := now.Add(deltaU)
-	user := user.User{ID: uuid.NewV4().String(), Name: name, Enabled: enabled, DomainID: domainID, CreateAt: time.Now().Unix(), ExpireActiveDays: expU.Unix()}
-	_, err = userPre.Exec(user.ID, user.Name, user.Enabled, user.DomainID, user.CreateAt, pass.ID, user.ExpireActiveDays)
-	if err != nil {
-		userPre.Close()
-		return nil, exception.NewInternalServerError("insert user exec sql err, %s", err)
-	}
-	userPre.Close()
-
 	// commit transaction
 	if err := tx.Commit(); err != nil {
 		if err := tx.Rollback(); err != nil {
@@ -93,7 +94,7 @@ func (m *manager) CreateUser(domainID, name, password string, enabled bool, user
 		return nil, exception.NewInternalServerError("insert user transaction commit error, but rollback success, %s", err)
 	}
 
-	return &user, nil
+	return &userI, nil
 }
 
 func (m *manager) ListUserProjects(userID string) ([]string, error) {
@@ -184,9 +185,8 @@ func (m *manager) GetUserByID(userID string) (*user.User, error) {
 	// get user by id
 	m.logger.Debug("get user by id...")
 	userI := user.User{}
-	var passwordID string
-	err := m.db.QueryRow("SELECT id,name,enabled,last_active_time,domain_id,password_id,create_at,expires_active_days,default_project_id FROM user WHERE id = ?", userID).Scan(
-		&userI.ID, &userI.Name, &userI.Enabled, &userI.LastActiveTime, &userI.DomainID, &passwordID, &userI.CreateAt, &userI.ExpireActiveDays, &userI.DefaultProjectID)
+	err := m.db.QueryRow("SELECT id,name,enabled,last_active_time,domain_id,create_at,expires_active_days,default_project_id FROM user WHERE id = ?", userID).Scan(
+		&userI.ID, &userI.Name, &userI.Enabled, &userI.LastActiveTime, &userI.DomainID, &userI.CreateAt, &userI.ExpireActiveDays, &userI.DefaultProjectID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewNotFound("user %s not find", userID)
@@ -196,27 +196,33 @@ func (m *manager) GetUserByID(userID string) (*user.User, error) {
 	}
 
 	// get user's emails
-	rows, err := m.db.Query("SELECT id,address,'primary',description FROM email WHERE user_id = ?", userID)
+	emails, err := m.QueryEmail(userID)
 	if err != nil {
-		return nil, exception.NewInternalServerError("query user's email error, %s", err)
-	}
-	defer rows.Close()
-	emails := []*user.Email{}
-	for rows.Next() {
-		email := user.Email{}
-		if err := rows.Scan(&email.ID, &email.Address, &email.Primary, &email.Description); err != nil {
-			return nil, exception.NewInternalServerError("scan user's email record error, %s", err)
-		}
-		emails = append(emails, &email)
+		return nil, err
 	}
 	userI.Emails = emails
 
 	// get user's phones
-	rows, err = m.db.Query("SELECT id,numbers,'primary',description FROM phone WHERE user_id = ?", userID)
+	phones, err := m.QueryPhone(userID)
+	if err != nil {
+		return nil, err
+	}
+	userI.Phones = phones
+
+	// get user's password
+	userI.Password = &user.Password{}
+
+	m.logger.Debug("get user: ", userI)
+	return &userI, nil
+}
+
+func (m *manager) QueryPhone(userID string) ([]*user.Phone, error) {
+	rows, err := m.db.Query("SELECT id,numbers,'primary',description FROM phone WHERE user_id = ?", userID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query user's phone error, %s", err)
 	}
 	defer rows.Close()
+
 	phones := []*user.Phone{}
 	for rows.Next() {
 		phone := user.Phone{}
@@ -225,12 +231,144 @@ func (m *manager) GetUserByID(userID string) (*user.User, error) {
 		}
 		phones = append(phones, &phone)
 	}
-	userI.Phones = phones
 
-	userI.Password = &user.Password{}
+	return phones, nil
+}
 
-	m.logger.Debug("get user: ", userI)
-	return &userI, nil
+func (m *manager) QueryEmail(userID string) ([]*user.Email, error) {
+	rows, err := m.db.Query("SELECT id,address,'primary',description FROM email WHERE user_id = ?", userID)
+	if err != nil {
+		return nil, exception.NewInternalServerError("query user's email error, %s", err)
+	}
+	defer rows.Close()
+
+	emails := []*user.Email{}
+	for rows.Next() {
+		email := user.Email{}
+		if err := rows.Scan(&email.ID, &email.Address, &email.Primary, &email.Description); err != nil {
+			return nil, exception.NewInternalServerError("scan user's email record error, %s", err)
+		}
+		emails = append(emails, &email)
+	}
+
+	return emails, nil
+}
+
+func (m *manager) ListUser(domainID string) ([]*user.User, error) {
+
+	rows, err := m.db.Query("SELECT id,name,enabled,last_active_time,create_at,expires_active_days,default_project_id FROM user WHERE domain_id = ?", domainID)
+	if err != nil {
+		return nil, exception.NewInternalServerError("query user list error, %s", err)
+	}
+	defer rows.Close()
+
+	users := []*user.User{}
+	for rows.Next() {
+		u := user.User{}
+		if err := rows.Scan(&u.ID, &u.Name, &u.Enabled, &u.LastActiveTime, &u.CreateAt, &u.ExpireActiveDays, &u.DefaultProjectID); err != nil {
+			return nil, exception.NewInternalServerError("scan project's user id error, %s", err)
+		}
+		// get user's emails
+		emails, err := m.QueryEmail(u.ID)
+		if err != nil {
+			return nil, err
+		}
+		u.Emails = emails
+		// get user's phone
+		phones, err := m.QueryPhone(u.ID)
+		if err != nil {
+			return nil, err
+		}
+		u.Phones = phones
+		// get user's password
+
+		users = append(users, &u)
+	}
+
+	m.logger.Debug("get user: ", users)
+
+	return users, nil
+
+}
+
+func (m *manager) DeleteUser(userID string) error {
+	tx, err := m.db.Begin()
+	if err != nil {
+		return exception.NewInternalServerError("start delete user transaction error, %s", err)
+	}
+
+	// delete user
+	deleteUserPre, err := tx.Prepare("DELETE FROM user WHERE id = ?")
+	if err != nil {
+		deleteUserPre.Close()
+		return exception.NewInternalServerError("prepare delete user stmt error, %s", err)
+	}
+
+	ret, err := deleteUserPre.Exec(userID)
+	if err != nil {
+		deleteUserPre.Close()
+		return exception.NewInternalServerError("delete user exec sql error, %s", err)
+	}
+	count, err := ret.RowsAffected()
+	if err != nil {
+		deleteUserPre.Close()
+		return exception.NewInternalServerError("get delete row affected error, %s", err)
+	}
+	if count == 0 {
+		deleteUserPre.Close()
+		return exception.NewBadRequest("user's <%s> not exist", userID)
+	}
+	deleteUserPre.Close()
+
+	// delete user's password
+	deletePassPre, err := tx.Prepare("DELETE FROM password WHERE user_id = ?")
+	if err != nil {
+		deletePassPre.Close()
+		return exception.NewInternalServerError("prepare delete user pass stmt error, %s", err)
+	}
+
+	ret, err = deletePassPre.Exec(userID)
+	if err != nil {
+		deletePassPre.Close()
+		return exception.NewInternalServerError("delete user pass exec sql error, %s", err)
+	}
+	deletePassPre.Close()
+
+	// delete user's email
+	deleteEmailPre, err := tx.Prepare("DELETE FROM email WHERE user_id = ?")
+	if err != nil {
+		deleteEmailPre.Close()
+		return exception.NewInternalServerError("prepare delete user email stmt error, %s", err)
+	}
+
+	ret, err = deleteEmailPre.Exec(userID)
+	if err != nil {
+		deleteEmailPre.Close()
+		return exception.NewInternalServerError("delete user pass exec sql error, %s", err)
+	}
+
+	// delete user's phone
+	deletePhonePre, err := tx.Prepare("DELETE FROM phone WHERE user_id = ?")
+	if err != nil {
+		deletePhonePre.Close()
+		return exception.NewInternalServerError("prepare delete user phone stmt error, %s", err)
+	}
+
+	ret, err = deletePhonePre.Exec(userID)
+	if err != nil {
+		deletePhonePre.Close()
+		return exception.NewInternalServerError("delete user phone exec sql error, %s", err)
+	}
+
+	// commit transaction
+	if err := tx.Commit(); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return exception.NewInternalServerError("delete user transaction rollback error, %s", err)
+		}
+		return exception.NewInternalServerError("delete user transaction commit error, but rollback success, %s", err)
+	}
+
+	return nil
 }
 
 func (m *manager) GetUserByName(domainID, userName, userPassword string) (*user.User, error) {
@@ -241,10 +379,6 @@ func (m *manager) GetUser(cert user.Credential) (*user.User, error) {
 	return nil, nil
 }
 
-func (m *manager) DeleteUser(cert user.Credential) error {
-	return nil
-}
-
 func (m *manager) AddPhone(cert user.Credential, number, phoneType, description string) error {
 	return nil
 }
@@ -253,20 +387,12 @@ func (m *manager) RemovePhone(cert user.Credential, number string) error {
 	return nil
 }
 
-func (m *manager) QueryPhone(cert user.Credential) (*[]user.Phone, error) {
-	return nil, nil
-}
-
 func (m *manager) AddEmail(cert user.Credential, address, description string, primary bool) error {
 	return nil
 }
 
 func (m *manager) RemoveEmail(cert user.Credential, address string) error {
 	return nil
-}
-
-func (m *manager) QueryEmail(cert user.Credential) (*[]user.Email, error) {
-	return nil, nil
 }
 
 func (m *manager) AddRoleToUser(cert user.Credential, roleID string) error {

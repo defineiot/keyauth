@@ -101,14 +101,6 @@ func (m *manager) DeleteProject(id string) error {
 		err  error
 	)
 
-	ok, err := m.CheckProjectIsExistByID(id)
-	if err != nil {
-		return err
-	}
-	if !ok {
-		return exception.NewBadRequest("project %s not exist", id)
-	}
-
 	once.Do(func() {
 		deletePrepare, err = m.db.Prepare("DELETE FROM project WHERE id = ?")
 	})
@@ -116,9 +108,18 @@ func (m *manager) DeleteProject(id string) error {
 		return exception.NewInternalServerError("prepare delete project stmt error, %s", err)
 	}
 
-	if _, err := deletePrepare.Exec(id); err != nil {
+	ret, err := deletePrepare.Exec(id)
+	if err != nil {
 		return exception.NewInternalServerError("delete project exec sql error, %s", err)
 	}
+	count, err := ret.RowsAffected()
+	if err != nil {
+		return exception.NewInternalServerError("get delete row affected error, %s", err)
+	}
+	if count == 0 {
+		return exception.NewBadRequest("project %s not exist", id)
+	}
+
 	return nil
 }
 

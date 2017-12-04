@@ -56,3 +56,30 @@ func RetreveUser(w http.ResponseWriter, r *http.Request) {
 
 	return
 }
+
+// ListUser use to list domain users
+func ListUser(w http.ResponseWriter, r *http.Request) {
+	users, err := userctl.ListUser(TestDomainID)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusOK, users)
+	return
+}
+
+// DeleteUser delete an user
+func DeleteUser(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	uid := ps.ByName("uid")
+
+	if err := userctl.DeleteUser(uid); err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusNoContent, "")
+
+	return
+}

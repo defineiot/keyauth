@@ -50,14 +50,29 @@ func (c *Controller) GetUser(userID string) (*user.User, error) {
 	return u, nil
 }
 
-// ListUsers list user
-func (c *Controller) ListUsers(domainID string) ([]*user.User, error) {
+// ListUser list user
+func (c *Controller) ListUser(domainID string) ([]*user.User, error) {
+	ok, err := c.ds.CheckDomainIsExistByID(domainID)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, exception.NewBadRequest("domain %s not exist", domainID)
+	}
 
-	return nil, nil
+	users, err := c.us.ListUser(domainID)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }
 
 // DeleteUser delete user
-func (c *Controller) DeleteUser() error {
+func (c *Controller) DeleteUser(userID string) error {
+	if err := c.us.DeleteUser(userID); err != nil {
+		return err
+	}
 	return nil
 }
 

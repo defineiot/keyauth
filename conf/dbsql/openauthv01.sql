@@ -21,7 +21,6 @@ CREATE TABLE `user` (
 `last_active_time` int(64) NULL,
 `extra` text NOT NULL DEFAULT '',
 `domain_id` varchar(255) NOT NULL,
-`password_id` int(16) NULL,
 `create_at` int(64) NOT NULL,
 `expires_active_days` int(64) NOT NUll DEFAULT 0,
 `default_project_id` varchar(255) NOT NULL DEFAULT '',
@@ -55,6 +54,7 @@ CREATE TABLE `password` (
 `create_at` int(64) NOT NULL DEFAULT 0,
 `extra` text NOT NULL DEFAULT '',
 `update_at` int(64) NOT NULL DEFAULT 0,
+`user_id` varchar(255) NOT NULL,
 PRIMARY KEY (`id`) 
 )
 ENGINE = InnoDB
