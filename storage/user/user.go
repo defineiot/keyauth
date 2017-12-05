@@ -1,18 +1,23 @@
 package user
 
+import (
+	"openauth/storage/project"
+)
+
 // User info
 type User struct {
-	ID               string    `json:"id"`
-	Name             string    `json:"name"`
-	LastActiveTime   int64     `json:"last_active_time"`
-	Enabled          bool      `json:"enabled"`
-	CreateAt         int64     `json:"create_at"`
-	Password         *Password `json:"-"`
-	Phones           []*Phone  `json:"phones,omitempty"`
-	Emails           []*Email  `json:"emails,omitempty"`
-	DomainID         string    `json:"domain_id"`
-	DefaultProjectID string    `json:"default_project_id,omitempty"`
-	ExpireActiveDays int64     `json:"expires_active_days"`
+	ID               string           `json:"id"`
+	Name             string           `json:"name"`
+	LastActiveTime   int64            `json:"last_active_time"`
+	Enabled          bool             `json:"enabled"`
+	CreateAt         int64            `json:"create_at"`
+	Password         *Password        `json:"-"`
+	Phones           []*Phone         `json:"phones,omitempty"`
+	Emails           []*Email         `json:"emails,omitempty"`
+	DomainID         string           `json:"domain_id"`
+	DefaultProjectID string           `json:"-"`
+	DefaultProject   *project.Project `json:"default_project,omitempty"`
+	ExpireActiveDays int64            `json:"expires_active_days"`
 
 	// Extend fields to facilitate the expansion of database tables
 	Extra string `json:"-"`
@@ -68,6 +73,7 @@ type Storage interface {
 	ListUser(domainID string) ([]*User, error)
 	GetUserByID(userID string) (*User, error)
 	DeleteUser(userID string) error
+	CheckUserNameIsExist(domainID, userName string) (bool, error)
 
 	ListUserProjects(userID string) ([]string, error)
 	SetDefaultProject(userID, projectID string) error

@@ -64,6 +64,16 @@ func (c *Controller) ListUser(domainID string) ([]*user.User, error) {
 	if err != nil {
 		return nil, err
 	}
+	for _, u := range users {
+		if u.DefaultProjectID != "" {
+			dp, err := c.ps.GetProject(u.DefaultProjectID)
+			if err != nil {
+				return nil, exception.NewInternalServerError("get user %s project error, %s", u.Name, err)
+			}
+
+			u.DefaultProject = dp
+		}
+	}
 
 	return users, nil
 }
@@ -114,13 +124,19 @@ func (c *Controller) ListUserProjects(userID string) ([]*project.Project, error)
 
 // AddProjectsToUser add projects
 func (c *Controller) AddProjectsToUser(userID string, projectIDs ...string) error {
+	u, err := c.us.GetUserByID(userID)
+	if err != nil {
+		return err
+	}
+
 	for _, pid := range projectIDs {
-		ok, err := c.ps.CheckProjectIsExistByID(pid)
+		p, err := c.ps.GetProject(pid)
 		if err != nil {
 			return err
 		}
-		if !ok {
-			return exception.NewBadRequest("project %s not exist", pid)
+
+		if p.DomainID != u.DomainID {
+			return exception.NewBadRequest("user %s and project %s not in one domain", userID, pid)
 		}
 	}
 

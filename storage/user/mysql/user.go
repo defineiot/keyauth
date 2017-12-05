@@ -32,6 +32,16 @@ type manager struct {
 }
 
 func (m *manager) CreateUser(domainID, name, password string, enabled bool, userExpires, passExpires int) (*user.User, error) {
+	// check is user exist
+	ok, err := m.CheckUserNameIsExist(domainID, name)
+	if err != nil {
+		return nil, err
+	}
+	if ok {
+		return nil, exception.NewBadRequest("user %s is exist", name)
+	}
+
+	// start transaction
 	tx, err := m.db.Begin()
 	if err != nil {
 		return nil, fmt.Errorf("start create user transaction error, %s", err)
@@ -98,6 +108,14 @@ func (m *manager) CreateUser(domainID, name, password string, enabled bool, user
 }
 
 func (m *manager) ListUserProjects(userID string) ([]string, error) {
+	ok, err := m.CheckUserIsExistByID(userID)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, exception.NewBadRequest("user %s not exist", userID)
+	}
+
 	rows, err := m.db.Query("SELECT project_id FROM mapping WHERE user_id = ?", userID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query user's project id error, %s", err)
@@ -154,6 +172,23 @@ func (m *manager) SetDefaultProject(userID, projectID string) error {
 }
 
 func (m *manager) AddProjectsToUser(userID string, projectIDs ...string) error {
+	// check the record is not exist
+	pids, err := m.ListUserProjects(userID)
+	if err != nil {
+		return err
+	}
+	existPids := []string{}
+	for _, epid := range pids {
+		for _, inpid := range projectIDs {
+			if inpid == epid {
+				existPids = append(existPids, inpid)
+			}
+		}
+	}
+	if len(existPids) != 0 {
+		return exception.NewBadRequest("projects %s is in this user", existPids)
+	}
+
 	mappPre, err := m.db.Prepare("INSERT INTO `mapping` (user_id, project_id) VALUES (?,?)")
 	if err != nil {
 		return fmt.Errorf("prepare add projects to user mapping stmt error, user: %s, project: %s, %s", userID, projectIDs, err)
@@ -161,6 +196,7 @@ func (m *manager) AddProjectsToUser(userID string, projectIDs ...string) error {
 	defer mappPre.Close()
 
 	for _, projectID := range projectIDs {
+		//
 		_, err = mappPre.Exec(userID, projectID)
 		if err != nil {
 			return fmt.Errorf("insert add projects to user mapping exec sql err, %s", err)
@@ -171,6 +207,27 @@ func (m *manager) AddProjectsToUser(userID string, projectIDs ...string) error {
 }
 
 func (m *manager) RemoveProjectsFromUser(userID string, projectIDs ...string) error {
+	// check the record is exist
+	pids, err := m.ListUserProjects(userID)
+	if err != nil {
+		return err
+	}
+	notExistPids := []string{}
+	for _, inpid := range projectIDs {
+		var ok bool
+		for _, epid := range pids {
+			if epid == inpid {
+				ok = true
+			}
+		}
+		if !ok {
+			notExistPids = append(notExistPids, inpid)
+		}
+	}
+	if len(notExistPids) != 0 {
+		return exception.NewBadRequest("projects %s isn't in this user", notExistPids)
+	}
+
 	mappPre, err := m.db.Prepare("DELETE FROM `mapping` WHERE user_id = ? AND project_id = ?")
 	if err != nil {
 		return fmt.Errorf("prepare remove projects to user mapping stmt error, user: %s, project: %s, %s", userID, projectIDs, err)
@@ -289,6 +346,8 @@ func (m *manager) ListUser(domainID string) ([]*user.User, error) {
 		u.Phones = phones
 		// get user's password
 
+		u.DomainID = domainID
+
 		users = append(users, &u)
 	}
 
@@ -323,7 +382,7 @@ func (m *manager) DeleteUser(userID string) error {
 	}
 	if count == 0 {
 		deleteUserPre.Close()
-		return exception.NewBadRequest("user's <%s> not exist", userID)
+		return exception.NewBadRequest("user %s not exist", userID)
 	}
 	deleteUserPre.Close()
 
@@ -438,6 +497,50 @@ func (m *manager) IsSystemAdmin(cert user.Credential) (bool, error) {
 
 func (m *manager) IsCloudAdmin(cert user.Credential) (bool, error) {
 	return false, nil
+}
+
+func (m *manager) CheckUserNameIsExist(domainID, userName string) (bool, error) {
+	rows, err := m.db.Query("SELECT name FROM user WHERE name = ? AND domain_id = ?", userName, domainID)
+	if err != nil {
+		return false, exception.NewInternalServerError("query user name exist error, %s", err)
+	}
+	defer rows.Close()
+
+	userNames := []string{}
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return false, exception.NewInternalServerError("scan user name exist record error, %s", err)
+		}
+		userNames = append(userNames, name)
+	}
+	if len(userNames) == 0 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (m *manager) CheckUserIsExistByID(userID string) (bool, error) {
+	rows, err := m.db.Query("SELECT name FROM user WHERE id = ?", userID)
+	if err != nil {
+		return false, exception.NewInternalServerError("query user exist error, %s", err)
+	}
+	defer rows.Close()
+
+	userNames := []string{}
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return false, exception.NewInternalServerError("scan user exist record error, %s", err)
+		}
+		userNames = append(userNames, name)
+	}
+	if len(userNames) == 0 {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func (m *manager) hmacHash(msg string) string {
