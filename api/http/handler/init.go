@@ -37,7 +37,7 @@ func InitController(conf *config.Config) error {
 
 	once.Do(func() {
 		domainctl = domain.NewController(logger, ds)
-		projectctl = project.NewController(logger, ds, ps)
+		projectctl = project.NewController(logger, ds, ps, us)
 		userctl = user.NewController(logger, us, ds, ps)
 		logger.Debugf("domain controller: %v", domainctl)
 		logger.Debugf("project controoler: %v", projectctl)

@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"openauth/api/exception"
 	"openauth/api/http/context"
 	"openauth/api/http/request"
 	"openauth/api/http/response"
@@ -32,7 +33,6 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 交给业务控制层处理
-
 	proj, err := projectctl.CreateProject(did, name, desc, user.Credential{})
 	if err != nil {
 		response.Failed(w, err)
@@ -86,5 +86,91 @@ func DeleteProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.Success(w, http.StatusNoContent, "")
+	return
+}
+
+// ListProjectUsers use to list
+func ListProjectUsers(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	pid := ps.ByName("pid")
+
+	users, err := projectctl.ListProjectUsers(pid)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusOK, users)
+	return
+}
+
+// AddUsersToProject add users
+func AddUsersToProject(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	pid := ps.ByName("pid")
+
+	iter, err := request.CheckArrayBody(r)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	// get did from token
+	uids := []string{}
+	for iter.ReadArray() {
+		uids = append(uids, iter.ReadString())
+	}
+	if iter.Error != nil {
+		response.Failed(w, exception.NewBadRequest("json format decode error, %s", iter.Error))
+		return
+	}
+
+	if len(uids) == 0 {
+		response.Failed(w, exception.NewBadRequest("not uid find"))
+		return
+	}
+
+	if err := projectctl.AddUsersToProject(pid, uids...); err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusCreated, "")
+	return
+
+}
+
+// RemoveUsersFromProject remove users
+func RemoveUsersFromProject(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	pid := ps.ByName("pid")
+
+	iter, err := request.CheckArrayBody(r)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	// get did from token
+	uids := []string{}
+	for iter.ReadArray() {
+		uids = append(uids, iter.ReadString())
+	}
+	if iter.Error != nil {
+		response.Failed(w, exception.NewBadRequest("json format decode error, %s", iter.Error))
+		return
+	}
+
+	if len(uids) == 0 {
+		response.Failed(w, exception.NewBadRequest("not uid find"))
+		return
+	}
+
+	if err := projectctl.RemoveUsersFromProject(pid, uids...); err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusCreated, "")
 	return
 }

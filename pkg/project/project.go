@@ -9,8 +9,8 @@ import (
 )
 
 // NewController use to new an controller
-func NewController(logger logger.OpenAuthLogger, ds domain.Storage, ps project.Storage) *Controller {
-	return &Controller{logger: logger, ds: ds, ps: ps}
+func NewController(logger logger.OpenAuthLogger, ds domain.Storage, ps project.Storage, us user.Storage) *Controller {
+	return &Controller{logger: logger, ds: ds, ps: ps, us: us}
 }
 
 // Controller is domain pkg
@@ -18,6 +18,7 @@ type Controller struct {
 	logger logger.OpenAuthLogger
 	ps     project.Storage
 	ds     domain.Storage
+	us     user.Storage
 }
 
 // CreateProject use to create domain
@@ -80,5 +81,75 @@ func (c *Controller) DestroyProject(id string, cred user.Credential) error {
 		return err
 	}
 
+	return nil
+}
+
+// ListProjectUsers use to list project's users
+func (c *Controller) ListProjectUsers(projectID string) ([]*user.User, error) {
+	userIDs, err := c.ps.ListProjectUsers(projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	users := []*user.User{}
+	for _, uid := range userIDs {
+		u, err := c.us.GetUserByID(uid)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+	return users, nil
+}
+
+// AddUsersToProject add users
+func (c *Controller) AddUsersToProject(projectID string, userIDs ...string) error {
+	// user and project must be in one domain
+	p, err := c.ps.GetProject(projectID)
+	if err != nil {
+		return err
+	}
+
+	for _, uid := range userIDs {
+		u, err := c.us.GetUserByID(uid)
+		if err != nil {
+			return err
+		}
+
+		if p.DomainID != u.DomainID {
+			return exception.NewBadRequest("user %s and project %s not in one domain", uid, projectID)
+		}
+	}
+
+	// insert
+	if err := c.ps.AddUsersToProject(projectID, userIDs...); err != nil {
+		return err
+	}
+	return nil
+}
+
+// RemoveUsersFromProject remove users
+func (c *Controller) RemoveUsersFromProject(projectID string, userIDs ...string) error {
+	// user and project must be in one domain
+	p, err := c.ps.GetProject(projectID)
+	if err != nil {
+		return err
+	}
+
+	for _, uid := range userIDs {
+		u, err := c.us.GetUserByID(uid)
+		if err != nil {
+			return err
+		}
+
+		if p.DomainID != u.DomainID {
+			return exception.NewBadRequest("user %s and project %s not in one domain", uid, projectID)
+		}
+	}
+
+	// insert
+	if err := c.ps.RemoveUsersFromProject(projectID, userIDs...); err != nil {
+		return err
+	}
 	return nil
 }

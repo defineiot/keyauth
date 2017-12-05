@@ -135,6 +135,11 @@ func AddProjectsToUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(pids) == 0 {
+		response.Failed(w, exception.NewBadRequest("pids not find"))
+		return
+	}
+
 	if err := userctl.AddProjectsToUser(uid, pids...); err != nil {
 		response.Failed(w, err)
 		return
@@ -162,6 +167,11 @@ func RemoveProjectsFromUser(w http.ResponseWriter, r *http.Request) {
 	}
 	if iter.Error != nil {
 		response.Failed(w, exception.NewBadRequest("json format decode error, %s", iter.Error))
+		return
+	}
+
+	if len(pids) == 0 {
+		response.Failed(w, exception.NewBadRequest("pids not find"))
 		return
 	}
 

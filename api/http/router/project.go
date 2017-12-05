@@ -11,4 +11,8 @@ func (r *MyRouter) RouteToProject() {
 	r.HandlerFunc("GET", "/projects/", handler.ListProject)
 	r.HandlerFunc("GET", "/projects/:pid/", handler.GetProject)
 	r.HandlerFunc("DELETE", "/projects/:pid/", handler.DeleteProject)
+
+	r.HandlerFunc("GET", "/projects/:pid/users/", handler.ListProjectUsers)
+	r.HandlerFunc("POST", "/projects/:pid/users/", handler.AddUsersToProject)
+	r.HandlerFunc("DELETE", "/projects/:pid/users/", handler.RemoveUsersFromProject)
 }

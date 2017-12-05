@@ -160,6 +160,15 @@ func (m *manager) projectNameExist(domainID, projectName string) (bool, error) {
 }
 
 func (m *manager) ListProjectUsers(projectID string) ([]string, error) {
+	// check the project is exist
+	ok, err := m.CheckProjectIsExistByID(projectID)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, exception.NewBadRequest("project %s not exist", projectID)
+	}
+
 	rows, err := m.db.Query("SELECT user_id FROM mapping WHERE project_id = ?", projectID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query project user id error, %s", err)
@@ -178,6 +187,32 @@ func (m *manager) ListProjectUsers(projectID string) ([]string, error) {
 }
 
 func (m *manager) AddUsersToProject(projectID string, userIDs ...string) error {
+	// check the project is exist
+	ok, err := m.CheckProjectIsExistByID(projectID)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return exception.NewBadRequest("project %s not exist", projectID)
+	}
+
+	// check user is in this project
+	uids, err := m.ListProjectUsers(projectID)
+	if err != nil {
+		return err
+	}
+	existUIDs := []string{}
+	for _, uid := range uids {
+		for _, inuid := range userIDs {
+			if inuid == uid {
+				existUIDs = append(existUIDs, inuid)
+			}
+		}
+	}
+	if len(existUIDs) != 0 {
+		return exception.NewBadRequest("users %s is in this project", existUIDs)
+	}
+
 	mappPre, err := m.db.Prepare("INSERT INTO `mapping` (user_id, project_id) VALUES (?,?)")
 	if err != nil {
 		return fmt.Errorf("prepare add users to project mapping stmt error, project: %s, user: %s,  %s", projectID, userIDs, err)
@@ -196,6 +231,36 @@ func (m *manager) AddUsersToProject(projectID string, userIDs ...string) error {
 }
 
 func (m *manager) RemoveUsersFromProject(projectID string, userIDs ...string) error {
+	// check the project is exist
+	ok, err := m.CheckProjectIsExistByID(projectID)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return exception.NewBadRequest("project %s not exist", projectID)
+	}
+
+	// check user is in this project
+	uids, err := m.ListProjectUsers(projectID)
+	if err != nil {
+		return err
+	}
+	nExistUIDs := []string{}
+	for _, inuid := range userIDs {
+		var ok bool
+		for _, uid := range uids {
+			if uid == inuid {
+				ok = true
+			}
+		}
+		if !ok {
+			nExistUIDs = append(nExistUIDs, inuid)
+		}
+	}
+	if len(nExistUIDs) != 0 {
+		return exception.NewBadRequest("users %s isn't in this project", nExistUIDs)
+	}
+
 	mappPre, err := m.db.Prepare("DELETE FROM `mapping` WHERE user_id = ? AND project_id = ?")
 	if err != nil {
 		return fmt.Errorf("prepare remove users from project mapping stmt error, project: %s, user: %s,  %s", projectID, userIDs, err)
