@@ -64,17 +64,15 @@ type Credential struct {
 
 // Storage is user service
 type Storage interface {
-	// create user, in the same domain, user can not be renamed, expires use h
 	CreateUser(domainID, userName, password string, enabled bool, userExpires, passExpires int) (*User, error)
-	// add projects to user, here will check user is exist, but not check project is exists
-	// you can use project pkg to check the project is exist
-	AddProjectsToUser(userID string, projectIDs ...string) error
-	// remove projects from user
-	RemoveProjectsFromUser(userID string, projectIDs ...string) error
-	// Get user with User id & user password
+	ListUser(domainID string) ([]*User, error)
 	GetUserByID(userID string) (*User, error)
 	DeleteUser(userID string) error
-	ListUser(domainID string) ([]*User, error)
+
+	ListUserProjects(userID string) ([]string, error)
+	SetDefaultProject(userID, projectID string) error
+	AddProjectsToUser(userID string, projectIDs ...string) error
+	RemoveProjectsFromUser(userID string, projectIDs ...string) error
 
 	// Get user with User name & user password
 	GetUserByName(domainID, userName, userPassword string) (*User, error)
@@ -98,8 +96,6 @@ type Storage interface {
 	QueryRole(cert Credential) ([]string, error)
 	// Verify user & feature
 	HasFeatures(cert Credential, features ...string) (bool, error)
-	// set user default project
-	SetDefaultProject(userID, projectID string) error
 	// add user to project, a user can add multiple project
 	AddUserToProject(cert Credential, projectID string) error
 	// remove user from project, when the user does not belong to any project, the user disable

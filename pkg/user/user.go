@@ -76,17 +76,75 @@ func (c *Controller) DeleteUser(userID string) error {
 	return nil
 }
 
-// ListUserProjects list all projects
-func (c *Controller) ListUserProjects() ([]*project.Project, error) {
-	return nil, nil
-}
+// SetUserDefualtProject use to set default prject
+func (c *Controller) SetUserDefualtProject(userID, projectID string) error {
+	ok, err := c.ps.CheckProjectIsExistByID(projectID)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return exception.NewBadRequest("project %s not exist", projectID)
+	}
 
-// AddProjects add projects
-func (c *Controller) AddProjects() error {
+	if err := c.us.SetDefaultProject(userID, projectID); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-// RemoveProjects remove projects
-func (c *Controller) RemoveProjects() error {
+// ListUserProjects list all projects
+func (c *Controller) ListUserProjects(userID string) ([]*project.Project, error) {
+	projectIDs, err := c.us.ListUserProjects(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	projects := []*project.Project{}
+	for _, pid := range projectIDs {
+		pj, err := c.ps.GetProject(pid)
+		if err != nil {
+			return nil, err
+		}
+		projects = append(projects, pj)
+	}
+
+	return projects, nil
+}
+
+// AddProjectsToUser add projects
+func (c *Controller) AddProjectsToUser(userID string, projectIDs ...string) error {
+	for _, pid := range projectIDs {
+		ok, err := c.ps.CheckProjectIsExistByID(pid)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return exception.NewBadRequest("project %s not exist", pid)
+		}
+	}
+
+	if err := c.us.AddProjectsToUser(userID, projectIDs...); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// RemoveProjectsFromUser remove projects
+func (c *Controller) RemoveProjectsFromUser(userID string, projectIDs ...string) error {
+	for _, pid := range projectIDs {
+		ok, err := c.ps.CheckProjectIsExistByID(pid)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return exception.NewBadRequest("project %s not exist", pid)
+		}
+	}
+
+	if err := c.us.RemoveProjectsFromUser(userID, projectIDs...); err != nil {
+		return err
+	}
 	return nil
 }

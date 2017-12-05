@@ -83,3 +83,93 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	return
 }
+
+// SetUserDefaultProject set default project
+func SetUserDefaultProject(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	uid := ps.ByName("uid")
+	pid := ps.ByName("pid")
+
+	if err := userctl.SetUserDefualtProject(uid, pid); err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusCreated, "")
+	return
+}
+
+// ListUserProjects list user's projects
+func ListUserProjects(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	uid := ps.ByName("uid")
+
+	projects, err := userctl.ListUserProjects(uid)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusOK, projects)
+	return
+}
+
+// AddProjectsToUser add projects
+func AddProjectsToUser(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	uid := ps.ByName("uid")
+
+	iter, err := request.CheckArrayBody(r)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	// get did from token
+	pids := []string{}
+	for iter.ReadArray() {
+		pids = append(pids, iter.ReadString())
+	}
+	if iter.Error != nil {
+		response.Failed(w, exception.NewBadRequest("json format decode error, %s", iter.Error))
+		return
+	}
+
+	if err := userctl.AddProjectsToUser(uid, pids...); err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusCreated, "")
+	return
+}
+
+// RemoveProjectsFromUser remove projects
+func RemoveProjectsFromUser(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	uid := ps.ByName("uid")
+
+	iter, err := request.CheckArrayBody(r)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	// get did from token
+	pids := []string{}
+	for iter.ReadArray() {
+		pids = append(pids, iter.ReadString())
+	}
+	if iter.Error != nil {
+		response.Failed(w, exception.NewBadRequest("json format decode error, %s", iter.Error))
+		return
+	}
+
+	if err := userctl.RemoveProjectsFromUser(uid, pids...); err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusCreated, "")
+	return
+}

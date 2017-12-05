@@ -129,7 +129,7 @@ func (m *manager) SetDefaultProject(userID, projectID string) error {
 		}
 	}
 	if !ok {
-		return exception.NewBadRequest("user %s hasn't project %s", projectID)
+		return exception.NewBadRequest("user %s hasn't project %s", userID, projectID)
 	}
 
 	mappPre, err := m.db.Prepare("UPDATE `user` SET default_project_id = ? WHERE id = ?")
@@ -138,9 +138,16 @@ func (m *manager) SetDefaultProject(userID, projectID string) error {
 	}
 	defer mappPre.Close()
 
-	_, err = mappPre.Exec(projectID, userID)
+	ret, err := mappPre.Exec(projectID, userID)
 	if err != nil {
 		return exception.NewInternalServerError("set user's default project exec sql error, %s", err)
+	}
+	count, err := ret.RowsAffected()
+	if err != nil {
+		return exception.NewInternalServerError("get affect rows count error, %s", err)
+	}
+	if count == 0 {
+		return exception.NewBadRequest("user %s not exist")
 	}
 
 	return nil
@@ -346,6 +353,7 @@ func (m *manager) DeleteUser(userID string) error {
 		deleteEmailPre.Close()
 		return exception.NewInternalServerError("delete user pass exec sql error, %s", err)
 	}
+	deleteEmailPre.Close()
 
 	// delete user's phone
 	deletePhonePre, err := tx.Prepare("DELETE FROM phone WHERE user_id = ?")
@@ -359,6 +367,7 @@ func (m *manager) DeleteUser(userID string) error {
 		deletePhonePre.Close()
 		return exception.NewInternalServerError("delete user phone exec sql error, %s", err)
 	}
+	deletePhonePre.Close()
 
 	// commit transaction
 	if err := tx.Commit(); err != nil {
