@@ -25,18 +25,21 @@ type Configer interface {
 
 // Config is service conf
 type Config struct {
-	APP   *appConf   `toml:"app"`
-	MySQL *mysqlConf `toml:"mysql"`
-	Log   *logConf   `toml:"log"`
+	APP   *AppConf   `toml:"app"`
+	MySQL *MySQLConf `toml:"mysql"`
+	Log   *LogConf   `toml:"log"`
 }
 
-type appConf struct {
+// AppConf service config
+type AppConf struct {
 	Host string `toml:"host"`
 	Port string `toml:"port"`
 	Key  string `toml:"key"`
+	Name string `toml:"name"`
 }
 
-type mysqlConf struct {
+// MySQLConf mysql config
+type MySQLConf struct {
 	Host        string `toml:"host"`
 	Port        string `toml:"port"`
 	User        string `toml:"user"`
@@ -47,8 +50,8 @@ type mysqlConf struct {
 	MaxLifeTime int    `toml:"max_life_time"`
 }
 
-type logConf struct {
-	Name     string `toml:"name"`
+// LogConf log config
+type LogConf struct {
 	Level    string `toml:"level"`
 	FilePath string `toml:"path"`
 }
@@ -58,8 +61,10 @@ func (c *Config) Validate() error {
 	if err := c.validateAPP(); err != nil {
 		return err
 	}
-
 	if err := c.validateMySQL(); err != nil {
+		return err
+	}
+	if err := c.validateLog(); err != nil {
 		return err
 	}
 
@@ -68,7 +73,7 @@ func (c *Config) Validate() error {
 
 func (c *Config) validateAPP() error {
 	if c.APP == nil {
-		c.APP = &appConf{}
+		c.APP = &AppConf{}
 	}
 
 	if c.APP.Host == "" {
@@ -76,6 +81,9 @@ func (c *Config) validateAPP() error {
 	}
 	if c.APP.Port == "" {
 		c.APP.Port = "8080"
+	}
+	if c.APP.Name == "" {
+		c.APP.Name = "openauth"
 	}
 
 	if c.APP.Key == "" {
@@ -87,7 +95,7 @@ func (c *Config) validateAPP() error {
 
 func (c *Config) validateMySQL() error {
 	if c.MySQL == nil {
-		c.MySQL = &mysqlConf{}
+		c.MySQL = &MySQLConf{}
 	}
 
 	if c.MySQL.Host == "" {
@@ -99,6 +107,22 @@ func (c *Config) validateMySQL() error {
 
 	if c.MySQL.User == "" || c.MySQL.Pass == "" || c.MySQL.DB == "" {
 		return errors.New("mysql user or pass or db isn't config")
+	}
+
+	return nil
+}
+
+func (c *Config) validateLog() error {
+	if c.Log == nil {
+		c.Log = &LogConf{}
+	}
+
+	if c.Log.Level == "" {
+		c.Log.Level = "info"
+	}
+
+	if c.Log.FilePath == "" {
+		return errors.New("log path not config")
 	}
 
 	return nil
@@ -130,7 +154,7 @@ func (c *Config) GetLogger() (logger.OpenAuthLogger, error) {
 		once sync.Once
 	)
 
-	opts := logger.Opts{Name: c.Log.Name, Level: c.Log.Level, FilePath: c.Log.FilePath}
+	opts := logger.Opts{Name: c.APP.Name, Level: c.Log.Level, FilePath: c.Log.FilePath}
 	once.Do(func() {
 		oalogger, err = logrus.NewLogrusLogger(&opts)
 	})

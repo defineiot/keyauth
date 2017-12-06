@@ -41,12 +41,13 @@ function main() {
     BRANCH=$(get_branch)
     COMMIT=$(get_commit)
     DATE=$(date '+%Y-%m-%d %H:%M:%S')
-    Path="version"
+    
+    Path="openauth/api/version"
     echo -e "collect project verion from git: tag:$TAG, data:$DATE, branch:$BRANCH, commit:$COMMIT"
 
     echo -e "start build ..."
     echo -e ""
-    go build -v -a -ldflags "-X '$Path.GIT_TAG=${TAG}' -X '$Path.GIT_BRANCH=${BRANCH}' -X '$Path.GIT_COMMIT=${COMMIT}' -X '$Path.BUILD_TIME=${DATE}' -X '$Path.GO_VERSION=go1.9 linux/amd64'"
+    docker run --rm -e 'CGO_ENABLED=0' -e 'GOOS=linux' -e 'GOARCH=amd64' -v "$PWD":/go/src/openauth -w /go/src/openauth golang:1.9 go build -v -a -o openauth -ldflags "-X '$Path.GIT_TAG=${TAG}' -X '$Path.GIT_BRANCH=${BRANCH}' -X '$Path.GIT_COMMIT=${COMMIT}' -X '$Path.BUILD_TIME=${DATE}' -X '$Path.GO_VERSION=go1.9 linux/amd64'" cmd/openauth/main.go
     echo -e ""
 
     echo -e "build completed!, the binaray file in this diretory"
