@@ -113,17 +113,19 @@ COLLATE = utf8_general_ci
 COMMENT = '用户角色表';
 
 CREATE TABLE `application` (
-`id` varchar(64) NOT NULL,
+`id` varchar(255) NOT NULL
 `name` varchar(255) NOT NULL,
 `user_id` varchar(64) NULL,
-`app_key` varchar(255) NOT NULL,
-`app_secret` varchar(255) NOT NULL,
+`client_id` varchar(255) NOT NULL,
+`client_secret` varchar(255) NOT NULL,
+`client_type` int(1) NOT NULL,
+`website` varchar(255) NOT NULL DEFAULT '',
+`logo_image` varchar(255) NOT NULL DEFAULT '',
 `description` text NOT NULL DEFAULT '',
-`type` int(1) NOT NULL,
 `redirect_uri` varchar(255) NULL,
-`extra` text NOT NULL DEFAULT '',
 `create_at` int(64) NOT NULL DEFAULT 0,
-PRIMARY KEY (`id`) 
+`extra` text NOT NULL DEFAULT '',
+PRIMARY KEY (`client_id`) 
 )
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8

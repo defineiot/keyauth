@@ -21,6 +21,10 @@ ENV OA_MYSQL_HOST="127.0.0.1" \
     OA_APP_KEY="your app secret key" \
     OA_APP_NAME="openauth"
 
+    OA_LOG_FILE_PATH="log/debug.log"
+    OA_LOG_LEVEL="debug"
+
+
 EXPOSE 8080
 
-CMD ["./openauth", "service", "-t", "env", "start"]%
+CMD ["./openauth", "service", "-t", "env", "start"]
