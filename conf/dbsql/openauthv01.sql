@@ -118,7 +118,7 @@ CREATE TABLE `application` (
 `user_id` varchar(64) NULL,
 `client_id` varchar(255) NOT NULL,
 `client_secret` varchar(255) NOT NULL,
-`client_type` int(1) NOT NULL,
+`client_type` varchar(64) NOT NULL,
 `website` varchar(255) NOT NULL DEFAULT '',
 `logo_image` varchar(255) NOT NULL DEFAULT '',
 `description` text NOT NULL DEFAULT '',

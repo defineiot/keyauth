@@ -14,4 +14,8 @@ func (r *MyRouter) RouteToUser() {
 	r.HandlerFunc("GET", "/users/:uid/projects/", handler.ListUserProjects)
 	r.HandlerFunc("POST", "/users/:uid/projects/", handler.AddProjectsToUser)
 	r.HandlerFunc("DELETE", "/users/:uid/projects/", handler.RemoveProjectsFromUser)
+
+	r.HandlerFunc("POST", "/users/:uid/applications/", handler.RegisteApplication)
+	r.HandlerFunc("DELETE", "/users/:uid/applications/:aid/", handler.UnRegisteApplication)
+	r.HandlerFunc("GET", "/users/:uid/applications/", handler.GetUserApplications)
 }

@@ -74,6 +74,7 @@ type Storage interface {
 	GetUserByID(userID string) (*User, error)
 	DeleteUser(userID string) error
 	CheckUserNameIsExist(domainID, userName string) (bool, error)
+	CheckUserIsExistByID(userID string) (bool, error)
 
 	ListUserProjects(userID string) ([]string, error)
 	SetDefaultProject(userID, projectID string) error

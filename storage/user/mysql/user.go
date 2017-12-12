@@ -522,22 +522,13 @@ func (m *manager) CheckUserNameIsExist(domainID, userName string) (bool, error) 
 }
 
 func (m *manager) CheckUserIsExistByID(userID string) (bool, error) {
-	rows, err := m.db.Query("SELECT name FROM user WHERE id = ?", userID)
+	var uid string
+	err := m.db.QueryRow("SELECT id FROM user WHERE id = ?", userID).Scan(&uid)
 	if err != nil {
-		return false, exception.NewInternalServerError("query user exist error, %s", err)
-	}
-	defer rows.Close()
-
-	userNames := []string{}
-	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err != nil {
-			return false, exception.NewInternalServerError("scan user exist record error, %s", err)
+		if err == sql.ErrNoRows {
+			return false, nil
 		}
-		userNames = append(userNames, name)
-	}
-	if len(userNames) == 0 {
-		return false, nil
+		return false, exception.NewInternalServerError("check user exist by id error, %s", err)
 	}
 
 	return true, nil

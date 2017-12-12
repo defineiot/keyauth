@@ -33,6 +33,24 @@ func (m *manager) Registration(userID, name, redirectURI, clientType, descriptio
 		err  error
 	)
 
+	if userID == "" {
+		return nil, exception.NewBadRequest("application user_id is missed")
+	}
+	if name == "" {
+		return nil, exception.NewBadRequest("application name is missed")
+	}
+	if clientType != "confidential" && clientType != "public" {
+		return nil, exception.NewBadRequest("application's client_type must one of confidential or public")
+	}
+
+	ok, err := m.CheckAPPIsExistByName(userID, name)
+	if err != nil {
+		return nil, err
+	}
+	if ok {
+		return nil, exception.NewBadRequest("application %s exist", name)
+	}
+
 	once.Do(func() {
 		createStmt, err = m.db.Prepare("INSERT INTO `application` (id, name, user_id, client_id, client_secret, client_type, website, logo_image, description, redirect_uri, create_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
 	})
@@ -55,23 +73,95 @@ func (m *manager) Registration(userID, name, redirectURI, clientType, descriptio
 		return nil, exception.NewInternalServerError("insert application exec sql err, %s", err)
 	}
 
-	return nil, nil
+	return &app, nil
 }
 
-func (m *manager) Unregistration(userID, clientID string) error {
+func (m *manager) CheckAPPIsExistByID(appID string) (bool, error) {
+	var id string
+	if err := m.db.QueryRow("SELECT id FROM application WHERE id = ?", appID).Scan(&id); err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+
+		return false, exception.NewInternalServerError("query application exist by id error, %s", err)
+	}
+
+	return true, nil
+}
+
+func (m *manager) CheckAPPIsExistByName(userID, name string) (bool, error) {
+	var id string
+	if err := m.db.QueryRow("SELECT id FROM application WHERE name = ? AND user_id = ?", name, userID).Scan(&id); err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+
+		return false, exception.NewInternalServerError("query application exist by name error, %s", err)
+	}
+
+	return true, nil
+}
+
+func (m *manager) Unregistration(id string) error {
+	var (
+		once sync.Once
+		err  error
+	)
+
+	ok, err := m.CheckAPPIsExistByID(id)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return exception.NewBadRequest("application %s not exist", id)
+	}
+
+	once.Do(func() {
+		deleteStmt, err = m.db.Prepare("DELETE FROM application WHERE id = ?")
+	})
+	if err != nil {
+		return exception.NewInternalServerError("prepare delete application stmt error, %s", err)
+	}
+
+	ret, err := deleteStmt.Exec(id)
+	if err != nil {
+		return exception.NewInternalServerError("delete application exec sql error, %s", err)
+	}
+	count, err := ret.RowsAffected()
+	if err != nil {
+		return exception.NewInternalServerError("get delete row affected error, %s", err)
+	}
+	if count == 0 {
+		return exception.NewBadRequest("application %s not exist", id)
+	}
+
 	return nil
 }
 
 func (m *manager) GetUserApps(userID string) ([]*application.Application, error) {
-	return nil, nil
+	rows, err := m.db.Query("SELECT id,name,user_id,client_id,client_secret,client_type,website,logo_image,description,redirect_uri,create_at FROM application WHERE user_id = ? ORDER BY create_at DESC", userID)
+	if err != nil {
+		return nil, exception.NewInternalServerError("query domain list error, %s", err)
+	}
+	defer rows.Close()
+
+	applications := []*application.Application{}
+	for rows.Next() {
+		app := application.Application{}
+		if err := rows.Scan(&app.ID, &app.Name, &app.UserID, &app.ClientID, &app.ClientSecret, &app.ClientType, &app.Website, &app.LogoImage, &app.Description, &app.RedirectURI, &app.CreateAt); err != nil {
+			return nil, exception.NewInternalServerError("scan application record error, %s", err)
+		}
+		applications = append(applications, &app)
+	}
+	return applications, nil
 }
 
 func makeuuid(lenth int) (string, error) {
 	charlist := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	password := make([]string, lenth)
-	rand.Seed(time.Now().Unix())
+	rand.Seed(time.Now().Unix() + int64(lenth))
 	for i := 0; i < lenth; i++ {
-		rn := rand.Intn(lenth)
+		rn := rand.Intn(len(charlist))
 		w := charlist[rn : rn+1]
 		password = append(password, w)
 	}

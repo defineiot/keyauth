@@ -7,8 +7,8 @@ type Application struct {
 	ClientID     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
 	Name         string `json:"name"`
-	Website      string `json:"website"`
-	LogoImage    string `json:"logo_image"`
+	Website      string `json:"website,omitempty"`
+	LogoImage    string `json:"logo_image,omitempty"`
 	Description  string `json:"description"`
 	RedirectURI  string `json:"redirect_uri"`
 	CreateAt     int64  `json:"create_at"`
@@ -18,6 +18,8 @@ type Application struct {
 // Storage appliction stroage
 type Storage interface {
 	Registration(userID, name, redirectURI, clientType, description, website string) (*Application, error)
-	Unregistration(userID, clientID string) error
+	Unregistration(id string) error
 	GetUserApps(userID string) ([]*Application, error)
+	CheckAPPIsExistByID(appID string) (bool, error)
+	CheckAPPIsExistByName(userID, name string) (bool, error)
 }
