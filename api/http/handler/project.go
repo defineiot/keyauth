@@ -7,7 +7,7 @@ import (
 	"openauth/api/http/context"
 	"openauth/api/http/request"
 	"openauth/api/http/response"
-	"openauth/storage/user"
+	"openauth/pkg/user"
 )
 
 // TestDomainID Just for test

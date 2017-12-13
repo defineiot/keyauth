@@ -13,7 +13,7 @@ import (
 
 	"openauth/api/exception"
 	"openauth/api/logger"
-	"openauth/storage/user"
+	"openauth/pkg/user"
 )
 
 var (

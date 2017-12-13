@@ -5,15 +5,15 @@ import (
 
 	"openauth/api/config"
 	"openauth/api/logger"
-	"openauth/storage/application"
-	"openauth/storage/domain"
-	"openauth/storage/project"
-	"openauth/storage/user"
+	"openauth/pkg/application"
+	"openauth/pkg/domain"
+	"openauth/pkg/project"
+	"openauth/pkg/user"
 
-	appmysql "openauth/storage/application/mysql"
-	domainmysql "openauth/storage/domain/mysql"
-	projectmysql "openauth/storage/project/mysql"
-	usermysql "openauth/storage/user/mysql"
+	appmysql "openauth/pkg/application/mysql"
+	domainmysql "openauth/pkg/domain/mysql"
+	projectmysql "openauth/pkg/project/mysql"
+	usermysql "openauth/pkg/user/mysql"
 )
 
 var (

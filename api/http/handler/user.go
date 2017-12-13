@@ -7,7 +7,7 @@ import (
 	"openauth/api/http/context"
 	"openauth/api/http/request"
 	"openauth/api/http/response"
-	"openauth/storage/project"
+	"openauth/pkg/project"
 )
 
 // CreateUser handler
