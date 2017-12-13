@@ -67,8 +67,8 @@ type Credential struct {
 	UserName    string
 }
 
-// Storage is user service
-type Storage interface {
+// Service is user service
+type Service interface {
 	CreateUser(domainID, userName, password string, enabled bool, userExpires, passExpires int) (*User, error)
 	ListUser(domainID string) ([]*User, error)
 	GetUserByID(userID string) (*User, error)

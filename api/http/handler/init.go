@@ -4,23 +4,25 @@ import (
 	"sync"
 
 	"openauth/api/config"
-	"openauth/pkg/domain"
-	"openauth/pkg/project"
-	"openauth/pkg/user"
-	"openauth/pkg/application"
+	"openauth/api/logger"
+	"openauth/storage/application"
+	"openauth/storage/domain"
+	"openauth/storage/project"
+	"openauth/storage/user"
 
-	domainstorage "openauth/storage/domain/mysql"
-	projectstorage "openauth/storage/project/mysql"
-	userstorage "openauth/storage/user/mysql"
-	appstroage  "openauth/storage/application/mysql"
+	appmysql "openauth/storage/application/mysql"
+	domainmysql "openauth/storage/domain/mysql"
+	projectmysql "openauth/storage/project/mysql"
+	usermysql "openauth/storage/user/mysql"
 )
 
 var (
-	domainctl  *domain.Controller
-	projectctl *project.Controller
-	userctl    *user.Controller
-	appctl     *application.Controller
+	domainsrv  domain.Service
+	projectsrv project.Service
+	usersrv    user.Service
+	appsrv     application.Service
 	once       sync.Once
+	log        logger.OpenAuthLogger
 )
 
 // InitController use to initial all controllers
@@ -29,25 +31,21 @@ func InitController(conf *config.Config) error {
 	if err != nil {
 		return err
 	}
-	logger, err := conf.GetLogger()
+	log, err = conf.GetLogger()
 	if err != nil {
 		return err
 	}
 
-	ps := projectstorage.NewProjectStroage(db)
-	ds := domainstorage.NewDomainStorage(db)
-	us := userstorage.NewUserStorage(db, conf.APP.Key, logger)
-	as := appstroage.NewApplicationStorage(db)
-
 	once.Do(func() {
-		domainctl = domain.NewController(logger, ds)
-		projectctl = project.NewController(logger, ds, ps, us)
-		userctl = user.NewController(logger, us, ds, ps)
-		appctl = application.NewController(logger, as, us)
-		logger.Debugf("domain controller: %v", domainctl)
-		logger.Debugf("project controoler: %v", projectctl)
-		logger.Debugf("user controller: %v", userctl)
-		logger.Debugf("application controller: %v", appctl)
+		domainsrv = domainmysql.NewDomainService(db)
+		projectsrv = projectmysql.NewProjectService(db)
+		usersrv = usermysql.NewUserService(db, conf.APP.Key, log)
+		appsrv = appmysql.NewApplicationService(db)
+
+		log.Debugf("domain service: %v", domainsrv)
+		log.Debugf("project service: %v", projectsrv)
+		log.Debugf("user service: %v", usersrv)
+		log.Debugf("application service: %v", appsrv)
 	})
 
 	return nil

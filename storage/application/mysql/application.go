@@ -18,8 +18,8 @@ var (
 	deleteStmt *sql.Stmt
 )
 
-// NewApplicationStorage use to new application instance
-func NewApplicationStorage(db *sql.DB) application.Storage {
+// NewApplicationService use to new application instance
+func NewApplicationService(db *sql.DB) application.Service {
 	return &manager{db: db}
 }
 

@@ -19,8 +19,8 @@ type Project struct {
 	Extra string `json:"-"`
 }
 
-// Storage is project service
-type Storage interface {
+// Service is project service
+type Service interface {
 	// Create a Project, super admin & domain admin are
 	// allowed to operate, Named in Domain, does not allow renaming
 	CreateProject(domainID, name, description string, enabled bool) (*Project, error)

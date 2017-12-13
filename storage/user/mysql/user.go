@@ -20,8 +20,8 @@ var (
 	deletePrepare *sql.Stmt
 )
 
-// NewUserStorage use to new an use service with mysql
-func NewUserStorage(db *sql.DB, key string, logger logger.OpenAuthLogger) user.Storage {
+// NewUserService use to new an use service with mysql
+func NewUserService(db *sql.DB, key string, logger logger.OpenAuthLogger) user.Service {
 	return &manager{db: db, key: key, logger: logger}
 }
 
@@ -172,23 +172,16 @@ func (m *manager) SetDefaultProject(userID, projectID string) error {
 }
 
 func (m *manager) AddProjectsToUser(userID string, projectIDs ...string) error {
-	// check the record is not exist
-	pids, err := m.ListUserProjects(userID)
+	// check the user is not exist
+	ok, err := m.CheckUserIsExistByID(userID)
 	if err != nil {
 		return err
 	}
-	existPids := []string{}
-	for _, epid := range pids {
-		for _, inpid := range projectIDs {
-			if inpid == epid {
-				existPids = append(existPids, inpid)
-			}
-		}
-	}
-	if len(existPids) != 0 {
-		return exception.NewBadRequest("projects %s is in this user", existPids)
+	if !ok {
+		return exception.NewBadRequest("user %s not exist", userID)
 	}
 
+	// insert
 	mappPre, err := m.db.Prepare("INSERT INTO `mapping` (user_id, project_id) VALUES (?,?)")
 	if err != nil {
 		return fmt.Errorf("prepare add projects to user mapping stmt error, user: %s, project: %s, %s", userID, projectIDs, err)
@@ -207,27 +200,16 @@ func (m *manager) AddProjectsToUser(userID string, projectIDs ...string) error {
 }
 
 func (m *manager) RemoveProjectsFromUser(userID string, projectIDs ...string) error {
-	// check the record is exist
-	pids, err := m.ListUserProjects(userID)
+	// check the user is not exist
+	ok, err := m.CheckUserIsExistByID(userID)
 	if err != nil {
 		return err
 	}
-	notExistPids := []string{}
-	for _, inpid := range projectIDs {
-		var ok bool
-		for _, epid := range pids {
-			if epid == inpid {
-				ok = true
-			}
-		}
-		if !ok {
-			notExistPids = append(notExistPids, inpid)
-		}
-	}
-	if len(notExistPids) != 0 {
-		return exception.NewBadRequest("projects %s isn't in this user", notExistPids)
+	if !ok {
+		return exception.NewBadRequest("user %s not exist", userID)
 	}
 
+	// insert
 	mappPre, err := m.db.Prepare("DELETE FROM `mapping` WHERE user_id = ? AND project_id = ?")
 	if err != nil {
 		return fmt.Errorf("prepare remove projects to user mapping stmt error, user: %s, project: %s, %s", userID, projectIDs, err)

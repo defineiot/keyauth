@@ -17,8 +17,8 @@ var (
 	deletePrepare *sql.Stmt
 )
 
-// NewProjectStroage is use mysql as storage
-func NewProjectStroage(db *sql.DB) project.Storage {
+// NewProjectService is use mysql as storage
+func NewProjectService(db *sql.DB) project.Service {
 	return &manager{db: db}
 }
 

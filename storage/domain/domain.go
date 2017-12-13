@@ -19,8 +19,8 @@ type Domain struct {
 	UpdateAt int64 `json:"update_at,omitempty"`
 }
 
-// Storage is an domain service
-type Storage interface {
+// Service is an domain service
+type Service interface {
 	// Create Domain, Only super admin are allowed
 	// to operate, Named globally only,
 	// renaming is not allowed

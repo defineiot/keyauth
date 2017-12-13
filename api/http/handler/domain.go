@@ -7,7 +7,6 @@ import (
 	"openauth/api/http/context"
 	"openauth/api/http/request"
 	"openauth/api/http/response"
-	"openauth/storage/user"
 )
 
 // CreateDomain use to create domain
@@ -29,7 +28,7 @@ func CreateDomain(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 交给业务控制层处理
-	dom, err := domainctl.CreateDomain(name, desc, disp, user.Credential{})
+	dom, err := domainsrv.CreateDomain(name, desc, disp, true)
 	if err != nil {
 		response.Failed(w, err)
 		return
@@ -44,7 +43,7 @@ func GetDomain(w http.ResponseWriter, r *http.Request) {
 	ps := context.GetParamsFromContext(r)
 	did := ps.ByName("did")
 
-	dom, err := domainctl.GetDomain(did)
+	dom, err := domainsrv.GetDomain(did)
 	if err != nil {
 		response.Failed(w, err)
 		return
@@ -56,7 +55,7 @@ func GetDomain(w http.ResponseWriter, r *http.Request) {
 
 // ListDomain domain list
 func ListDomain(w http.ResponseWriter, r *http.Request) {
-	doms, err := domainctl.ListDomain()
+	doms, err := domainsrv.ListDomain()
 	if err != nil {
 		response.Failed(w, err)
 		return
@@ -72,8 +71,7 @@ func DeleteDomain(w http.ResponseWriter, r *http.Request) {
 	did := ps.ByName("did")
 
 	// TODO: get token from context, and check permission
-
-	if err := domainctl.DestoryDomain(did); err != nil {
+	if err := domainsrv.DeleteDomain(did); err != nil {
 		response.Failed(w, err)
 		return
 	}

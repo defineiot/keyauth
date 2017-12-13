@@ -32,7 +32,17 @@ func RegisteApplication(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 交给业务控制层处理
-	app, err := appctl.RegisteApplication(uid, name, redirectURI, clientType, desc, website)
+	ok, err := usersrv.CheckUserIsExistByID(uid)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+	if !ok {
+		response.Failed(w, exception.NewBadRequest("user %s not exist", uid))
+		return
+	}
+
+	app, err := appsrv.Registration(uid, name, redirectURI, clientType, desc, website)
 	if err != nil {
 		response.Failed(w, err)
 		return
@@ -48,8 +58,7 @@ func UnRegisteApplication(w http.ResponseWriter, r *http.Request) {
 	aid := ps.ByName("aid")
 
 	// TODO: get token from context, and check permission
-
-	if err := appctl.UnregisteApplication(aid); err != nil {
+	if err := appsrv.Unregistration(aid); err != nil {
 		response.Failed(w, err)
 		return
 	}
@@ -63,7 +72,17 @@ func GetUserApplications(w http.ResponseWriter, r *http.Request) {
 	ps := context.GetParamsFromContext(r)
 	uid := ps.ByName("uid")
 
-	apps, err := appctl.GetUserApplications(uid)
+	ok, err := usersrv.CheckUserIsExistByID(uid)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+	if !ok {
+		response.Failed(w, exception.NewBadRequest("user %s not exist", uid))
+		return
+	}
+
+	apps, err := appsrv.GetUserApps(uid)
 	if err != nil {
 		response.Failed(w, err)
 		return

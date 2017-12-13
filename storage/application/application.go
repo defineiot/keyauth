@@ -15,8 +15,8 @@ type Application struct {
 	ClientType   string `json:"client_type"` // 1. confidential 2.public  https://tools.ietf.org/html/rfc6749#section-2.1
 }
 
-// Storage appliction stroage
-type Storage interface {
+// Service appliction stroage
+type Service interface {
 	Registration(userID, name, redirectURI, clientType, description, website string) (*Application, error)
 	Unregistration(id string) error
 	GetUserApps(userID string) ([]*Application, error)
