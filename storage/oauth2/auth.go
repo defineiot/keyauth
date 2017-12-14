@@ -1,8 +1,7 @@
 package oauth2
 
 import (
-	"openauth/pkg/application"
-	"openauth/pkg/user"
+	"openauth/storage/application"
 )
 
 // GrantType is the type for OAuth2 param `grant_type`
@@ -17,12 +16,31 @@ const (
 	RefreshToken                     GrantType = "refresh_token"
 )
 
-// Request use to request token
-type Request struct {
-	user         *user.User
-	app          *application.Application
+// AuthCodeRequest https://tools.ietf.org/html/rfc6749#section-4.1.1
+type AuthCodeRequest struct {
+	responseType string
+	clientID     string
+	redirectURI  string
+	scope        string
+	state        string
+}
+
+// Code https://tools.ietf.org/html/rfc6749#section-4.1.2
+type Code struct {
+	Code  string
+	State string
+}
+
+// TokenRequest use to request token
+// https://tools.ietf.org/html/rfc6749#section-4.1.3
+type TokenRequest struct {
 	grantType    GrantType
 	code         string
+	redirectURI  string
+	clientID     string
+	username     string
+	password     string
+	clientSecret string
 	codeVerifier string
 	state        string
 }
@@ -43,12 +61,6 @@ type Token struct {
 type Scope struct {
 	ProjectID string `json:"project_id,omitempty"`
 	DomainID  string `json:"domain_id,omitempty"`
-}
-
-// Code https://tools.ietf.org/html/rfc6749#section-4.1.2
-type Code struct {
-	Code  string
-	State string
 }
 
 // Service is auth service

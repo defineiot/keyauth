@@ -13,7 +13,7 @@ import (
 
 	"openauth/api/exception"
 	"openauth/api/logger"
-	"openauth/pkg/user"
+	"openauth/storage/user"
 )
 
 var (
@@ -21,7 +21,7 @@ var (
 )
 
 // NewUserService use to new an use service with mysql
-func NewUserService(db *sql.DB, key string, logger logger.OpenAuthLogger) user.Service {
+func NewUserService(db *sql.DB, key string, logger logger.OpenAuthLogger) user.Storage {
 	return &manager{db: db, key: key, logger: logger}
 }
 

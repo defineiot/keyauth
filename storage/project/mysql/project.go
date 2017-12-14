@@ -9,7 +9,7 @@ import (
 	"github.com/satori/go.uuid"
 
 	"openauth/api/exception"
-	"openauth/pkg/project"
+	"openauth/storage/project"
 )
 
 var (
@@ -18,7 +18,7 @@ var (
 )
 
 // NewProjectService is use mysql as storage
-func NewProjectService(db *sql.DB) project.Service {
+func NewProjectService(db *sql.DB) project.Storage {
 	return &manager{db: db}
 }
 

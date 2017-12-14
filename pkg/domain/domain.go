@@ -1,39 +1,82 @@
 package domain
 
-// Domain is tenant container.
-type Domain struct {
-	ID string `json:"id"`
-	// domain name, allow repeat
-	Name string `json:"name"`
-	// DisplayName is to show
-	DisplayName string `json:"display_name"`
-	// domain description
-	Description string `json:"description"`
-	// Whether to enable
-	Enabled bool `json:"enabled"`
-	// Extend fields to facilitate the expansion of database tables
-	Extra string `json:"-"`
-	// CreateAt create domain at
-	CreateAt int64 `json:"create_at"`
-	// UpdateAt update domain time
-	UpdateAt int64 `json:"update_at,omitempty"`
+import (
+	"sync"
+
+	"openauth/api/exception"
+	"openauth/api/logger"
+	"openauth/storage/domain"
+)
+
+var (
+	controller *Controller
+	once       sync.Once
+)
+
+// GetController use to new an controller
+func GetController() (*Controller, error) {
+	if controller == nil {
+		return nil, exception.NewInternalServerError("domain controller not initial")
+	}
+	return controller, nil
 }
 
-// Service is an domain service
-type Service interface {
-	// Create Domain, Only super admin are allowed
-	// to operate, Named globally only,
-	// renaming is not allowed
-	CreateDomain(name, description, displayName string, enabled bool) (*Domain, error)
-	// GetDomain get a domain by domain id or domain name,
-	// super admin & domain admin are allowed to operate
-	GetDomain(domainID string) (*Domain, error)
-	// List all Domain, Only super admin are allowed to operate
-	ListDomain() ([]*Domain, error)
-	// Update a Domain, super admin & domain admin are allowed to operate
-	UpdateDomain(id, name, description string) (*Domain, error)
-	// Soft Delete a Domain, Domain still in persistence storage, Only super admin are allowed to operate
-	DeleteDomain(id string) error
-	// CheckDomainIsExist use to check the domain is exist by domain id
-	CheckDomainIsExistByID(domainID string) (bool, error)
+// InitController use to init controller
+func InitController(ds domain.Storage, log logger.OpenAuthLogger) {
+	once.Do(func() {
+		controller = &Controller{ds: ds, log: log}
+		controller.log.Debug("initial domain controller successful")
+	})
+	controller.log.Info("domain contoller aready initialed")
+}
+
+// Controller is domain pkg
+type Controller struct {
+	ds  domain.Storage
+	log logger.OpenAuthLogger
+}
+
+// CreateDomain use to create domain
+func (c *Controller) CreateDomain(name, description, displayName string, enabled bool) (*domain.Domain, error) {
+	dom, err := c.ds.CreateDomain(name, description, displayName, enabled)
+	if err != nil {
+		return nil, err
+	}
+
+	return dom, nil
+}
+
+// ListDomain use to list all domains
+func (c *Controller) ListDomain() ([]*domain.Domain, error) {
+	doms, err := c.ds.ListDomain()
+	if err != nil {
+		return nil, err
+	}
+
+	return doms, nil
+}
+
+// GetDomain use to get an domain
+func (c *Controller) GetDomain(domainID string) (*domain.Domain, error) {
+	dom, err := c.ds.GetDomain(domainID)
+	if err != nil {
+		return nil, err
+	}
+
+	return dom, nil
+
+}
+
+// UpdateDomain use to update an domain
+func (c *Controller) UpdateDomain() {
+
+}
+
+// DestoryDomain use to delete an domain
+func (c *Controller) DestoryDomain(domainID string) error {
+	if err := c.ds.DeleteDomain(domainID); err != nil {
+		return err
+	}
+
+	return nil
 }

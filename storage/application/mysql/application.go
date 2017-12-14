@@ -10,7 +10,7 @@ import (
 	"github.com/satori/go.uuid"
 
 	"openauth/api/exception"
-	"openauth/pkg/application"
+	"openauth/storage/application"
 )
 
 var (
@@ -19,7 +19,7 @@ var (
 )
 
 // NewApplicationService use to new application instance
-func NewApplicationService(db *sql.DB) application.Service {
+func NewApplicationService(db *sql.DB) application.Storage {
 	return &manager{db: db}
 }
 

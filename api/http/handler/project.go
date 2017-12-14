@@ -7,7 +7,6 @@ import (
 	"openauth/api/http/context"
 	"openauth/api/http/request"
 	"openauth/api/http/response"
-	"openauth/pkg/user"
 )
 
 // TestDomainID Just for test
@@ -33,23 +32,13 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 交给业务控制层处理
-	ok, err := domainsrv.CheckDomainIsExistByID(did)
-	if err != nil {
-		response.Failed(w, err)
-		return
-	}
-	if !ok {
-		response.Failed(w, exception.NewBadRequest("domain %s not exist", did))
-		return
-	}
-
-	proj, err := projectsrv.CreateProject(did, name, desc, true)
+	project, err := projectsrv.CreateProject(did, name, desc)
 	if err != nil {
 		response.Failed(w, err)
 		return
 	}
 
-	response.Success(w, http.StatusCreated, proj)
+	response.Success(w, http.StatusCreated, project)
 	return
 }
 
@@ -72,17 +61,7 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 // ListProject use to list all project
 func ListProject(w http.ResponseWriter, r *http.Request) {
 
-	ok, err := domainsrv.CheckDomainIsExistByID(TestDomainID)
-	if err != nil {
-		response.Failed(w, err)
-		return
-	}
-	if !ok {
-		response.Failed(w, exception.NewBadRequest("domain %s not exist", TestDomainID))
-		return
-	}
-
-	projects, err := projectsrv.ListDomainProjects(TestDomainID)
+	projects, err := projectsrv.ListProject(TestDomainID)
 	if err != nil {
 		response.Failed(w, err)
 		return
@@ -98,7 +77,7 @@ func DeleteProject(w http.ResponseWriter, r *http.Request) {
 	pid := ps.ByName("pid")
 
 	// TODO: get token from context, and check permission
-	if err := projectsrv.DeleteProject(pid); err != nil {
+	if err := projectsrv.DestroyProject(pid); err != nil {
 		response.Failed(w, err)
 		return
 	}
@@ -112,20 +91,10 @@ func ListProjectUsers(w http.ResponseWriter, r *http.Request) {
 	ps := context.GetParamsFromContext(r)
 	pid := ps.ByName("pid")
 
-	userIDs, err := projectsrv.ListProjectUsers(pid)
+	users, err := projectsrv.ListProjectUsers(pid)
 	if err != nil {
 		response.Failed(w, err)
 		return
-	}
-
-	users := []*user.User{}
-	for _, uid := range userIDs {
-		u, err := usersrv.GetUserByID(uid)
-		if err != nil {
-			response.Failed(w, err)
-			return
-		}
-		users = append(users, u)
 	}
 
 	response.Success(w, http.StatusOK, users)
@@ -159,26 +128,6 @@ func AddUsersToProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 业务层处理逻辑
-	p, err := projectsrv.GetProject(pid)
-	if err != nil {
-		response.Failed(w, err)
-		return
-	}
-
-	for _, uid := range uids {
-		u, err := usersrv.GetUserByID(uid)
-		if err != nil {
-			response.Failed(w, err)
-			return
-		}
-
-		if p.DomainID != u.DomainID {
-			response.Failed(w, exception.NewBadRequest("user %s and project %s not in one domain", uid, pid))
-			return
-		}
-	}
-
-	// insert
 	if err := projectsrv.AddUsersToProject(pid, uids...); err != nil {
 		response.Failed(w, err)
 		return
@@ -216,26 +165,6 @@ func RemoveUsersFromProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 业务逻辑层
-	p, err := projectsrv.GetProject(pid)
-	if err != nil {
-		response.Failed(w, err)
-		return
-	}
-
-	for _, uid := range uids {
-		u, err := usersrv.GetUserByID(uid)
-		if err != nil {
-			response.Failed(w, err)
-			return
-		}
-
-		if p.DomainID != u.DomainID {
-			response.Failed(w, exception.NewBadRequest("user %s and project %s not in one domain", uid, pid))
-			return
-		}
-	}
-
-	// insert
 	if err := projectsrv.RemoveUsersFromProject(pid, uids...); err != nil {
 		response.Failed(w, err)
 		return

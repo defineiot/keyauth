@@ -71,7 +71,7 @@ func DeleteDomain(w http.ResponseWriter, r *http.Request) {
 	did := ps.ByName("did")
 
 	// TODO: get token from context, and check permission
-	if err := domainsrv.DeleteDomain(did); err != nil {
+	if err := domainsrv.DestoryDomain(did); err != nil {
 		response.Failed(w, err)
 		return
 	}

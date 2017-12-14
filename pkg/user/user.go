@@ -1,116 +1,184 @@
 package user
 
 import (
-	"openauth/pkg/project"
+	"sync"
+
+	"openauth/api/exception"
+	"openauth/api/logger"
+	"openauth/storage/domain"
+	"openauth/storage/project"
+	"openauth/storage/user"
 )
 
-// User info
-type User struct {
-	ID               string           `json:"id"`
-	Name             string           `json:"name"`
-	LastActiveTime   int64            `json:"last_active_time"`
-	Enabled          bool             `json:"enabled"`
-	CreateAt         int64            `json:"create_at"`
-	Password         *Password        `json:"-"`
-	Phones           []*Phone         `json:"phones,omitempty"`
-	Emails           []*Email         `json:"emails,omitempty"`
-	DomainID         string           `json:"domain_id"`
-	DefaultProjectID string           `json:"-"`
-	DefaultProject   *project.Project `json:"default_project,omitempty"`
-	ExpireActiveDays int64            `json:"expires_active_days"`
+var (
+	controller *Controller
+	once       sync.Once
+)
 
-	// Extend fields to facilitate the expansion of database tables
-	Extra string `json:"-"`
+// GetController use to new an controller
+func GetController() (*Controller, error) {
+	if controller == nil {
+		return nil, exception.NewInternalServerError("user controller not initial")
+	}
+	return controller, nil
 }
 
-// Phone user's phone
-type Phone struct {
-	ID          int64  `json:"-"`
-	UserID      string `json:"-"`
-	Number      string `json:"number"`
-	Primary     bool   `json:"primary"`
-	Description string `json:"descrption"`
-	// Extend fields to facilitate the expansion of database tables
-	Extra string `json:"-"`
+// InitController use to initial user controller
+func InitController(log logger.OpenAuthLogger, us user.Storage, ds domain.Storage, ps project.Storage) {
+	once.Do(func() {
+		controller = &Controller{ds: ds, ps: ps, us: us, log: log}
+		controller.log.Debug("user controller inital successful")
+	})
+	controller.log.Info("user controller aready initaled")
 }
 
-// Email use's email
-type Email struct {
-	ID          int64  `json:"-"`
-	UserID      string `json:"-"`
-	Address     string `json:"address"`
-	Primary     bool   `json:"primary"`
-	Description string `json:"description"`
-	// Extend fields to facilitate the expansion of database tables
-	Extra string `json:"-"`
+// Controller is domain pkg
+type Controller struct {
+	log logger.OpenAuthLogger
+	ps  project.Storage
+	ds  domain.Storage
+	us  user.Storage
 }
 
-// Password user's password
-type Password struct {
-	ID       int64  `json:"-"`
-	Password string `json:"-"`
-	ExpireAt int64  `json:"expire_at"`
-	CreateAt int64  `json:"create_at"`
-	UpdateAt int64  `json:"update_at,omitempty"`
-	UserID   string `json:"user_id"`
+// CreateUser create user
+func (c *Controller) CreateUser(domainID, userName, password, description string) (*user.User, error) {
+	ok, err := c.ds.CheckDomainIsExistByID(domainID)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, exception.NewBadRequest("domain %s not exist", domainID)
+	}
 
-	// Extend fields to facilitate the expansion of database tables
-	Extra string `json:"-"`
+	u, err := c.us.CreateUser(domainID, userName, password, true, 4096, 4096)
+	if err != nil {
+		return nil, err
+	}
+
+	return u, nil
 }
 
-// Credential is user's credential
-type Credential struct {
-	UserID      string
-	Password    string
-	AccessToken string
-	DomainID    string
-	UserName    string
+// GetUser get on user
+func (c *Controller) GetUser(userID string) (*user.User, error) {
+	u, err := c.us.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return u, nil
 }
 
-// Service is user service
-type Service interface {
-	CreateUser(domainID, userName, password string, enabled bool, userExpires, passExpires int) (*User, error)
-	ListUser(domainID string) ([]*User, error)
-	GetUserByID(userID string) (*User, error)
-	DeleteUser(userID string) error
-	CheckUserNameIsExist(domainID, userName string) (bool, error)
-	CheckUserIsExistByID(userID string) (bool, error)
+// ListUser list user
+func (c *Controller) ListUser(domainID string) ([]*user.User, error) {
+	ok, err := c.ds.CheckDomainIsExistByID(domainID)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, exception.NewBadRequest("domain %s not exist", domainID)
+	}
 
-	ListUserProjects(userID string) ([]string, error)
-	SetDefaultProject(userID, projectID string) error
-	AddProjectsToUser(userID string, projectIDs ...string) error
-	RemoveProjectsFromUser(userID string, projectIDs ...string) error
+	users, err := c.us.ListUser(domainID)
+	if err != nil {
+		return nil, err
+	}
+	for _, u := range users {
+		if u.DefaultProjectID != "" {
+			dp, err := c.ps.GetProject(u.DefaultProjectID)
+			if err != nil {
+				return nil, exception.NewInternalServerError("get user %s project error, %s", u.Name, err)
+			}
 
-	// Get user with User name & user password
-	GetUserByName(domainID, userName, userPassword string) (*User, error)
-	// GetUser get an user
-	GetUser(cert Credential) (*User, error)
-	// Delete user from persistence storage
+			u.DefaultProject = dp
+		}
+	}
 
-	// Add Phone to User
-	AddPhone(cert Credential, number, phoneType, description string) error
-	// Remove Phone from User
-	RemovePhone(cert Credential, number string) error
-	// Add email to User
-	AddEmail(cert Credential, address, description string, primary bool) error
-	// Remove Email from User
-	RemoveEmail(cert Credential, address string) error
-	// Add role to user
-	AddRoleToUser(cert Credential, roleID string) error
-	// remove role from user
-	RemoveRoleFromUser(cert Credential, roleID string) error
-	// list user roles
-	QueryRole(cert Credential) ([]string, error)
-	// Verify user & feature
-	HasFeatures(cert Credential, features ...string) (bool, error)
-	// add user to project, a user can add multiple project
-	AddUserToProject(cert Credential, projectID string) error
-	// remove user from project, when the user does not belong to any project, the user disable
-	RemoveUserFromProject(cert Credential, projectID string) error
-	// get user default project
-	GetDefaultProject(cert Credential) (string, error)
-	// determine if the user has a super administrator role
-	IsSystemAdmin(cert Credential) (bool, error)
-	// determine if the user has a cloud administrator role
-	IsCloudAdmin(cert Credential) (bool, error)
+	return users, nil
+}
+
+// DeleteUser delete user
+func (c *Controller) DeleteUser(userID string) error {
+	if err := c.us.DeleteUser(userID); err != nil {
+		return err
+	}
+	return nil
+}
+
+// SetUserDefualtProject use to set default prject
+func (c *Controller) SetUserDefualtProject(userID, projectID string) error {
+	ok, err := c.ps.CheckProjectIsExistByID(projectID)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return exception.NewBadRequest("project %s not exist", projectID)
+	}
+
+	if err := c.us.SetDefaultProject(userID, projectID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ListUserProjects list all projects
+func (c *Controller) ListUserProjects(userID string) ([]*project.Project, error) {
+	projectIDs, err := c.us.ListUserProjects(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	projects := []*project.Project{}
+	for _, pid := range projectIDs {
+		pj, err := c.ps.GetProject(pid)
+		if err != nil {
+			return nil, err
+		}
+		projects = append(projects, pj)
+	}
+
+	return projects, nil
+}
+
+// AddProjectsToUser add projects
+func (c *Controller) AddProjectsToUser(userID string, projectIDs ...string) error {
+	u, err := c.us.GetUserByID(userID)
+	if err != nil {
+		return err
+	}
+
+	for _, pid := range projectIDs {
+		p, err := c.ps.GetProject(pid)
+		if err != nil {
+			return err
+		}
+
+		if p.DomainID != u.DomainID {
+			return exception.NewBadRequest("user %s and project %s not in one domain", userID, pid)
+		}
+	}
+
+	if err := c.us.AddProjectsToUser(userID, projectIDs...); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// RemoveProjectsFromUser remove projects
+func (c *Controller) RemoveProjectsFromUser(userID string, projectIDs ...string) error {
+	for _, pid := range projectIDs {
+		ok, err := c.ps.CheckProjectIsExistByID(pid)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return exception.NewBadRequest("project %s not exist", pid)
+		}
+	}
+
+	if err := c.us.RemoveProjectsFromUser(userID, projectIDs...); err != nil {
+		return err
+	}
+	return nil
 }
