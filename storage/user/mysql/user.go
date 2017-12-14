@@ -229,7 +229,6 @@ func (m *manager) RemoveProjectsFromUser(userID string, projectIDs ...string) er
 
 func (m *manager) GetUserByID(userID string) (*user.User, error) {
 	// get user by id
-	m.logger.Debug("get user by id...")
 	userI := user.User{}
 	err := m.db.QueryRow("SELECT id,name,enabled,last_active_time,domain_id,create_at,expires_active_days,default_project_id FROM user WHERE id = ?", userID).Scan(
 		&userI.ID, &userI.Name, &userI.Enabled, &userI.LastActiveTime, &userI.DomainID, &userI.CreateAt, &userI.ExpireActiveDays, &userI.DefaultProjectID)
@@ -258,7 +257,6 @@ func (m *manager) GetUserByID(userID string) (*user.User, error) {
 	// get user's password
 	userI.Password = &user.Password{}
 
-	m.logger.Debug("get user: ", userI)
 	return &userI, nil
 }
 
@@ -300,6 +298,21 @@ func (m *manager) QueryEmail(userID string) ([]*user.Email, error) {
 	return emails, nil
 }
 
+func (m *manager) QueryPassword(userID string) (*user.Password, error) {
+	pass := user.Password{}
+	err := m.db.QueryRow("SELECT password,expires_at,create_at,update_at FROM password WHERE user_id = ?", userID).Scan(
+		&pass.Password, &pass.ExpireAt, &pass.CreateAt, &pass.UpdateAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, exception.NewNotFound("password %s not find", userID)
+		}
+
+		return nil, exception.NewInternalServerError("query single password error, %s", err)
+	}
+
+	return &pass, nil
+}
+
 func (m *manager) ListUser(domainID string) ([]*user.User, error) {
 
 	rows, err := m.db.Query("SELECT id,name,enabled,last_active_time,create_at,expires_active_days,default_project_id FROM user WHERE domain_id = ?", domainID)
@@ -327,7 +340,13 @@ func (m *manager) ListUser(domainID string) ([]*user.User, error) {
 		}
 		u.Phones = phones
 		// get user's password
+		pass, err := m.QueryPassword(u.ID)
+		if err != nil {
+			return nil, err
+		}
+		u.Password = pass
 
+		// set domainID
 		u.DomainID = domainID
 
 		users = append(users, &u)
@@ -421,8 +440,59 @@ func (m *manager) DeleteUser(userID string) error {
 	return nil
 }
 
-func (m *manager) GetUserByName(domainID, userName, userPassword string) (*user.User, error) {
-	return nil, nil
+func (m *manager) GetUserByName(domainID, userName string) (*user.User, error) {
+	userI := user.User{}
+	err := m.db.QueryRow("SELECT id,name,enabled,last_active_time,domain_id,create_at,expires_active_days,default_project_id FROM user WHERE name = ? AND domain_id = ?", userName, domainID).Scan(
+		&userI.ID, &userI.Name, &userI.Enabled, &userI.LastActiveTime, &userI.DomainID, &userI.CreateAt, &userI.ExpireActiveDays, &userI.DefaultProjectID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, exception.NewNotFound("user %s not find", userName)
+		}
+
+		return nil, exception.NewInternalServerError("query single user error, %s", err)
+	}
+
+	// get user's emails
+	emails, err := m.QueryEmail(userI.ID)
+	if err != nil {
+		return nil, err
+	}
+	userI.Emails = emails
+
+	// get user's phones
+	phones, err := m.QueryPhone(userI.ID)
+	if err != nil {
+		return nil, err
+	}
+	userI.Phones = phones
+
+	// get user's password
+	userI.Password = &user.Password{}
+
+	return &userI, nil
+}
+
+func (m *manager) ValidateUser(domainID, userName, password string) (string, error) {
+	var uid string
+	err := m.db.QueryRow("SELECT id FROM user WHERE name = ? AND domain_id = ?", userName, domainID).Scan(&uid)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", exception.NewNotFound("user %s not find", userName)
+		}
+
+		return "", exception.NewInternalServerError("query single user error, %s", err)
+	}
+
+	pass, err := m.QueryPassword(uid)
+	if err != nil {
+		return "", err
+	}
+
+	if m.hmacHash(password) == pass.Password {
+		return uid, nil
+	}
+
+	return "", nil
 }
 
 func (m *manager) GetUser(cert user.Credential) (*user.User, error) {

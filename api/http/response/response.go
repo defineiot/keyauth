@@ -25,6 +25,8 @@ func Failed(w http.ResponseWriter, err error) {
 		code = t.Code()
 	case *exception.InternalServerError:
 		code = t.Code()
+	case *exception.Unauthorized:
+		code = t.Code()
 	default:
 		code = http.StatusInternalServerError
 	}

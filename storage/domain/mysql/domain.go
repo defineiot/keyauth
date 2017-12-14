@@ -72,6 +72,21 @@ func (m *manager) GetDomain(domainID string) (*domain.Domain, error) {
 	return &dom, nil
 }
 
+func (m *manager) GetDomainByName(name string) (*domain.Domain, error) {
+	dom := domain.Domain{}
+	err := m.db.QueryRow("SELECT id,name,display_name,description,enabled,create_at,update_at FROM domain WHERE name = ?", name).Scan(
+		&dom.ID, &dom.Name, &dom.DisplayName, &dom.Description, &dom.Enabled, &dom.CreateAt, &dom.UpdateAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, exception.NewNotFound("domain %s not find", name)
+		}
+
+		return nil, exception.NewInternalServerError("query single domain error, %s", err)
+	}
+
+	return &dom, nil
+}
+
 // ListDomain use to list all domains
 func (m *manager) ListDomain() ([]*domain.Domain, error) {
 	rows, err := m.db.Query("SELECT id,name,display_name,description,enabled,create_at,update_at FROM domain ORDER BY create_at DESC")

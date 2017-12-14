@@ -28,6 +28,7 @@ type Config struct {
 	APP   *AppConf   `toml:"app"`
 	MySQL *MySQLConf `toml:"mysql"`
 	Log   *LogConf   `toml:"log"`
+	Token *Token     `toml:"token"`
 }
 
 // AppConf service config
@@ -56,6 +57,12 @@ type LogConf struct {
 	FilePath string `toml:"path"`
 }
 
+// Token is oauth token
+type Token struct {
+	Type      string `toml:"type"`
+	ExpiresIn int32  `toml:"expires_in"`
+}
+
 // Validate use to check the service config
 func (c *Config) Validate() error {
 	if err := c.validateAPP(); err != nil {
@@ -65,6 +72,9 @@ func (c *Config) Validate() error {
 		return err
 	}
 	if err := c.validateLog(); err != nil {
+		return err
+	}
+	if err := c.validateToken(); err != nil {
 		return err
 	}
 
@@ -114,7 +124,7 @@ func (c *Config) validateMySQL() error {
 
 func (c *Config) validateLog() error {
 	if c.Log == nil {
-		c.Log = &LogConf{}
+		c.Log = new(LogConf)
 	}
 
 	if c.Log.Level == "" {
@@ -123,6 +133,21 @@ func (c *Config) validateLog() error {
 
 	if c.Log.FilePath == "" {
 		return errors.New("log path not config")
+	}
+
+	return nil
+}
+
+func (c *Config) validateToken() error {
+	if c.Token == nil {
+		c.Token = new(Token)
+	}
+
+	if c.Token.Type == "" {
+		c.Token.Type = "bearer"
+	}
+	if c.Token.ExpiresIn == 0 {
+		c.Token.ExpiresIn = 3600
 	}
 
 	return nil

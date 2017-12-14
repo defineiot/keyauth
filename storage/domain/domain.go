@@ -25,9 +25,8 @@ type Storage interface {
 	// to operate, Named globally only,
 	// renaming is not allowed
 	CreateDomain(name, description, displayName string, enabled bool) (*Domain, error)
-	// GetDomain get a domain by domain id or domain name,
-	// super admin & domain admin are allowed to operate
 	GetDomain(domainID string) (*Domain, error)
+	GetDomainByName(name string) (*Domain, error)
 	// List all Domain, Only super admin are allowed to operate
 	ListDomain() ([]*Domain, error)
 	// Update a Domain, super admin & domain admin are allowed to operate

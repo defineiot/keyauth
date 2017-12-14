@@ -1,4 +1,4 @@
-package oauth2
+package token
 
 import (
 	"openauth/storage/application"
@@ -9,40 +9,23 @@ type GrantType string
 
 const (
 	// oauth2 Authorization Grant: https://tools.ietf.org/html/rfc6749#section-1.3
-	AuthorizationCode                GrantType = "authorization_code"
-	Implicit                         GrantType = "implicit"
-	ResourceOwnerPasswordCredentials GrantType = "resource_owner_password_credentials"
-	ClientCredentials                GrantType = "client_credentials"
-	RefreshToken                     GrantType = "refresh_token"
+
+	// AUTHCODE oauth2 Authorization Code Grant
+	AUTHCODE GrantType = "authorization_code"
+	// IMPLICIT oauth2 Implicit Grant
+	IMPLICIT GrantType = "implicit"
+	// PASSWORD oauth2 Resource Owner Password Credentials Grant
+	PASSWORD GrantType = "password"
+	// CLIENT oauth2 Client Credentials Grant
+	CLIENT GrantType = "client_credentials"
+	//REFRESH oauth2 Refreshing an Access Token
+	REFRESH GrantType = "refresh_token"
 )
 
-// AuthCodeRequest https://tools.ietf.org/html/rfc6749#section-4.1.1
-type AuthCodeRequest struct {
-	responseType string
-	clientID     string
-	redirectURI  string
-	scope        string
-	state        string
-}
-
-// Code https://tools.ietf.org/html/rfc6749#section-4.1.2
+// Code is oauth2 auth code https://tools.ietf.org/html/rfc6749#section-4.1.2
 type Code struct {
 	Code  string
 	State string
-}
-
-// TokenRequest use to request token
-// https://tools.ietf.org/html/rfc6749#section-4.1.3
-type TokenRequest struct {
-	grantType    GrantType
-	code         string
-	redirectURI  string
-	clientID     string
-	username     string
-	password     string
-	clientSecret string
-	codeVerifier string
-	state        string
 }
 
 // Token is user's access resource token
@@ -57,14 +40,16 @@ type Token struct {
 	Scope        *Scope `json:"scope"`
 }
 
-// Scope token scope
+// Scope token scope detail https://tools.ietf.org/html/rfc6749#section-3.3
+// here use struct, but when http headler while use rfc format
 type Scope struct {
 	ProjectID string `json:"project_id,omitempty"`
 	DomainID  string `json:"domain_id,omitempty"`
 }
 
-// Service is auth service
-type Service interface {
+// Storage is auth service
+type Storage interface {
+	SaveToken(*Token) error
 	IssueTokenWithProject(userID, projectID string) (*Token, error)
 	IssueTokenWithDomain(userID, domainID string) (*Token, error)
 	IssueTokenByCode(code string) (*Token, error)

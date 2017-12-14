@@ -58,17 +58,20 @@ func (m *manager) Registration(userID, name, redirectURI, clientType, descriptio
 		return nil, exception.NewInternalServerError("prepare insert application stmt error, domain: %s, %s", name, err)
 	}
 
-	clientID, err := makeuuid(10)
+	clientID, err := makeuuid(24)
 	if err != nil {
 		return nil, exception.NewInternalServerError("initial client_id error, %s", err)
 	}
-	clientSecret, err := makeuuid(16)
+	clientSecret, err := makeuuid(32)
 	if err != nil {
 		return nil, exception.NewInternalServerError("initial client_secret error, %s", err)
 	}
 
-	app := application.Application{ID: uuid.NewV4().String(), Name: name, UserID: userID, ClientID: clientID, ClientSecret: clientSecret, ClientType: clientType, Website: website, Description: description, RedirectURI: redirectURI, CreateAt: time.Now().Unix()}
-	_, err = createStmt.Exec(app.ID, app.Name, app.UserID, app.ClientID, app.ClientSecret, app.ClientType, app.Website, app.LogoImage, app.Description, app.RedirectURI, app.CreateAt)
+	client := application.Client{ClientID: clientID, ClientSecret: clientSecret, ClientType: clientType, RedirectURI: redirectURI}
+	app := application.Application{ID: uuid.NewV4().String(), Name: name, UserID: userID, Website: website, Description: description, CreateAt: time.Now().Unix()}
+	app.Client = &client
+
+	_, err = createStmt.Exec(app.ID, app.Name, app.UserID, client.ClientID, client.ClientSecret, client.ClientType, app.Website, app.LogoImage, app.Description, client.RedirectURI, app.CreateAt)
 	if err != nil {
 		return nil, exception.NewInternalServerError("insert application exec sql err, %s", err)
 	}
@@ -148,18 +151,34 @@ func (m *manager) GetUserApps(userID string) ([]*application.Application, error)
 	applications := []*application.Application{}
 	for rows.Next() {
 		app := application.Application{}
-		if err := rows.Scan(&app.ID, &app.Name, &app.UserID, &app.ClientID, &app.ClientSecret, &app.ClientType, &app.Website, &app.LogoImage, &app.Description, &app.RedirectURI, &app.CreateAt); err != nil {
+		cli := application.Client{}
+		if err := rows.Scan(&app.ID, &app.Name, &app.UserID, &cli.ClientID, &cli.ClientSecret, &cli.ClientType, &app.Website, &app.LogoImage, &app.Description, &cli.RedirectURI, &app.CreateAt); err != nil {
 			return nil, exception.NewInternalServerError("scan application record error, %s", err)
 		}
+		app.Client = &cli
 		applications = append(applications, &app)
 	}
 	return applications, nil
 }
 
+func (m *manager) GetClient(clientID string) (*application.Client, error) {
+	cli := new(application.Client)
+	err := m.db.QueryRow("SELECT client_id,client_secret,client_type,redirect_uri FROM application WHERE client_id = ?", clientID).Scan(&cli.ClientID, &cli.ClientSecret, &cli.ClientType, &cli.RedirectURI)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, exception.NewNotFound("client %s not find", clientID)
+		}
+
+		return nil, exception.NewInternalServerError("query single application's client error, %s", err)
+	}
+
+	return cli, nil
+}
+
 func makeuuid(lenth int) (string, error) {
 	charlist := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	password := make([]string, lenth)
-	rand.Seed(time.Now().Unix() + int64(lenth))
+	rand.Seed(time.Now().UnixNano() + int64(lenth))
 	for i := 0; i < lenth; i++ {
 		rn := rand.Intn(len(charlist))
 		w := charlist[rn : rn+1]

@@ -35,6 +35,11 @@ type BadRequest struct {
 	*apiException
 }
 
+// BadRequest exception
+type Unauthorized struct {
+	*apiException
+}
+
 // NewAPIException is openauth api error
 func NewAPIException(text string, code int) error {
 	return &apiException{msg: text, code: code}
@@ -58,5 +63,12 @@ func NewNotFound(format string, args ...interface{}) error {
 func NewBadRequest(format string, args ...interface{}) error {
 	excp := new(BadRequest)
 	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), code: http.StatusBadRequest}
+	return excp
+}
+
+// NewUnauthorized for 401
+func NewUnauthorized(format string, args ...interface{}) error {
+	excp := new(Unauthorized)
+	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), code: http.StatusUnauthorized}
 	return excp
 }
