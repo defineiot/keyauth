@@ -37,10 +37,10 @@ func InitController(conf *config.Config) error {
 	}
 
 	once.Do(func() {
-		domainstr := domainmysql.NewDomainService(db)
-		projectstr := projectmysql.NewProjectService(db)
-		userstr := usermysql.NewUserService(db, conf.APP.Key, log)
-		appstr := appmysql.NewApplicationService(db)
+		domainstr := domainmysql.NewDomainStorage(db)
+		projectstr := projectmysql.NewProjectStorage(db)
+		userstr := usermysql.NewUserStorage(db, conf.APP.Key, log)
+		appstr := appmysql.NewApplicationStorage(db)
 
 		domain.InitController(domainstr, log)
 		project.InitController(log, domainstr, projectstr, userstr)

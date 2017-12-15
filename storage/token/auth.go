@@ -1,7 +1,8 @@
 package token
 
 import (
-	"openauth/storage/application"
+	"openauth/api/exception"
+	"time"
 )
 
 // GrantType is the type for OAuth2 param `grant_type`
@@ -31,6 +32,7 @@ type Code struct {
 // Token is user's access resource token
 type Token struct {
 	UserID       string    `json:"user_id"`
+	ClientID     string    `json:"-"`
 	GrantType    GrantType `json:"grant_type"`
 	AccessToken  string    `json:"access_token"`
 	RefreshToken string    `json:"refresh_token,omitempty"`
@@ -49,12 +51,43 @@ type Scope struct {
 
 // Storage is auth service
 type Storage interface {
-	SaveToken(*Token) error
-	IssueTokenWithProject(userID, projectID string) (*Token, error)
-	IssueTokenWithDomain(userID, domainID string) (*Token, error)
-	IssueTokenByCode(code string) (*Token, error)
-	IssueAuthCode(app *application.Application) (*Code, error)
-	ValidateToken(accessToken string) (*Token, error)
-	RefreshToken(refreshToken string) (*Token, error)
-	RevokeToken(accessToken string) error
+	SaveToken(t *Token) (*Token, error)
+	// IssueTokenWithProject(userID, projectID string) (*Token, error)
+	// IssueTokenWithDomain(userID, domainID string) (*Token, error)
+	// IssueTokenByCode(code string) (*Token, error)
+	// IssueAuthCode(app *application.Application) (*Code, error)
+	// ValidateToken(accessToken string) (*Token, error)
+	// RefreshToken(refreshToken string) (*Token, error)
+	// RevokeToken(accessToken string) error
+}
+
+// Validate use to validate token to save
+func (t *Token) Validate() error {
+	if t.ClientID == "" || t.UserID == "" {
+		return exception.NewBadRequest("token's client_id or user_id is missed")
+	}
+	if t.AccessToken == "" {
+		return exception.NewInternalServerError("token's access token must'nt be \"\"")
+	}
+	if t.Scope == nil {
+		return exception.NewBadRequest("token's scope must'nt be null")
+	}
+	if t.Scope.DomainID == "" && t.Scope.ProjectID == "" {
+		return exception.NewBadRequest("token's scope domain or project must choice one")
+	}
+	if t.TokenType != "bearer" && t.TokenType != "jwt" {
+		return exception.NewInternalServerError("token's type must one of bearer or jwt")
+	}
+	if t.GrantType != AUTHCODE && t.GrantType != IMPLICIT && t.GrantType != PASSWORD && t.GrantType != CLIENT && t.GrantType != REFRESH {
+		return exception.NewBadRequest("grant_type must one of authorization_code,implicit,password,client_credentials,refresh_token")
+	}
+
+	if t.CreatedAt == 0 {
+		t.CreatedAt = time.Now().Unix()
+	}
+	if t.ExpiresIn == 0 {
+		t.ExpiresIn = 3600
+	}
+
+	return nil
 }

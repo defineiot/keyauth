@@ -16,8 +16,8 @@ var (
 	deletePrepare *sql.Stmt
 )
 
-// NewDomainService use to create domain storage service
-func NewDomainService(db *sql.DB) domain.Storage {
+// NewDomainStorage use to create domain storage service
+func NewDomainStorage(db *sql.DB) domain.Storage {
 	return &manager{db: db}
 }
 

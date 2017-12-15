@@ -65,14 +65,17 @@ COMMENT = '用户密码表';
 
 CREATE TABLE `token` (
 `id` int(11) NOT NULL AUTO_INCREMENT,
+`grant_type` varchar(64) NULL,
+`access_token` varchar(255) NOT NULL,
+`refresh_token` varchar(255) NOT NULL DEFAULT '',
+`type` varchar(64) NOT NULL,
+`create_at` int(64) NOT NULL DEFAULT 0,
 `expire_at` int(64) NOT NULL DEFAULT 0,
-`token` varchar(255) NOT NULL,
-`type` int(2) NOT NULL,
-`purpose` int(2) NULL,
 `client_id` varchar(64) NULL,
 `user_id` varchar(11) NULL,
+`domian_id` varchar(255) NOT NULL DEFAULT '',
+`project_id` varchar(255) NOT NULL DEFAULT '',
 `extra` text NOT NULL DEFAULT '',
-`create_at` int(64) NOT NULL DEFAULT 0,
 PRIMARY KEY (`id`) 
 )
 ENGINE = InnoDB

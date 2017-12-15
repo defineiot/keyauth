@@ -20,8 +20,8 @@ var (
 	deletePrepare *sql.Stmt
 )
 
-// NewUserService use to new an use service with mysql
-func NewUserService(db *sql.DB, key string, logger logger.OpenAuthLogger) user.Storage {
+// NewUserStorage use to new an use service with mysql
+func NewUserStorage(db *sql.DB, key string, logger logger.OpenAuthLogger) user.Storage {
 	return &manager{db: db, key: key, logger: logger}
 }
 

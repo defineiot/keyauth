@@ -46,7 +46,7 @@ type Controller struct {
 }
 
 // IssueToken use to issue access token
-func (c *Controller) IssueToken(grantType token.GrantType, clientID string, clientSecret string) (*token.Token, error) {
+func (c *Controller) IssueToken(scope *token.Scope, grantType token.GrantType, clientID, clientSecret string) (*token.Token, error) {
 	cli, err := c.as.GetClient(clientID)
 	if err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func (c *Controller) issueTokenByImplicit(clientID, redirectURI string) (*token.
 
 // Resource Owner Password Credentials Grant
 // https://tools.ietf.org/html/rfc6749#section-4.3
-func (c *Controller) issueTokenByPassword(domainname, username, password, scope string) (*token.Token, error) {
+func (c *Controller) issueTokenByPassword(scope *token.Scope, clientID, domainname, username, password string) (*token.Token, error) {
 	dm, err := c.ds.GetDomainByName(domainname)
 	if err != nil {
 		return nil, err
@@ -113,13 +113,16 @@ func (c *Controller) issueTokenByPassword(domainname, username, password, scope 
 		return nil, exception.NewUnauthorized("user password error")
 	}
 
+	scope.DomainID = dm.ID
+
 	t := new(token.Token)
+	t.Scope = scope
 	t.CreatedAt = time.Now().Unix()
 	t.ExpiresIn = c.expiresIn
 	t.GrantType = token.PASSWORD
-	t.Scope = &token.Scope{DomainID: dm.ID}
 	t.TokenType = c.tokenType
 	t.UserID = uid
+	t.ClientID = clientID
 
 	switch c.tokenType {
 	case "bearer":
@@ -130,11 +133,12 @@ func (c *Controller) issueTokenByPassword(domainname, username, password, scope 
 		return nil, exception.NewInternalServerError("unknow token type, %s", c.tokenType)
 	}
 
-	if err := c.ts.SaveToken(t); err != nil {
+	retToken, err := c.ts.SaveToken(t)
+	if err != nil {
 		return nil, err
 	}
 
-	return t, nil
+	return retToken, nil
 }
 
 // Client Credentials Grant
