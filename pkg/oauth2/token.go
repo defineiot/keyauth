@@ -12,7 +12,7 @@ import (
 func makeBearerToken(lenth int) string {
 	charlist := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-._~+/"
 	t := make([]string, lenth)
-	rand.Seed(time.Now().UnixNano() + int64(lenth))
+	rand.Seed(time.Now().UnixNano() + int64(lenth) + rand.Int63n(10000))
 	for i := 0; i < lenth; i++ {
 		rn := rand.Intn(len(charlist))
 		w := charlist[rn : rn+1]

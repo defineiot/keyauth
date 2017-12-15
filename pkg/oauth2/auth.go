@@ -123,7 +123,7 @@ func (c *Controller) issueTokenByPassword(domainname, username, password, scope 
 
 	switch c.tokenType {
 	case "bearer":
-		t.AccessToken = makeBearerToken(32)
+		t.AccessToken = makeBearerToken(24)
 		t.RefreshToken = makeBearerToken(32)
 	case "jwt":
 	default:
