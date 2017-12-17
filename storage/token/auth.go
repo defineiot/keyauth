@@ -19,7 +19,7 @@ const (
 	PASSWORD GrantType = "password"
 	// CLIENT oauth2 Client Credentials Grant
 	CLIENT GrantType = "client_credentials"
-	//REFRESH oauth2 Refreshing an Access Token
+	// REFRESH oauth2 Refreshing an Access Token
 	REFRESH GrantType = "refresh_token"
 )
 

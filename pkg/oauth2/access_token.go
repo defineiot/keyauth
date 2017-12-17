@@ -1,63 +1,33 @@
 package oauth2
 
 import (
-	"sync"
 	"time"
 
 	"openauth/api/exception"
-	"openauth/api/logger"
-	"openauth/storage/application"
-	"openauth/storage/domain"
 	"openauth/storage/token"
-	"openauth/storage/user"
 )
 
-var (
-	controller *Controller
-	once       sync.Once
-)
-
-// GetController use to new an controller
-func GetController() (*Controller, error) {
-	if controller == nil {
-		return nil, exception.NewInternalServerError("domain controller not initial")
-	}
-	return controller, nil
-}
-
-// InitController use to init controller
-func InitController(ts token.Storage, us user.Storage, ds domain.Storage, as application.Storage, log logger.OpenAuthLogger, tokenType string, expiresIn int32) {
-	once.Do(func() {
-		controller = &Controller{ts: ts, us: us, ds: ds, as: as, log: log, tokenType: tokenType, expiresIn: expiresIn}
-		controller.log.Debug("initial token controller successful")
-	})
-	controller.log.Info("token contoller aready initialed")
-}
-
-// Controller is domain pkg
-type Controller struct {
-	ts        token.Storage
-	us        user.Storage
-	ds        domain.Storage
-	as        application.Storage
-	log       logger.OpenAuthLogger
-	tokenType string
-	expiresIn int32
+// TokenRequest use to request access token
+type TokenRequest struct {
+	Scope        *token.Scope
+	GrantType    token.GrantType
+	clientID     string
+	clientSecret string
 }
 
 // IssueToken use to issue access token
-func (c *Controller) IssueToken(scope *token.Scope, grantType token.GrantType, clientID, clientSecret string) (*token.Token, error) {
-	cli, err := c.as.GetClient(clientID)
+func (c *Controller) IssueToken(req *TokenRequest) (*token.Token, error) {
+	cli, err := c.as.GetClient(req.clientID)
 	if err != nil {
 		return nil, err
 	}
-	if grantType != token.IMPLICIT {
-		if clientSecret != cli.ClientSecret {
+	if req.GrantType != token.IMPLICIT {
+		if req.clientSecret != cli.ClientSecret {
 			return nil, exception.NewUnauthorized("unauthorized_client")
 		}
 	}
 
-	switch grantType {
+	switch req.GrantType {
 	case token.AUTHCODE:
 	case token.IMPLICIT:
 	case token.PASSWORD:
@@ -70,34 +40,29 @@ func (c *Controller) IssueToken(scope *token.Scope, grantType token.GrantType, c
 	return nil, nil
 }
 
-// IssueCode use to issue auth code
-func (c *Controller) IssueCode() {
-
-}
-
 // ValidateToken use to valdiate token
 func (c *Controller) ValidateToken() {
 
 }
 
-// RefreshToken refresh token
-func (c *Controller) RefreshToken() {
+// RevolkToken refresh token
+func (c *Controller) RevolkToken() {
 
 }
 
-// Authorization Code Grant
+// issueTokenByAuthCode implement Authorization Code Grant
 // https://tools.ietf.org/html/rfc6749#section-4.1.3
 func (c *Controller) issueTokenByAuthCode(clientID, clientSecret, code, redirectURI string) (*token.Token, error) {
 	return nil, nil
 }
 
-// Implicit Grant
+// issueTokenByImplicit implement Implicit Grant
 // https://tools.ietf.org/html/rfc6749#section-4.2
 func (c *Controller) issueTokenByImplicit(clientID, redirectURI string) (*token.Token, error) {
 	return nil, nil
 }
 
-// Resource Owner Password Credentials Grant
+// issueTokenByPassword implement Resource Owner Password Credentials Grant
 // https://tools.ietf.org/html/rfc6749#section-4.3
 func (c *Controller) issueTokenByPassword(scope *token.Scope, clientID, domainname, username, password string) (*token.Token, error) {
 	dm, err := c.ds.GetDomainByName(domainname)
@@ -141,13 +106,13 @@ func (c *Controller) issueTokenByPassword(scope *token.Scope, clientID, domainna
 	return retToken, nil
 }
 
-// Client Credentials Grant
+// issuteTokenByClient implement Client Credentials Grant
 // https://tools.ietf.org/html/rfc6749#section-4.4.2
 func (c *Controller) issuteTokenByClient(clientID, clientSecret, scope string) (*token.Token, error) {
 	return nil, nil
 }
 
-// Refreshing an Access Token
+// issueTokenByRefresh implement Refreshing an Access Token
 // https://tools.ietf.org/html/rfc6749#section-6
 func (c *Controller) issueTokenByRefresh(cientID, clientSecret, refreshToken string) (*token.Token, error) {
 	return nil, nil
