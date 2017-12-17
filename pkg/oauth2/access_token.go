@@ -9,35 +9,117 @@ import (
 
 // TokenRequest use to request access token
 type TokenRequest struct {
-	Scope        *token.Scope
-	GrantType    token.GrantType
-	clientID     string
-	clientSecret string
+	Scope               *token.Scope
+	GrantType           token.GrantType
+	ClientID            string
+	ClientSecret        string
+	AuthorizationHeader string
+	DomainName          string
+	Username            string
+	Password            string
+	Code                string
+	RedirectURI         string
+	RefreshToken        string
+}
+
+// Validate validate the request
+func (t *TokenRequest) Validate() error {
+	if t.Scope == nil {
+		return exception.NewBadRequest("scope must'nt be nil")
+	}
+	if t.Scope.DomainID == "" && t.Scope.ProjectID == "" {
+		return exception.NewBadRequest("scope's domain id or project id must choice one")
+	}
+
+	switch t.GrantType {
+	case token.AUTHCODE:
+		if t.Code == "" {
+			return exception.NewBadRequest("if use %s grant type, code is needed", t.GrantType)
+		}
+		if t.RedirectURI == "" {
+			return exception.NewBadRequest("if use %s grant type, redirect uri is need", t.GrantType)
+		}
+		goto CHECK_CLIENT
+
+	case token.IMPLICIT:
+		if t.ClientID == "" {
+			return exception.NewBadRequest("if use %s grant type, client id is needed", t.GrantType)
+		}
+		if t.RedirectURI == "" {
+			return exception.NewBadRequest("if use %s grant type, redirect uri is need", t.GrantType)
+		}
+
+	case token.PASSWORD:
+		if t.DomainName == "" || t.Username == "" || t.Password == "" {
+			return exception.NewBadRequest("if use %s grant type, domainname, username, password is needed", t.GrantType)
+		}
+		goto CHECK_CLIENT
+
+	case token.CLIENT:
+		goto CHECK_CLIENT
+
+	case token.REFRESH:
+		if t.RefreshToken == "" {
+			return exception.NewBadRequest("if use %s grant type, refresh token is needed", t.GrantType)
+		}
+		goto CHECK_CLIENT
+
+	default:
+		return exception.NewBadRequest("invalid_grant")
+	}
+
+CHECK_CLIENT:
+	if t.ClientID == "" || t.ClientSecret == "" {
+		return exception.NewBadRequest("if use %s grant type, client id and client secret is needed", t.GrantType)
+	}
+
+	return nil
 }
 
 // IssueToken use to issue access token
 func (c *Controller) IssueToken(req *TokenRequest) (*token.Token, error) {
-	cli, err := c.as.GetClient(req.clientID)
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	cli, err := c.as.GetClient(req.ClientID)
 	if err != nil {
 		return nil, err
 	}
+
 	if req.GrantType != token.IMPLICIT {
-		if req.clientSecret != cli.ClientSecret {
+		if req.ClientSecret != cli.ClientSecret {
 			return nil, exception.NewUnauthorized("unauthorized_client")
 		}
 	}
 
+	var t *token.Token
 	switch req.GrantType {
 	case token.AUTHCODE:
+		t, err = c.issueTokenByAuthCode(req.ClientID, req.Code, req.RedirectURI)
+		goto DEAL_ERROR
 	case token.IMPLICIT:
+		t, err = c.issueTokenByImplicit(req.ClientID, req.RedirectURI)
+		goto DEAL_ERROR
 	case token.PASSWORD:
+		t, err = c.issueTokenByPassword(req.Scope, cli.ClientID, req.DomainName, req.Username, req.Password)
+		goto DEAL_ERROR
 	case token.CLIENT:
+		t, err = c.issuteTokenByClient(req.ClientID, req.Scope)
+		goto DEAL_ERROR
 	case token.REFRESH:
+		t, err = c.issueTokenByRefresh(req.ClientID, req.RefreshToken)
+		goto DEAL_ERROR
 	default:
 		return nil, exception.NewBadRequest("invalid_grant")
 	}
 
-	return nil, nil
+DEAL_ERROR:
+	if err != nil {
+		return nil, err
+	}
+
+	return t, nil
 }
 
 // ValidateToken use to valdiate token
@@ -52,7 +134,7 @@ func (c *Controller) RevolkToken() {
 
 // issueTokenByAuthCode implement Authorization Code Grant
 // https://tools.ietf.org/html/rfc6749#section-4.1.3
-func (c *Controller) issueTokenByAuthCode(clientID, clientSecret, code, redirectURI string) (*token.Token, error) {
+func (c *Controller) issueTokenByAuthCode(clientID, code, redirectURI string) (*token.Token, error) {
 	return nil, nil
 }
 
@@ -108,12 +190,12 @@ func (c *Controller) issueTokenByPassword(scope *token.Scope, clientID, domainna
 
 // issuteTokenByClient implement Client Credentials Grant
 // https://tools.ietf.org/html/rfc6749#section-4.4.2
-func (c *Controller) issuteTokenByClient(clientID, clientSecret, scope string) (*token.Token, error) {
+func (c *Controller) issuteTokenByClient(clientID string, scope *token.Scope) (*token.Token, error) {
 	return nil, nil
 }
 
 // issueTokenByRefresh implement Refreshing an Access Token
 // https://tools.ietf.org/html/rfc6749#section-6
-func (c *Controller) issueTokenByRefresh(cientID, clientSecret, refreshToken string) (*token.Token, error) {
+func (c *Controller) issueTokenByRefresh(cientID, refreshToken string) (*token.Token, error) {
 	return nil, nil
 }

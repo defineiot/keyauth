@@ -44,9 +44,7 @@ func (s *Service) Start() error {
 	n := negroni.New()
 
 	r := router.NewRouter()
-	r.RouteToDomain()
-	r.RouteToProject()
-	r.RouteToUser()
+	r.RouteToV1()
 
 	// includes some default middlewares
 	corsM := cors.New(cors.Options{

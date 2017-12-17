@@ -13,8 +13,8 @@ import (
 
 // MyRouter is an hack for httprouter
 type MyRouter struct {
-	Router       *httprouter.Router
-	feathureList []string
+	Router    *httprouter.Router
+	endpoints map[string]string
 }
 
 // NewRouter use to new an router
@@ -25,9 +25,9 @@ func NewRouter() *MyRouter {
 		HandleMethodNotAllowed: true,
 		HandleOPTIONS:          true,
 	}
-	fl := []string{}
+	ep := make(map[string]string)
 
-	r := &MyRouter{Router: hrouter, feathureList: fl}
+	r := &MyRouter{Router: hrouter, endpoints: ep}
 
 	return r
 }
@@ -48,12 +48,12 @@ func (r *MyRouter) HandlerFunc(method, path string, handleFunc http.HandlerFunc)
 	fn := runtime.FuncForPC(reflect.ValueOf(handleFunc).Pointer()).Name()
 	feathure := strings.Split(fn, ".")[1]
 
-	r.feathureList = append(r.feathureList, feathure)
+	r.endpoints[path] = feathure
 
 	r.Handler(method, path, http.HandlerFunc(handleFunc), feathure)
 }
 
-// GetFunctionList get router's fl
-func (r *MyRouter) GetFunctionList() []string {
-	return r.feathureList
+// GetEndpoints get router's fl
+func (r *MyRouter) GetEndpoints() map[string]string {
+	return r.endpoints
 }

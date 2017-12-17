@@ -7,12 +7,14 @@ import (
 	"openauth/api/logger"
 	"openauth/pkg/application"
 	"openauth/pkg/domain"
+	"openauth/pkg/oauth2"
 	"openauth/pkg/project"
 	"openauth/pkg/user"
 
 	appmysql "openauth/storage/application/mysql"
 	domainmysql "openauth/storage/domain/mysql"
 	projectmysql "openauth/storage/project/mysql"
+	tokenmysql "openauth/storage/token/mysql"
 	usermysql "openauth/storage/user/mysql"
 )
 
@@ -21,6 +23,7 @@ var (
 	projectsrv *project.Controller
 	usersrv    *user.Controller
 	appsrv     *application.Controller
+	authsrc    *oauth2.Controller
 	log        logger.OpenAuthLogger
 	once       sync.Once
 )
@@ -41,11 +44,13 @@ func InitController(conf *config.Config) error {
 		projectstr := projectmysql.NewProjectStorage(db)
 		userstr := usermysql.NewUserStorage(db, conf.APP.Key, log)
 		appstr := appmysql.NewApplicationStorage(db)
+		tokenstr := tokenmysql.NewTokenStorage(db)
 
 		domain.InitController(domainstr, log)
 		project.InitController(log, domainstr, projectstr, userstr)
 		user.InitController(log, userstr, domainstr, projectstr)
 		application.InitController(log, appstr, userstr)
+		oauth2.InitController(tokenstr, userstr, domainstr, appstr, log, conf.Token.Type, conf.Token.ExpiresIn)
 	})
 
 	domainsrv, err = domain.GetController()
@@ -61,6 +66,10 @@ func InitController(conf *config.Config) error {
 		return err
 	}
 	appsrv, err = application.GetController()
+	if err != nil {
+		return err
+	}
+	authsrc, err = oauth2.GetController()
 	if err != nil {
 		return err
 	}
