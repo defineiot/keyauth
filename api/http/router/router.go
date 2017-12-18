@@ -25,6 +25,10 @@ func NewRouter() *MyRouter {
 		HandleMethodNotAllowed: true,
 		HandleOPTIONS:          true,
 	}
+
+	hrouter.NotFound = new(notFoundHandler)
+	hrouter.MethodNotAllowed = new(methodNotAllowedHandler)
+
 	ep := make(map[string]string)
 
 	r := &MyRouter{Router: hrouter, endpoints: ep}

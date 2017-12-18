@@ -35,15 +35,20 @@ type BadRequest struct {
 	*apiException
 }
 
-// BadRequest exception
+// Unauthorized exception
 type Unauthorized struct {
 	*apiException
 }
 
-// NewAPIException is openauth api error
-func NewAPIException(text string, code int) error {
-	return &apiException{msg: text, code: code}
+// MethodNotAllowed exception
+type MethodNotAllowed struct {
+	*apiException
 }
+
+// NewAPIException is openauth api error
+// func NewAPIException(text string, code int) error {
+// 	return &apiException{msg: text, code: code}
+// }
 
 // NewInternalServerError for 503
 func NewInternalServerError(format string, args ...interface{}) error {
@@ -70,5 +75,12 @@ func NewBadRequest(format string, args ...interface{}) error {
 func NewUnauthorized(format string, args ...interface{}) error {
 	excp := new(Unauthorized)
 	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), code: http.StatusUnauthorized}
+	return excp
+}
+
+// NewMethodNotAllowed for 405
+func NewMethodNotAllowed(format string, args ...interface{}) error {
+	excp := new(MethodNotAllowed)
+	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), code: http.StatusMethodNotAllowed}
 	return excp
 }
