@@ -30,7 +30,7 @@ type Storage interface {
 	GetDomain(domainID string) (*Domain, error)
 	GetDomainByName(name string) (*Domain, error)
 	// List all Domain, Only super admin are allowed to operate
-	ListDomain(pageNumber, pageSize string) (domains []*Domain, totalPage int64, err error)
+	ListDomain(pageNumber, pageSize int64) (domains []*Domain, totalPage int64, err error)
 	// Update a Domain, super admin & domain admin are allowed to operate
 	UpdateDomain(id, name, description string) (*Domain, error)
 	// Soft Delete a Domain, Domain still in persistence storage, Only super admin are allowed to operate

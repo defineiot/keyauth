@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"database/sql"
-	"strconv"
 	"sync"
 	"time"
 
@@ -89,32 +88,17 @@ func (m *manager) GetDomainByName(name string) (*domain.Domain, error) {
 }
 
 // ListDomain use to list all domains
-func (m *manager) ListDomain(pageNumber, pageSize string) ([]*domain.Domain, int64, error) {
+func (m *manager) ListDomain(pageNumber, pageSize int64) ([]*domain.Domain, int64, error) {
 	var (
 		rows   *sql.Rows
 		err    error
-		pn     int64
-		ps     int64
 		totalP int64
 	)
 
-	if pageNumber != "" {
-		pn, err = strconv.ParseInt(pageNumber, 10, 64)
-		if err != nil {
-			return nil, 0, exception.NewBadRequest("page_size must be number")
-		}
-	}
-	if pageSize != "" {
-		ps, err = strconv.ParseInt(pageSize, 10, 64)
-		if err != nil {
-			return nil, 0, exception.NewBadRequest("page_number must be number")
-		}
-	}
+	offset := (pageNumber - 1) * pageSize
+	limit := pageSize
 
-	offset := (pn - 1) * ps
-	limit := ps
-
-	if ps != 0 {
+	if pageSize != 0 {
 		rows, err = m.db.Query("SELECT id,name,display_name,description,enabled,create_at,update_at FROM domain ORDER BY create_at DESC LIMIT ?,?", offset, limit)
 	} else {
 		rows, err = m.db.Query("SELECT id,name,display_name,description,enabled,create_at,update_at FROM domain ORDER BY create_at DESC")
@@ -138,12 +122,12 @@ func (m *manager) ListDomain(pageNumber, pageSize string) ([]*domain.Domain, int
 		return nil, 0, err
 	}
 
-	if ps != 0 {
-		if total < ps {
+	if pageSize != 0 {
+		if total < pageSize {
 			totalP = 1
 		} else {
-			ok := total % ps
-			totalP = total / ps
+			ok := total % pageSize
+			totalP = total / pageSize
 			if ok != 0 {
 				totalP++
 			}

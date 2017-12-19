@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"openauth/api/exception"
 	"openauth/api/http/context"
@@ -55,10 +56,31 @@ func GetDomain(w http.ResponseWriter, r *http.Request) {
 
 // ListDomain domain list
 func ListDomain(w http.ResponseWriter, r *http.Request) {
+	var (
+		ps  int64
+		pn  int64
+		err error
+	)
+
 	pageNumber := r.URL.Query().Get("page_number")
 	pageSize := r.URL.Query().Get("page_size")
 
-	doms, totalP, err := domainsrv.ListDomain(pageNumber, pageSize)
+	if pageNumber != "" {
+		pn, err = strconv.ParseInt(pageNumber, 10, 64)
+		if err != nil {
+			response.Failed(w, exception.NewBadRequest("page_size must be number"))
+			return
+		}
+	}
+	if pageSize != "" {
+		ps, err = strconv.ParseInt(pageSize, 10, 64)
+		if err != nil {
+			response.Failed(w, exception.NewBadRequest("page_number must be number"))
+			return
+		}
+	}
+
+	doms, totalP, err := domainsrv.ListDomain(pn, ps)
 	if err != nil {
 		response.Failed(w, err)
 		return

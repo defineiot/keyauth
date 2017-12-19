@@ -47,7 +47,7 @@ func (c *Controller) CreateDomain(name, description, displayName string, enabled
 }
 
 // ListDomain use to list all domains
-func (c *Controller) ListDomain(pageNumber, pageSize string) ([]*domain.Domain, int64, error) {
+func (c *Controller) ListDomain(pageNumber, pageSize int64) ([]*domain.Domain, int64, error) {
 	doms, totalPage, err := c.ds.ListDomain(pageNumber, pageSize)
 	if err != nil {
 		return nil, 0, err
