@@ -10,10 +10,7 @@ func (r *MyRouter) RouteToV1() {
 	r.routeToProject()
 	r.routeToUser()
 	r.routeToAuth()
-}
-
-func (r *MyRouter) routeToV1Root() {
-
+	r.AddV1Root()
 }
 
 // RouteToDomain use to deal message
@@ -60,10 +57,10 @@ func (r *MyRouter) routeToUser() {
 func (r *MyRouter) routeToAuth() {
 	// Token Endpoint https://tools.ietf.org/html/rfc6749#section-3.2
 	r.HandlerFunc("POST", "/v1/oauth2/tokens/", handler.IssueToken)
-	r.HandlerFunc("GET", "/v1/oauth2/token/", handler.ListDomain)
-	r.HandlerFunc("GET", "/v1/oauth2/tokens/", handler.ListProject)
-	r.HandlerFunc("DELETE", "/v1/oauth2/tokens/", handler.DeleteProject)
+	// r.HandlerFunc("GET", "/v1/oauth2/token/", handler.ListDomain)
+	// r.HandlerFunc("GET", "/v1/oauth2/tokens/", handler.ListProject)
+	// r.HandlerFunc("DELETE", "/v1/oauth2/tokens/", handler.DeleteProject)
 
-	// Authorization Endpoint https://tools.ietf.org/html/rfc6749#section-3.1
-	r.HandlerFunc("GET", "/v1/oauth2/authorize/", handler.ListProjectUsers)
+	// // Authorization Endpoint https://tools.ietf.org/html/rfc6749#section-3.1
+	// r.HandlerFunc("GET", "/v1/oauth2/authorize/", handler.ListProjectUsers)
 }
