@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"strconv"
 	"sync"
 	"time"
 
@@ -88,10 +89,38 @@ func (m *manager) GetDomainByName(name string) (*domain.Domain, error) {
 }
 
 // ListDomain use to list all domains
-func (m *manager) ListDomain() ([]*domain.Domain, error) {
-	rows, err := m.db.Query("SELECT id,name,display_name,description,enabled,create_at,update_at FROM domain ORDER BY create_at DESC")
+func (m *manager) ListDomain(pageNumber, pageSize string) ([]*domain.Domain, int64, error) {
+	var (
+		rows   *sql.Rows
+		err    error
+		pn     int64
+		ps     int64
+		totalP int64
+	)
+
+	if pageNumber != "" {
+		pn, err = strconv.ParseInt(pageNumber, 10, 64)
+		if err != nil {
+			return nil, 0, exception.NewBadRequest("page_size must be number")
+		}
+	}
+	if pageSize != "" {
+		ps, err = strconv.ParseInt(pageSize, 10, 64)
+		if err != nil {
+			return nil, 0, exception.NewBadRequest("page_number must be number")
+		}
+	}
+
+	offset := (pn - 1) * ps
+	limit := ps
+
+	if ps != 0 {
+		rows, err = m.db.Query("SELECT id,name,display_name,description,enabled,create_at,update_at FROM domain ORDER BY create_at DESC LIMIT ?,?", offset, limit)
+	} else {
+		rows, err = m.db.Query("SELECT id,name,display_name,description,enabled,create_at,update_at FROM domain ORDER BY create_at DESC")
+	}
 	if err != nil {
-		return nil, exception.NewInternalServerError("query domain list error, %s", err)
+		return nil, 0, exception.NewInternalServerError("query domain list error, %s", err)
 	}
 	defer rows.Close()
 
@@ -99,12 +128,40 @@ func (m *manager) ListDomain() ([]*domain.Domain, error) {
 	for rows.Next() {
 		dom := domain.Domain{}
 		if err := rows.Scan(&dom.ID, &dom.Name, &dom.DisplayName, &dom.Description, &dom.Enabled, &dom.CreateAt, &dom.UpdateAt); err != nil {
-			return nil, exception.NewInternalServerError("scan domain record error, %s", err)
+			return nil, 0, exception.NewInternalServerError("scan domain record error, %s", err)
 		}
 		domains = append(domains, &dom)
 	}
 
-	return domains, nil
+	total, err := m.domainCount()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if ps != 0 {
+		if total < ps {
+			totalP = 1
+		} else {
+			ok := total % ps
+			totalP = total / ps
+			if ok != 0 {
+				totalP++
+			}
+		}
+	} else {
+		totalP = 1
+	}
+
+	return domains, totalP, nil
+}
+
+func (m *manager) domainCount() (int64, error) {
+	count := int64(0)
+	if err := m.db.QueryRow("SELECT COUNT(*) FROM domain").Scan(&count); err != nil {
+		return 0, exception.NewInternalServerError("count domain record error, %s", err)
+	}
+
+	return count, nil
 }
 
 // UpdateDomain use to update an domain

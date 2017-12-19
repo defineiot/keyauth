@@ -47,13 +47,13 @@ func (c *Controller) CreateDomain(name, description, displayName string, enabled
 }
 
 // ListDomain use to list all domains
-func (c *Controller) ListDomain() ([]*domain.Domain, error) {
-	doms, err := c.ds.ListDomain()
+func (c *Controller) ListDomain(pageNumber, pageSize string) ([]*domain.Domain, int64, error) {
+	doms, totalPage, err := c.ds.ListDomain(pageNumber, pageSize)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return doms, nil
+	return doms, totalPage, nil
 }
 
 // GetDomain use to get an domain

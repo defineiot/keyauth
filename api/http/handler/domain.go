@@ -55,13 +55,16 @@ func GetDomain(w http.ResponseWriter, r *http.Request) {
 
 // ListDomain domain list
 func ListDomain(w http.ResponseWriter, r *http.Request) {
-	doms, err := domainsrv.ListDomain()
+	pageNumber := r.URL.Query().Get("page_number")
+	pageSize := r.URL.Query().Get("page_size")
+
+	doms, totalP, err := domainsrv.ListDomain(pageNumber, pageSize)
 	if err != nil {
 		response.Failed(w, err)
 		return
 	}
 
-	response.Success(w, http.StatusOK, doms)
+	response.SuccessWithPage(w, http.StatusOK, doms, totalP)
 	return
 }
 

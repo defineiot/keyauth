@@ -8,9 +8,10 @@ import (
 
 // Response to be used by controllers.
 type Response struct {
-	Status  string      `json:"status"`
-	Message string      `json:"message,omitempty"`
-	Data    interface{} `json:"data,omitempty"`
+	Status   string      `json:"status"`
+	Message  string      `json:"message,omitempty"`
+	Data     interface{} `json:"data,omitempty"`
+	TotalPag int64       `json:"total_page,omitempty"`
 }
 
 // Failed use to response error messge
@@ -58,6 +59,30 @@ func Success(w http.ResponseWriter, code int, data interface{}) {
 		Status:  "success",
 		Message: "",
 		Data:    data,
+	}
+
+	// set response heanders
+	w.Header().Set("Content-Type", "application/json")
+
+	respByt, err := json.Marshal(resp)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"status":"error", "message": "encoding to json error"}`))
+		return
+	}
+
+	w.WriteHeader(code)
+	w.Write(respByt)
+	return
+}
+
+// SuccessWithPage use to response success data
+func SuccessWithPage(w http.ResponseWriter, code int, data interface{}, totoalPage int64) {
+	resp := Response{
+		Status:   "success",
+		Message:  "",
+		Data:     data,
+		TotalPag: totoalPage,
 	}
 
 	// set response heanders
