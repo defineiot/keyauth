@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/rs/cors"
 	"github.com/urfave/negroni"
@@ -79,8 +80,18 @@ func (s *Service) Start() error {
 
 	addr := fmt.Sprintf("%s:%s", s.conf.APP.Host, s.conf.APP.Port)
 	s.logger.Infof("starting openauth service at %s", addr)
-	if err := http.ListenAndServe(addr, n); err != nil {
+
+	srv := &http.Server{
+		ReadHeaderTimeout: 3 * time.Second,
+		ReadTimeout:       5 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       120 * time.Second,
+		Addr:              addr,
+		Handler:           n,
+	}
+	if err := srv.ListenAndServe(); err != nil {
 		return fmt.Errorf("start openauth error, %s", err.Error())
 	}
+
 	return nil
 }
