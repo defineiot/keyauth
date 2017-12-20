@@ -105,7 +105,7 @@ func (c *Controller) IssueToken(req *TokenRequest) (*token.Token, error) {
 		t, err = c.issueTokenByPassword(req.Scope, cli.ClientID, req.DomainName, req.Username, req.Password)
 		goto DEAL_ERROR
 	case token.CLIENT:
-		t, err = c.issuteTokenByClient(req.ClientID, req.Scope)
+		t, err = c.issueTokenByClient(req.ClientID, req.Scope)
 		goto DEAL_ERROR
 	case token.REFRESH:
 		t, err = c.issueTokenByRefresh(req.ClientID, req.RefreshToken)
@@ -122,13 +122,13 @@ DEAL_ERROR:
 	return t, nil
 }
 
-// ValidateToken use to valdiate token
+// ValidateToken use to validate token
 func (c *Controller) ValidateToken() {
 
 }
 
-// RevolkToken refresh token
-func (c *Controller) RevolkToken() {
+// RevokeToken refresh token
+func (c *Controller) RevokeToken() {
 
 }
 
@@ -180,7 +180,7 @@ func (c *Controller) issueTokenByPassword(scope *token.Scope, clientID, domainna
 		t.RefreshToken = makeBearerToken(32)
 	case "jwt":
 	default:
-		return nil, exception.NewInternalServerError("unknow token type, %s", c.tokenType)
+		return nil, exception.NewInternalServerError("unknown token type, %s", c.tokenType)
 	}
 
 	retToken, err := c.ts.SaveToken(t)
@@ -191,9 +191,9 @@ func (c *Controller) issueTokenByPassword(scope *token.Scope, clientID, domainna
 	return retToken, nil
 }
 
-// issuteTokenByClient implement Client Credentials Grant
+// issueTokenByClient implement Client Credentials Grant
 // https://tools.ietf.org/html/rfc6749#section-4.4.2
-func (c *Controller) issuteTokenByClient(clientID string, scope *token.Scope) (*token.Token, error) {
+func (c *Controller) issueTokenByClient(clientID string, scope *token.Scope) (*token.Token, error) {
 	return nil, nil
 }
 

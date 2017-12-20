@@ -1,57 +1,63 @@
-#!/usr/bin/sh
+#!/usr/bin/env bash
 
+function _info(){
+    local msg=$1
+    local now=`date '+%Y-%m-%d %H:%M:%S'`
+    echo -e "\033[44;37m [INFO] ${now} ${msg} \033[0m"
+}
 function get_tag () {
-    tag=$(git describe --exact-match --tags)
+    local tag=$(git describe --exact-match --tags)
 
     if ! [ $? -eq 0 ]; then
-        tag='unknown'
+        local tag='unknown'
     else
-        tag=$(echo $tag | cut -d '-' -f 1,2)
+        local tag=$(echo ${tag} | cut -d '-' -f 1,2)
     fi
 
-    echo $tag
+    echo ${tag}
 }
 
 function get_branch () {
-    branch=$(git rev-parse --abbrev-ref HEAD)
+    local branch=$(git rev-parse --abbrev-ref HEAD)
 
     if ! [ $? -eq 0 ]; then
-        branch='unknown'
+        local branch='unknown'
     fi
 
-    echo $branch
+    echo ${branch}
 }
 
 function get_commit () {
-    commit=$(git rev-parse HEAD)
+    local commit=$(git rev-parse HEAD)
 
     if ! [ $? -eq 0 ]; then
-        commit='unknown'
+        local commit='unknown'
     fi
 
-    echo $commit
+    echo ${commit}
 }
 
 
 function main() {
-    echo -e "\n========================================================"
-    echo -e "start get version ..."
+    _info "start get version ..."
 
     TAG=$(get_tag)
     BRANCH=$(get_branch)
     COMMIT=$(get_commit)
     DATE=$(date '+%Y-%m-%d %H:%M:%S')
-    
+
     Path="openauth/api/version"
-    echo -e "collect project verion from git: tag:$TAG, data:$DATE, branch:$BRANCH, commit:$COMMIT"
+    _info "collect project verion from git: tag:$TAG, data:$DATE, branch:$BRANCH, commit:$COMMIT"
 
-    echo -e "start build ..."
+    _info "start build ..."
     echo -e ""
-    docker run --rm -e 'CGO_ENABLED=0' -e 'GOOS=linux' -e 'GOARCH=amd64' -v "$PWD":/go/src/openauth -w /go/src/openauth golang:1.9 go build -v -a -o openauth -ldflags "-X '$Path.GIT_TAG=${TAG}' -X '$Path.GIT_BRANCH=${BRANCH}' -X '$Path.GIT_COMMIT=${COMMIT}' -X '$Path.BUILD_TIME=${DATE}' -X '$Path.GO_VERSION=go1.9 linux/amd64'" cmd/openauthd/main.go
+    docker run --rm -e 'CGO_ENABLED=0' -e 'GOOS=linux' -e 'GOARCH=amd64' \
+        -v "$PWD":/go/src/openauth \
+        -w /go/src/openauth golang:1.9 \
+        go build -v -a -o openauth -ldflags "-X '${Path}.GIT_TAG=${TAG}' -X '${Path}.GIT_BRANCH=${BRANCH}' -X '${Path}.GIT_COMMIT=${COMMIT}' -X '${Path}.BUILD_TIME=${DATE}' -X '${Path}.GO_VERSION=`go version`'" cmd/openauth/main.go
     echo -e ""
 
-    echo -e "build completed!, the binaray file in this diretory"
-    echo -e "========================================================\n"
+    _info "build completed,the binary file in this directory."
 }
 
 main

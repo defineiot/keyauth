@@ -27,9 +27,9 @@ func GetController() (*Controller, error) {
 func InitController(log logger.OpenAuthLogger, us user.Storage, ds domain.Storage, ps project.Storage) {
 	once.Do(func() {
 		controller = &Controller{ds: ds, ps: ps, us: us, log: log}
-		controller.log.Debug("user controller inital successful")
+		controller.log.Debug("user controller initial successful")
 	})
-	controller.log.Info("user controller aready initaled")
+	controller.log.Info("user controller already initialed")
 }
 
 // Controller is domain pkg
@@ -104,8 +104,8 @@ func (c *Controller) DeleteUser(userID string) error {
 	return nil
 }
 
-// SetUserDefualtProject use to set default prject
-func (c *Controller) SetUserDefualtProject(userID, projectID string) error {
+// SetUserDefaultProject use to set default prject
+func (c *Controller) SetUserDefaultProject(userID, projectID string) error {
 	ok, err := c.ps.CheckProjectIsExistByID(projectID)
 	if err != nil {
 		return err

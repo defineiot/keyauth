@@ -26,7 +26,7 @@ var databaseCmd = &cobra.Command{
 			}
 			fmt.Println("initial database successful")
 		default:
-			return errors.New("unknow argument, see usage")
+			return errors.New("unknown argument, see usage")
 		}
 
 		return nil

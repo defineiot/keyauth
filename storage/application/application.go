@@ -20,7 +20,7 @@ type Client struct {
 	ClientType   string `json:"client_type"` // 1. confidential 2.public  https://tools.ietf.org/html/rfc6749#section-2.1
 }
 
-// Storage appliction stroage
+// Storage application storage
 type Storage interface {
 	Registration(userID, name, redirectURI, clientType, description, website string) (*Application, error)
 	Unregistration(id string) error

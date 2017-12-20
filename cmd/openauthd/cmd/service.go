@@ -85,7 +85,7 @@ func checkConfType(configType string) (conf *config.Config, err error) {
 	case "etcd":
 		return nil, errors.New("not implemented")
 	default:
-		return nil, errors.New("unknow config type")
+		return nil, errors.New("unknown config type")
 	}
 	return conf, nil
 }
