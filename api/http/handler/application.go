@@ -33,7 +33,7 @@ func RegisteApplication(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 交给业务控制层处理
-	app, err := appsrv.RegisteApplication(uid, name, redirectURI, clientType, desc, website)
+	app, err := appsrv.RegisterApplication(uid, name, redirectURI, clientType, desc, website)
 	if err != nil {
 		response.Failed(w, err)
 		return

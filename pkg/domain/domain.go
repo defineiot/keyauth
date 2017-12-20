@@ -27,7 +27,7 @@ func InitController(ds domain.Storage, log logger.OpenAuthLogger) {
 		controller = &Controller{ds: ds, log: log}
 		controller.log.Debug("initial domain controller successful")
 	})
-	controller.log.Info("domain contoller aready initialed")
+	controller.log.Info("domain controller already initialed")
 }
 
 // Controller is domain pkg
@@ -72,8 +72,8 @@ func (c *Controller) UpdateDomain() {
 
 }
 
-// DestoryDomain use to delete an domain
-func (c *Controller) DestoryDomain(domainID string) error {
+// DestroyDomain use to delete an domain
+func (c *Controller) DestroyDomain(domainID string) error {
 	if err := c.ds.DeleteDomain(domainID); err != nil {
 		return err
 	}

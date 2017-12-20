@@ -28,7 +28,7 @@ func InitController(logger logger.OpenAuthLogger, as application.Storage, us use
 		controller = &Controller{log: logger, as: as, us: us}
 		controller.log.Debug("initial application controller successful")
 	})
-	controller.log.Info("application controller aread initialed")
+	controller.log.Info("application controller already initialed")
 }
 
 // Controller is domain pkg
@@ -38,8 +38,8 @@ type Controller struct {
 	us  user.Storage
 }
 
-// RegisteApplication use to regist application
-func (c *Controller) RegisteApplication(userID, name, redirectURI, clientType, description, website string) (*application.Application, error) {
+// RegisterApplication use to regist application
+func (c *Controller) RegisterApplication(userID, name, redirectURI, clientType, description, website string) (*application.Application, error) {
 	ok, err := c.us.CheckUserIsExistByID(userID)
 	if err != nil {
 		return nil, err

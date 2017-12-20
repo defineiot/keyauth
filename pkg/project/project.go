@@ -29,7 +29,7 @@ func InitController(logger logger.OpenAuthLogger, ds domain.Storage, ps project.
 		controller = &Controller{log: logger, ds: ds, ps: ps, us: us}
 		controller.log.Debug("initial project controller successful")
 	})
-	controller.log.Info("project controller aready initialed")
+	controller.log.Info("project controller already initialed")
 }
 
 // Controller is domain pkg
@@ -94,7 +94,7 @@ func (c *Controller) UpdateProject(cred user.Credential) (*project.Project, erro
 
 // DestroyProject use to delete one project
 func (c *Controller) DestroyProject(id string) error {
-	// TODO: check the projcet is for this user
+	// TODO: check the project is for this user
 
 	if err := c.ps.DeleteProject(id); err != nil {
 		return err

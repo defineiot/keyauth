@@ -88,7 +88,7 @@ func SetUserDefaultProject(w http.ResponseWriter, r *http.Request) {
 	uid := ps.ByName("uid")
 	pid := ps.ByName("pid")
 
-	if err := usersrv.SetUserDefualtProject(uid, pid); err != nil {
+	if err := usersrv.SetUserDefaultProject(uid, pid); err != nil {
 		response.Failed(w, err)
 		return
 	}
