@@ -1,0 +1,8 @@
+language: go
+
+go:
+  - 1.9
+
+go_import_path: "./openauth"
+
+script: go build -o openauth cmd/openauthd/main.go

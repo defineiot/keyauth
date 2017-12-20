@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -56,7 +57,9 @@ func (s *Service) Start() error {
 		AllowCredentials: true,
 	})
 	recoverM := negroni.NewRecovery()
+	accessL := negroni.NewLogger()
 	n.Use(corsM)
+	n.Use(accessL)
 	n.Use(recoverM)
 	s.logger.Info("loading http middleware success")
 
@@ -70,25 +73,32 @@ func (s *Service) Start() error {
 	s.logger.Info("loading router success")
 
 	// run http service
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL, syscall.SIGHUP, syscall.SIGQUIT)
-	go func() {
-		sg := <-ch
-		s.logger.Infof("receive signal '%v'", sg)
-		os.Exit(1)
-	}()
-
 	addr := fmt.Sprintf("%s:%s", s.conf.APP.Host, s.conf.APP.Port)
-	s.logger.Infof("starting openauth service at %s", addr)
-
 	srv := &http.Server{
 		ReadHeaderTimeout: 3 * time.Second,
 		ReadTimeout:       5 * time.Second,
 		WriteTimeout:      10 * time.Second,
 		IdleTimeout:       120 * time.Second,
+		MaxHeaderBytes:    1 << 20,
 		Addr:              addr,
 		Handler:           n,
 	}
+
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL, syscall.SIGHUP, syscall.SIGQUIT)
+	go func() {
+		sg := <-ch
+		s.logger.Infof("receive signal '%v', start graceful shutdown", sg)
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		if err := srv.Shutdown(ctx); err != nil {
+			s.logger.Error("graceful shutdown timeout, force exit")
+		}
+		os.Exit(1)
+	}()
+
+	s.logger.Infof("starting openauth service at %s", addr)
 	if err := srv.ListenAndServe(); err != nil {
 		return fmt.Errorf("start openauth error, %s", err.Error())
 	}
