@@ -14,8 +14,10 @@ import (
 )
 
 var (
-	db       *sql.DB
-	oalogger logger.OpenAuthLogger
+	db         *sql.DB
+	oalogger   logger.OpenAuthLogger
+	dbOnce     sync.Once
+	loggerOnce sync.Once
 )
 
 // Configer use to get conf
@@ -155,12 +157,9 @@ func (c *Config) validateToken() error {
 
 // GetDBConn use to get mysql database connection
 func (c *Config) GetDBConn() (*sql.DB, error) {
-	var (
-		err  error
-		once sync.Once
-	)
+	var err error
 
-	once.Do(func() {
+	dbOnce.Do(func() {
 		err = c.initDBConn()
 	})
 
@@ -169,18 +168,14 @@ func (c *Config) GetDBConn() (*sql.DB, error) {
 	}
 
 	return db, nil
-
 }
 
 // GetLogger use to get logger instance
 func (c *Config) GetLogger() (logger.OpenAuthLogger, error) {
-	var (
-		err  error
-		once sync.Once
-	)
+	var err error
 
 	opts := logger.Opts{Name: c.APP.Name, Level: c.Log.Level, FilePath: c.Log.FilePath}
-	once.Do(func() {
+	loggerOnce.Do(func() {
 		oalogger, err = logrus.NewLogrusLogger(&opts)
 	})
 
@@ -189,11 +184,9 @@ func (c *Config) GetLogger() (logger.OpenAuthLogger, error) {
 	}
 
 	return oalogger, nil
-
 }
 
 func (c *Config) initDBConn() error {
-
 	var err error
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&multiStatements=true", c.MySQL.User, c.MySQL.Pass, c.MySQL.Host, c.MySQL.Port, c.MySQL.DB)
 	db, err = sql.Open("mysql", dsn)
