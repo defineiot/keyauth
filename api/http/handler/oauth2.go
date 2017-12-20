@@ -12,16 +12,48 @@ import (
 
 // IssueToken use to issue access token
 func IssueToken(w http.ResponseWriter, r *http.Request) {
-	val, err := request.CheckObjectBody(r)
-	if err != nil {
-		response.Failed(w, err)
+	var grantType string
+	tokenReq := new(oauth2.TokenRequest)
+
+	switch r.Header.Get("content-type") {
+	case "application/json":
+		val, err := request.CheckObjectBody(r)
+		if err != nil {
+			response.Failed(w, err)
+			return
+		}
+		tokenReq.ClientID = val.Get("client_id").ToString()
+		tokenReq.ClientSecret = val.Get("client_secret").ToString()
+		tokenReq.DomainName = val.Get("domain_name").ToString()
+		tokenReq.Username = val.Get("username").ToString()
+		tokenReq.Password = val.Get("password").ToString()
+		grantType = val.Get("grant_type").ToString()
+	case "application/x-www-form-urlencoded":
+		if err := r.ParseForm(); err != nil {
+			response.Failed(w, exception.NewBadRequest("parse x-www-form-urlencoded data error, %s", err))
+			return
+		}
+		tokenReq.ClientID = r.FormValue("client_id")
+		tokenReq.ClientSecret = r.FormValue("client_secret")
+		tokenReq.DomainName = r.FormValue("domain_name")
+		tokenReq.Username = r.FormValue("username")
+		tokenReq.Password = r.FormValue("password")
+		grantType = r.FormValue("grant_type")
+	case "":
+		response.Failed(w, exception.NewBadRequest("content-type missed, your must be choice one [application/json, application/x-www-form-urlencoded]"))
+		return
+	default:
+		response.Failed(w, exception.NewBadRequest("content-type only support for application/json and application/x-www-form-urlencoded others don't supported"))
 		return
 	}
 
-	tokenReq := new(oauth2.TokenRequest)
-	tokenReq.ClientID = val.Get("client_id").ToString()
-	tokenReq.ClientSecret = val.Get("client_secret").ToString()
-	switch val.Get("grant_type").ToString() {
+	clientID, clientSecret, ok := r.BasicAuth()
+	if ok {
+		tokenReq.ClientID = clientID
+		tokenReq.ClientSecret = clientSecret
+	}
+
+	switch grantType {
 	case "authorization_code":
 		tokenReq.GrantType = token.AUTHCODE
 	case "implicit":
@@ -32,14 +64,13 @@ func IssueToken(w http.ResponseWriter, r *http.Request) {
 		tokenReq.GrantType = token.CLIENT
 	case "refresh_token":
 		tokenReq.GrantType = token.REFRESH
+	case "":
+		response.Failed(w, exception.NewBadRequest("grant_type missed"))
+		return
 	default:
-		response.Failed(w, exception.NewBadRequest("grant_type suport list [authorization_code, implicit, password, client_credentials, refresh_token"))
+		response.Failed(w, exception.NewBadRequest("grant_type suport list [authorization_code, implicit, password, client_credentials, refresh_token]"))
 		return
 	}
-
-	tokenReq.DomainName = val.Get("domian_name").ToString()
-	tokenReq.Username = val.Get("username").ToString()
-	tokenReq.Password = val.Get("password").ToString()
 
 	t, err := authsrc.IssueToken(tokenReq)
 	if err != nil {

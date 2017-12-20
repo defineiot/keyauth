@@ -24,12 +24,12 @@ type TokenRequest struct {
 
 // Validate validate the request
 func (t *TokenRequest) Validate() error {
-	if t.Scope == nil {
-		return exception.NewBadRequest("scope must'nt be nil")
-	}
-	if t.Scope.DomainID == "" && t.Scope.ProjectID == "" {
-		return exception.NewBadRequest("scope's domain id or project id must choice one")
-	}
+	// if t.Scope == nil {
+	// 	return exception.NewBadRequest("scope must'nt be nil")
+	// }
+	// if t.Scope.DomainID == "" && t.Scope.ProjectID == "" {
+	// 	return exception.NewBadRequest("scope's domain id or project id must choice one")
+	// }
 
 	switch t.GrantType {
 	case token.AUTHCODE:
@@ -51,7 +51,7 @@ func (t *TokenRequest) Validate() error {
 
 	case token.PASSWORD:
 		if t.DomainName == "" || t.Username == "" || t.Password == "" {
-			return exception.NewBadRequest("if use %s grant type, domainname, username, password is needed", t.GrantType)
+			return exception.NewBadRequest("if use %s grant type, domian_name, username, password is needed", t.GrantType)
 		}
 		goto CHECK_CLIENT
 
@@ -160,6 +160,9 @@ func (c *Controller) issueTokenByPassword(scope *token.Scope, clientID, domainna
 		return nil, exception.NewUnauthorized("user password error")
 	}
 
+	if scope == nil {
+		scope = new(token.Scope)
+	}
 	scope.DomainID = dm.ID
 
 	t := new(token.Token)

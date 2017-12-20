@@ -32,13 +32,13 @@ func (m *manager) SaveToken(t *token.Token) (*token.Token, error) {
 	)
 
 	once.Do(func() {
-		createStmt, err = m.db.Prepare("INSERT INTO `token` (grant_type, access_token, refresh_token, type, create_at, expire_at, client_id, user_id, domian_id, project_id) VALUES (?,?,?,?,?,?,?,?,?,?)")
+		createStmt, err = m.db.Prepare("INSERT INTO `token` (grant_type, access_token, refresh_token, type, create_at, expire_at, client_id, user_id, domain_id, project_id) VALUES (?,?,?,?,?,?,?,?,?,?)")
 	})
 	if err != nil {
 		return nil, exception.NewInternalServerError("prepare insert token stmt error, %s", err)
 	}
 
-	_, err = createStmt.Exec(t.GrantType, t.AccessToken, t.RefreshToken, t.TokenType, t.CreatedAt, t.ExpiresIn, t.ClientID, t.UserID, t.Scope.DomainID, t.Scope.ProjectID)
+	_, err = createStmt.Exec(string(t.GrantType), t.AccessToken, t.RefreshToken, t.TokenType, t.CreatedAt, t.ExpiresIn, t.ClientID, t.UserID, t.Scope.DomainID, t.Scope.ProjectID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("insert token exec sql err, %s", err)
 	}
