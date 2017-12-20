@@ -47,7 +47,7 @@ function main() {
 
     echo -e "start build ..."
     echo -e ""
-    docker run --rm -e 'CGO_ENABLED=0' -e 'GOOS=linux' -e 'GOARCH=amd64' -v "$PWD":/go/src/openauth -w /go/src/openauth golang:1.9 go build -v -a -o openauth -ldflags "-X '$Path.GIT_TAG=${TAG}' -X '$Path.GIT_BRANCH=${BRANCH}' -X '$Path.GIT_COMMIT=${COMMIT}' -X '$Path.BUILD_TIME=${DATE}' -X '$Path.GO_VERSION=go1.9 linux/amd64'" cmd/openauth/main.go
+    docker run --rm -e 'CGO_ENABLED=0' -e 'GOOS=linux' -e 'GOARCH=amd64' -v "$PWD":/go/src/openauth -w /go/src/openauth golang:1.9 go build -v -a -o openauth -ldflags "-X '$Path.GIT_TAG=${TAG}' -X '$Path.GIT_BRANCH=${BRANCH}' -X '$Path.GIT_COMMIT=${COMMIT}' -X '$Path.BUILD_TIME=${DATE}' -X '$Path.GO_VERSION=go1.9 linux/amd64'" cmd/openauthd/main.go
     echo -e ""
 
     echo -e "build completed!, the binaray file in this diretory"

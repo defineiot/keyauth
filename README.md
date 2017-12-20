@@ -1,6 +1,6 @@
 # openauth
-[![Build Status](https://travis-ci.org/defineiot/keyauth.svg?branch=master)](https://travis-ci.org/defineiot/keyauth)
-[![Go Report Card](https://goreportcard.com/badge/github.com/defineiot/keyauth)](https://goreportcard.com/report/github.com/defineiot/keyauth)
+[![Build Status](https://travis-ci.org/defineiot/openauth.svg?branch=master)](https://travis-ci.org/defineiot/openauth)
+[![Go Report Card](https://goreportcard.com/badge/github.com/defineiot/openauth)](https://goreportcard.com/report/github.com/defineiot/openauth)
 
 user account and authentication server with oauth 2.0
 
