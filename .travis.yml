@@ -2,7 +2,23 @@ language: go
 
 go:
   - 1.9
+  - master
 
 go_import_path: "./openauth"
 
-script: go build -o openauth cmd/openauthd/main.go
+notifications:
+  email:
+    recipients:
+      - 18108053819@163.com
+  on_success: change
+  on_failure: always
+
+
+before_install:
+  - go get github.com/mattn/goveralls
+  - go get golang.org/x/tools/cmd/cover
+
+script: 
+  - go build -o openauth cmd/openauthd/main.go
+  - $HOME/gopath/bin/goveralls -repotoken cjtC3u3ZHQZPLEJt6FgJS3LU6maKaGuYX
+
