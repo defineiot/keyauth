@@ -78,6 +78,8 @@ func IssueToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("x-oauth-token", t.AccessToken)
+
 	response.Success(w, http.StatusCreated, t)
 	return
 
@@ -85,7 +87,20 @@ func IssueToken(w http.ResponseWriter, r *http.Request) {
 
 // ValidateToken use to validate token information
 func ValidateToken(w http.ResponseWriter, r *http.Request) {
+	access := r.Header.Get("x-oauth-token")
+	if access == "" {
+		response.Failed(w, exception.NewUnauthorized("x-oauth-token missed in header"))
+		return
+	}
 
+	t, err := authsrc.ValidateToken(access)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusOK, t)
+	return
 }
 
 // RevolkToken use to revolk token

@@ -32,13 +32,13 @@ type Code struct {
 // Token is user's access resource token
 type Token struct {
 	UserID       string    `json:"user_id"`
-	ClientID     string    `json:"-"`
+	ClientID     string    `json:"client_id"`
 	GrantType    GrantType `json:"grant_type"`
 	AccessToken  string    `json:"access_token"`
 	RefreshToken string    `json:"refresh_token,omitempty"`
 	TokenType    string    `json:"token_type"`
 	CreatedAt    int64     `json:"create_at"`
-	ExpiresIn    int32     `json:"expires_in"`
+	ExpiresIn    int64     `json:"expires_in"`
 	Scope        *Scope    `json:"scope"`
 }
 
@@ -52,6 +52,7 @@ type Scope struct {
 // Storage is auth service
 type Storage interface {
 	SaveToken(t *Token) (*Token, error)
+	GetToken(accessToken string) (*Token, error)
 	// IssueTokenWithProject(userID, projectID string) (*Token, error)
 	// IssueTokenWithDomain(userID, domainID string) (*Token, error)
 	// IssueTokenByCode(code string) (*Token, error)
@@ -62,7 +63,7 @@ type Storage interface {
 }
 
 // Validate use to validate token to save
-func (t *Token) Validate() error {
+func (t *Token) validateSave() error {
 	if t.ClientID == "" || t.UserID == "" {
 		return exception.NewBadRequest("token's client_id or user_id is missed")
 	}
@@ -90,4 +91,16 @@ func (t *Token) Validate() error {
 	}
 
 	return nil
+}
+
+// IsExpired use to validate the token is expired
+func (t *Token) IsExpired() (bool, int64) {
+	now := time.Now().Unix()
+	allow := t.CreatedAt + t.ExpiresIn
+
+	if now < allow {
+		return true, allow - now
+	}
+
+	return false, 0
 }

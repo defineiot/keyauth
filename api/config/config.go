@@ -62,7 +62,7 @@ type LogConf struct {
 // Token is oauth token
 type Token struct {
 	Type      string `toml:"type"`
-	ExpiresIn int32  `toml:"expires_in"`
+	ExpiresIn int64  `toml:"expires_in"`
 }
 
 // Validate use to check the service config

@@ -57,7 +57,7 @@ func (r *MyRouter) routeToUser() {
 func (r *MyRouter) routeToAuth() {
 	// Token Endpoint https://tools.ietf.org/html/rfc6749#section-3.2
 	r.HandlerFunc("POST", "/v1/oauth2/tokens/", handler.IssueToken)
-	// r.HandlerFunc("GET", "/v1/oauth2/token/", handler.ListDomain)
+	r.HandlerFunc("GET", "/v1/oauth2/tokens/", handler.ValidateToken)
 	// r.HandlerFunc("GET", "/v1/oauth2/tokens/", handler.ListProject)
 	// r.HandlerFunc("DELETE", "/v1/oauth2/tokens/", handler.DeleteProject)
 

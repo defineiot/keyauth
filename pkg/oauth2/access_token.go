@@ -123,8 +123,19 @@ DEAL_ERROR:
 }
 
 // ValidateToken use to validate token
-func (c *Controller) ValidateToken() {
+func (c *Controller) ValidateToken(accessToken string) (*token.Token, error) {
+	token, err := c.ts.GetToken(accessToken)
+	if err != nil {
+		return nil, err
+	}
 
+	ok, delta := token.IsExpired()
+	if !ok {
+		return nil, exception.NewUnauthorized("token has expired")
+	}
+	token.ExpiresIn = delta
+
+	return token, nil
 }
 
 // RevokeToken refresh token
