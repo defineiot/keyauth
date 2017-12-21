@@ -24,7 +24,7 @@ func GetController() (*Controller, error) {
 }
 
 // InitController use to initial user controller
-func InitController(log logger.OpenAuthLogger, us user.Storage, ds domain.Storage, ps project.Storage) {
+func InitController(log logger.OpenAuthLogger, us user.Storage, ds domain.Store, ps project.Storage) {
 	once.Do(func() {
 		controller = &Controller{ds: ds, ps: ps, us: us, log: log}
 		controller.log.Debug("user controller initial successful")
@@ -36,7 +36,7 @@ func InitController(log logger.OpenAuthLogger, us user.Storage, ds domain.Storag
 type Controller struct {
 	log logger.OpenAuthLogger
 	ps  project.Storage
-	ds  domain.Storage
+	ds  domain.Store
 	us  user.Storage
 }
 

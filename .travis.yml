@@ -20,5 +20,5 @@ before_install:
 
 script: 
   - go build -o openauth cmd/openauthd/main.go
-  - $HOME/gopath/bin/goveralls -repotoken cjtC3u3ZHQZPLEJt6FgJS3LU6maKaGuYX
+  - $HOME/gopath/bin/goveralls -service=travis-ci -repotoken cjtC3u3ZHQZPLEJt6FgJS3LU6maKaGuYX
 

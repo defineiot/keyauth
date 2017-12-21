@@ -22,7 +22,7 @@ func GetController() (*Controller, error) {
 }
 
 // InitController use to init controller
-func InitController(ds domain.Storage, log logger.OpenAuthLogger) {
+func InitController(ds domain.Store, log logger.OpenAuthLogger) {
 	once.Do(func() {
 		controller = &Controller{ds: ds, log: log}
 		controller.log.Debug("initial domain controller successful")
@@ -32,7 +32,7 @@ func InitController(ds domain.Storage, log logger.OpenAuthLogger) {
 
 // Controller is domain pkg
 type Controller struct {
-	ds  domain.Storage
+	ds  domain.Store
 	log logger.OpenAuthLogger
 }
 

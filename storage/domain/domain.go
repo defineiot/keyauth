@@ -2,39 +2,34 @@ package domain
 
 // Domain is tenant container.
 type Domain struct {
-	ID string `json:"id"`
-	// domain name, allow repeat
-	Name string `json:"name"`
-	// DisplayName is to show
+	ID          string `json:"id"`
+	Name        string `json:"name"`
 	DisplayName string `json:"display_name"`
-	// domain description
 	Description string `json:"description"`
-	// Whether to enable
-	Enabled bool `json:"enabled"`
-	// Extend fields to facilitate the expansion of database tables
-	Extra string `json:"-"`
-	// CreateAt create domain at
-	CreateAt int64 `json:"create_at"`
-	// UpdateAt update domain time
-	UpdateAt int64 `json:"update_at,omitempty"`
-	// Links Hypermedia API, database don'save this
-	// Links map[string]string `json:"links"`
+	Enabled     bool   `json:"enabled"`
+	CreateAt    int64  `json:"create_at"`
+	UpdateAt    int64  `json:"update_at,omitempty"`
+	Extra       string `json:"-"`
 }
 
-// Storage is an domain service
-type Storage interface {
-	// Create Domain, Only super admin are allowed
-	// to operate, Named globally only,
-	// renaming is not allowed
-	CreateDomain(name, description, displayName string, enabled bool) (*Domain, error)
+// Store is an domain service
+type Store interface {
+	StoreReader
+	StoreWriter
+	Close() error
+}
+
+// StoreReader for read data from store
+type StoreReader interface {
 	GetDomain(domainID string) (*Domain, error)
 	GetDomainByName(name string) (*Domain, error)
-	// List all Domain, Only super admin are allowed to operate
-	ListDomain(pageNumber, pageSize int64) (domains []*Domain, totalPage int64, err error)
-	// Update a Domain, super admin & domain admin are allowed to operate
-	UpdateDomain(id, name, description string) (*Domain, error)
-	// Soft Delete a Domain, Domain still in persistence storage, Only super admin are allowed to operate
-	DeleteDomain(id string) error
-	// CheckDomainIsExist use to check the domain is exist by domain id
 	CheckDomainIsExistByID(domainID string) (bool, error)
+	ListDomain(pageNumber, pageSize int64) (domains []*Domain, totalPage int64, err error)
+}
+
+// StoreWriter for write data to store
+type StoreWriter interface {
+	CreateDomain(name, description, displayName string, enabled bool) (*Domain, error)
+	UpdateDomain(id, name, description string) (*Domain, error)
+	DeleteDomain(id string) error
 }

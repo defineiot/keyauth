@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"openauth/api/exception"
 	"sync"
 
 	"openauth/api/config"
@@ -39,8 +40,12 @@ func InitController(conf *config.Config) error {
 		return err
 	}
 
+	storeErr := []error{}
 	once.Do(func() {
-		domainstr := domainmysql.NewDomainStorage(db)
+		domainstr, err := domainmysql.NewDomainStorage(db)
+		if err != nil {
+			storeErr = append(storeErr, err)
+		}
 		projectstr := projectmysql.NewProjectStorage(db)
 		userstr := usermysql.NewUserStorage(db, conf.APP.Key, log)
 		appstr := appmysql.NewApplicationStorage(db)
@@ -52,6 +57,9 @@ func InitController(conf *config.Config) error {
 		application.InitController(log, appstr, userstr)
 		oauth2.InitController(tokenstr, userstr, domainstr, appstr, log, conf.Token.Type, conf.Token.ExpiresIn)
 	})
+	if len(storeErr) != 0 {
+		return exception.NewInternalServerError("get store error, %s", storeErr)
+	}
 
 	domainsrv, err = domain.GetController()
 	if err != nil {
