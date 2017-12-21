@@ -13,9 +13,10 @@ func Test_CreateDomain(t *testing.T) {
 	}
 	defer db.Close()
 
-	mock.ExpectPrepare("INSERT INTO product_viewers").
-		mock.ExpectExec("INSERT INTO product_viewers").WithArgs(2, 3).WillReturnResult(sqlmock.NewResult(1, 1))
-
+	mock.ExpectBegin()
+	mock.ExpectExec("UPDATE products").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO product_viewers").WithArgs(2, 3).WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
 }
 
 func Test_GetDomain(t *testing.T) {

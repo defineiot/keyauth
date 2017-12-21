@@ -19,6 +19,5 @@ before_install:
   - go get golang.org/x/tools/cmd/cover
 
 script: 
-  - go build -o openauth cmd/openauthd/main.go
   - $HOME/gopath/bin/goveralls -service=travis-ci -repotoken cjtC3u3ZHQZPLEJt6FgJS3LU6maKaGuYX
 
