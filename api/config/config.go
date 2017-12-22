@@ -13,13 +13,6 @@ import (
 	"openauth/api/logger/logrus"
 )
 
-var (
-	db         *sql.DB
-	oalogger   logger.OpenAuthLogger
-	dbOnce     sync.Once
-	loggerOnce sync.Once
-)
-
 // Configer use to get conf
 type Configer interface {
 	GetConf() (*Config, error)
@@ -31,6 +24,10 @@ type Config struct {
 	MySQL *MySQLConf `toml:"mysql"`
 	Log   *LogConf   `toml:"log"`
 	Token *Token     `toml:"token"`
+	db         *sql.DB
+	oalogger   logger.OpenAuthLogger
+	dbOnce     sync.Once
+	loggerOnce sync.Once
 }
 
 // AppConf service config
@@ -159,7 +156,7 @@ func (c *Config) validateToken() error {
 func (c *Config) GetDBConn() (*sql.DB, error) {
 	var err error
 
-	dbOnce.Do(func() {
+	c.dbOnce.Do(func() {
 		err = c.initDBConn()
 	})
 
@@ -167,7 +164,7 @@ func (c *Config) GetDBConn() (*sql.DB, error) {
 		return nil, err
 	}
 
-	return db, nil
+	return c.db, nil
 }
 
 // GetLogger use to get logger instance
@@ -175,28 +172,28 @@ func (c *Config) GetLogger() (logger.OpenAuthLogger, error) {
 	var err error
 
 	opts := logger.Opts{Name: c.APP.Name, Level: c.Log.Level, FilePath: c.Log.FilePath}
-	loggerOnce.Do(func() {
-		oalogger, err = logrus.NewLogrusLogger(&opts)
+	c.loggerOnce.Do(func() {
+		c.oalogger, err = logrus.NewLogrusLogger(&opts)
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	return oalogger, nil
+	return c.oalogger, nil
 }
 
 func (c *Config) initDBConn() error {
 	var err error
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&multiStatements=true", c.MySQL.User, c.MySQL.Pass, c.MySQL.Host, c.MySQL.Port, c.MySQL.DB)
-	db, err = sql.Open("mysql", dsn)
+	c.db, err = sql.Open("mysql", dsn)
 	if err != nil {
 		return fmt.Errorf("connect to mysql<%s> error, %s", dsn, err.Error())
 	}
-	db.SetMaxOpenConns(c.MySQL.MaxOpenConn)
-	db.SetMaxIdleConns(c.MySQL.MaxIdleConn)
-	db.SetConnMaxLifetime(time.Minute * time.Duration(c.MySQL.MaxLifeTime))
-	if err := db.Ping(); err != nil {
+	c.db.SetMaxOpenConns(c.MySQL.MaxOpenConn)
+	c.db.SetMaxIdleConns(c.MySQL.MaxIdleConn)
+	c.db.SetConnMaxLifetime(time.Minute * time.Duration(c.MySQL.MaxLifeTime))
+	if err := c.db.Ping(); err != nil {
 		return fmt.Errorf("ping mysql<%s> error, %s", dsn, err.Error())
 	}
 

@@ -12,8 +12,8 @@ var (
 	once sync.Once
 )
 
-// NewConfigManager use to get env config
-func NewConfigManager() config.Configer {
+// NewEnvConf use to get env config
+func NewEnvConf() config.Configer {
 	return &envConfig{}
 }
 

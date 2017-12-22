@@ -71,14 +71,14 @@ to quickly create a Cobra application.`,
 func checkConfType(configType string) (conf *config.Config, err error) {
 	switch configType {
 	case "file":
-		envconf := file.NewFileConf(confFile)
-		conf, err = envconf.GetConf()
+		fileconf := file.NewFileConf(confFile)
+		conf, err = fileconf.GetConf()
 		if err != nil {
 			return nil, fmt.Errorf("new file conf error, %s", err.Error())
 		}
 	case "env":
-		fileconf := env.NewConfigManager()
-		conf, err = fileconf.GetConf()
+		envconf := env.NewEnvConf()
+		conf, err = envconf.GetConf()
 		if err != nil {
 			return nil, fmt.Errorf("new env conf error, %s", err.Error())
 		}
