@@ -1,7 +1,7 @@
 package user
 
 import (
-	"openauth/storage/project"
+	"openauth/store/project"
 )
 
 // User info

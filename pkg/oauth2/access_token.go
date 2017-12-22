@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"openauth/api/exception"
-	"openauth/storage/token"
+	"openauth/store/token"
 )
 
 // TokenRequest use to request access token

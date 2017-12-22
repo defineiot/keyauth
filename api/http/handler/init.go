@@ -12,11 +12,11 @@ import (
 	"openauth/pkg/project"
 	"openauth/pkg/user"
 
-	appmysql "openauth/storage/application/mysql"
-	domainmysql "openauth/storage/domain/mysql"
-	projectmysql "openauth/storage/project/mysql"
-	tokenmysql "openauth/storage/token/mysql"
-	usermysql "openauth/storage/user/mysql"
+	appmysql "openauth/store/application/mysql"
+	domainmysql "openauth/store/domain/mysql"
+	projectmysql "openauth/store/project/mysql"
+	tokenmysql "openauth/store/token/mysql"
+	usermysql "openauth/store/user/mysql"
 )
 
 var (
@@ -42,7 +42,7 @@ func InitController(conf *config.Config) error {
 
 	storeErr := []error{}
 	once.Do(func() {
-		domainstr, err := domainmysql.NewDomainStorage(db)
+		domainstr, err := domainmysql.NewDomainStore(db)
 		if err != nil {
 			storeErr = append(storeErr, err)
 		}

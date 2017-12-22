@@ -10,7 +10,7 @@ import (
 	"github.com/satori/go.uuid"
 
 	"openauth/api/exception"
-	"openauth/storage/application"
+	"openauth/store/application"
 )
 
 var (

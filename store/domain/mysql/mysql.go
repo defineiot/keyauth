@@ -3,7 +3,7 @@ package mysql
 import (
 	"database/sql"
 	"openauth/api/exception"
-	"openauth/storage/domain"
+	"openauth/store/domain"
 )
 
 const (
@@ -20,8 +20,8 @@ const (
 	FindDomainName = "find-domain-name"
 )
 
-// NewDomainStorage use to create domain storage service
-func NewDomainStorage(db *sql.DB) (domain.Store, error) {
+// NewDomainStore use to create domain storage service
+func NewDomainStore(db *sql.DB) (domain.Store, error) {
 	unprepared := map[string]string{
 		CreateDomain: `
 			INSERT INTO domain (id, name, display_name, description, enabled, extra, create_at)

@@ -3,7 +3,7 @@ package tokenprovider
 import (
 	"time"
 
-	"openauth/storage/token"
+	"openauth/store/token"
 )
 
 // Manager use to provide token

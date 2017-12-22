@@ -2,7 +2,6 @@ language: go
 
 go:
   - 1.9
-  - master
 
 go_import_path: "./openauth"
 

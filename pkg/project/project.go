@@ -5,9 +5,9 @@ import (
 
 	"openauth/api/exception"
 	"openauth/api/logger"
-	"openauth/storage/domain"
-	"openauth/storage/project"
-	"openauth/storage/user"
+	"openauth/store/domain"
+	"openauth/store/project"
+	"openauth/store/user"
 )
 
 var (

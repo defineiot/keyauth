@@ -7,7 +7,7 @@ import (
 	"openauth/api/http/request"
 	"openauth/api/http/response"
 	"openauth/pkg/oauth2"
-	"openauth/storage/token"
+	"openauth/store/token"
 )
 
 // IssueToken use to issue access token

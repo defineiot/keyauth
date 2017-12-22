@@ -3,7 +3,7 @@ package mysql
 import (
 	"database/sql"
 	"openauth/api/exception"
-	"openauth/storage/token"
+	"openauth/store/token"
 	"sync"
 )
 

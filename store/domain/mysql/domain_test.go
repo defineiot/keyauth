@@ -6,7 +6,7 @@ import (
 	"gopkg.in/DATA-DOG/go-sqlmock.v1"
 )
 
-func Test_CreateDomain(t *testing.T) {
+func TestCreateDomain(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -19,30 +19,30 @@ func Test_CreateDomain(t *testing.T) {
 	mock.ExpectCommit()
 }
 
-func Test_GetDomain(t *testing.T) {
+func TestGetDomain(t *testing.T) {
 
 }
 
-func Test_GetDomainByName(t *testing.T) {
+func TestGetDomainByName(t *testing.T) {
 
 }
 
-func Test_ListDomain(t *testing.T) {
+func TestListDomain(t *testing.T) {
 
 }
 
-func Test_UpdateDomain(t *testing.T) {
+func TestUpdateDomain(t *testing.T) {
 
 }
 
-func Test_DeleteDomain(t *testing.T) {
+func TestDeleteDomain(t *testing.T) {
 
 }
 
-func Test_CheckDomainIsExistByID(t *testing.T) {
+func TestCheckDomainIsExistByID(t *testing.T) {
 
 }
 
-func Test_CheckDomainIsExistByName(t *testing.T) {
+func TestCheckDomainIsExistByName(t *testing.T) {
 
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/satori/go.uuid"
 
 	"openauth/api/exception"
-	"openauth/storage/domain"
+	"openauth/store/domain"
 )
 
 // CreateDomain use to create an domain

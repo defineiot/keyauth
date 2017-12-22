@@ -5,7 +5,7 @@ import (
 
 	"openauth/api/exception"
 	"openauth/api/logger"
-	"openauth/storage/domain"
+	"openauth/store/domain"
 )
 
 var (
