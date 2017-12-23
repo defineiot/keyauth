@@ -9,16 +9,15 @@ import (
 
 func TestNewEnvConf(t *testing.T) {
 	fakeEnv()
-	env := env.NewEnvConf()
-	_, err := env.GetConf()
+	envconf := env.NewEnvConf()
+	conf, err := envconf.GetConf()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-}
-
-func TestEnvStruct(t *testing.T) {
-
+	if conf.APP.Key != "default" {
+		t.Fatal("the key not default")
+	}
 }
 
 func fakeEnv() {

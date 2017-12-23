@@ -1,10 +1,11 @@
 package env
 
 import (
-	"openauth/api/config"
 	"os"
 	"strconv"
 	"sync"
+
+	"openauth/api/config"
 )
 
 var (
