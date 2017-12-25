@@ -1,42 +1,22 @@
 package mysql_test
 
 import (
-	"testing"
+	"openauth/api/config/mock"
+	"openauth/store/domain"
+	"openauth/store/domain/mysql"
 )
 
-func TestNewDomainStore(t *testing.T) {
+func newTestStore() domain.Store {
+	conf := mock.NewConfig()
+	db, err := conf.GetDBConn()
+	if err != nil {
+		panic(err)
+	}
 
-	// _, err = mysql.NewDomainStore(db)
-	// if err != nil {
-	// 	t.Error(err)
-	// }
-}
+	store, err := mysql.NewDomainStore(db)
+	if err != nil {
+		panic(err)
+	}
 
-func TestPrepareStatements(t *testing.T) {
-	// Connect to the database
-	// dsn := fmt.Sprintf(
-	// 	"%s:%s@tcp(%s:%s)/?parseTime=true",
-	// 	os.Getenv("DB_USERNAME"),
-	// 	os.Getenv("DB_PASSWORD"),
-	// 	os.Getenv("DB_HOST"),
-	// 	os.Getenv("DB_PORT"),
-	// )
-
-	// db, err := sql.Open("mysql", dsn)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-
-	// unprepared := map[string]string{
-	// 	"test": "SELECT 1",
-	// }
-
-	// stmts, err := prepareStmts(db, unprepared)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-
-	// if len(stmts) != 1 {
-	// 	t.Fatalf("incorrect number of statements prepared; got %v want %v\n", len(stmts), 1)
-	// }
+	return store
 }

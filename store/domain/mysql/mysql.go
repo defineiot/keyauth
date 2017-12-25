@@ -33,6 +33,12 @@ func NewDomainStore(db *sql.DB) (domain.Store, error) {
 			FROM domain d
 			ORDER BY create_at DESC;
 		`,
+		FindDomainsWithPage: `
+		SELECT d.id, d.name, d.display_name, d.description, d.enabled, d.create_at, d.update_at
+		FROM domain d
+		ORDER BY create_at DESC
+		LIMIT ?,?;
+		`,
 		FindDomainByID: `
 			SELECT d.id, d.name, d.display_name, d.description, d.enabled, d.create_at, d.update_at
 			FROM domain d
