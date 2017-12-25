@@ -116,7 +116,7 @@ COLLATE = utf8_general_ci
 COMMENT = '用户角色表';
 
 CREATE TABLE `application` (
-`id` varchar(255) NOT NULL
+`id` varchar(255) NOT NULL,
 `name` varchar(255) NOT NULL,
 `user_id` varchar(64) NULL,
 `client_id` varchar(255) NOT NULL,
