@@ -22,7 +22,7 @@ before_install:
   - go get golang.org/x/tools/cmd/cover
 
 script:
-  - mysql -u openauth -p openauth -D openauth < conf/ddl/openauthv01.sql
+  - mysql -uopenauth -popenauth -Dopenauth < conf/ddl/openauthv01.sql
   - $HOME/gopath/bin/goveralls -service=travis-ci -repotoken cjtC3u3ZHQZPLEJt6FgJS3LU6maKaGuYX
 
 
