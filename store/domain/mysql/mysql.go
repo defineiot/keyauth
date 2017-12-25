@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+
 	"openauth/api/exception"
 	"openauth/store/domain"
 )

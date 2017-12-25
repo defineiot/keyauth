@@ -45,11 +45,6 @@ type MethodNotAllowed struct {
 	*apiException
 }
 
-// NewAPIException is openauth api error
-// func NewAPIException(text string, code int) error {
-// 	return &apiException{msg: text, code: code}
-// }
-
 // NewInternalServerError for 503
 func NewInternalServerError(format string, args ...interface{}) error {
 	excp := new(InternalServerError)
