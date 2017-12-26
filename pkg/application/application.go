@@ -23,7 +23,7 @@ func GetController() (*Controller, error) {
 }
 
 // InitController use to initial controller
-func InitController(logger logger.OpenAuthLogger, as application.Storage, us user.Storage) {
+func InitController(logger logger.OpenAuthLogger, as application.Store, us user.Store) {
 	once.Do(func() {
 		controller = &Controller{log: logger, as: as, us: us}
 		controller.log.Debug("initial application controller successful")
@@ -34,8 +34,8 @@ func InitController(logger logger.OpenAuthLogger, as application.Storage, us use
 // Controller is domain pkg
 type Controller struct {
 	log logger.OpenAuthLogger
-	as  application.Storage
-	us  user.Storage
+	as  application.Store
+	us  user.Store
 }
 
 // RegisterApplication use to regist application

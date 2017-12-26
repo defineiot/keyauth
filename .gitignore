@@ -18,3 +18,4 @@ openauthctl
 main
 log/
 .idea/
+.vscode/

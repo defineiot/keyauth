@@ -46,10 +46,22 @@ func InitController(conf *config.Config) error {
 		if err != nil {
 			storeErr = append(storeErr, err)
 		}
-		projectstr := projectmysql.NewProjectStorage(db)
-		userstr := usermysql.NewUserStorage(db, conf.APP.Key, log)
-		appstr := appmysql.NewApplicationStorage(db)
-		tokenstr := tokenmysql.NewTokenStorage(db)
+		projectstr, err := projectmysql.NewProjectStore(db)
+		if err != nil {
+			storeErr = append(storeErr, err)
+		}
+		userstr, err := usermysql.NewUserStore(db, conf.APP.Key, log)
+		if err != nil {
+			storeErr = append(storeErr, err)
+		}
+		appstr, err := appmysql.NewAppStore(db)
+		if err != nil {
+			storeErr = append(storeErr, err)
+		}
+		tokenstr, err := tokenmysql.NewTokenStore(db)
+		if err != nil {
+			storeErr = append(storeErr, err)
+		}
 
 		domain.InitController(domainstr, log)
 		project.InitController(log, domainstr, projectstr, userstr)

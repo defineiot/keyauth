@@ -20,12 +20,25 @@ type Client struct {
 	ClientType   string `json:"client_type"` // 1. confidential 2.public  https://tools.ietf.org/html/rfc6749#section-2.1
 }
 
-// Storage application storage
-type Storage interface {
-	Registration(userID, name, redirectURI, clientType, description, website string) (*Application, error)
-	Unregistration(id string) error
+
+// Store application storage
+type Store interface {
+	StoreReader
+	StoreWriter
+	Close() error
+
+}
+
+// StoreReader use to read application information from store
+type StoreReader interface {
 	GetUserApps(userID string) ([]*Application, error)
 	CheckAPPIsExistByID(appID string) (bool, error)
 	CheckAPPIsExistByName(userID, name string) (bool, error)
 	GetClient(clientID string) (*Client, error)
+}
+
+// StoreWriter use to write application information from store
+type StoreWriter interface {
+	Registration(userID, name, redirectURI, clientType, description, website string) (*Application, error)
+	Unregistration(id string) error
 }

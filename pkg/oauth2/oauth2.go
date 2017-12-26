@@ -25,7 +25,7 @@ func GetController() (*Controller, error) {
 }
 
 // InitController use to init controller
-func InitController(ts token.Storage, us user.Storage, ds domain.Store, as application.Storage, log logger.OpenAuthLogger, tokenType string, expiresIn int64) {
+func InitController(ts token.Store, us user.Store, ds domain.Store, as application.Store, log logger.OpenAuthLogger, tokenType string, expiresIn int64) {
 	once.Do(func() {
 		controller = &Controller{ts: ts, us: us, ds: ds, as: as, log: log, tokenType: tokenType, expiresIn: expiresIn}
 		controller.log.Debug("initial token controller successful")
@@ -35,10 +35,10 @@ func InitController(ts token.Storage, us user.Storage, ds domain.Store, as appli
 
 // Controller is domain pkg
 type Controller struct {
-	ts        token.Storage
-	us        user.Storage
+	ts        token.Store
+	us        user.Store
 	ds        domain.Store
-	as        application.Storage
+	as        application.Store
 	log       logger.OpenAuthLogger
 	tokenType string
 	expiresIn int64

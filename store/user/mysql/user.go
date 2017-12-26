@@ -12,7 +12,6 @@ import (
 	"github.com/satori/go.uuid"
 
 	"openauth/api/exception"
-	"openauth/api/logger"
 	"openauth/store/user"
 )
 
@@ -20,18 +19,7 @@ var (
 	deletePrepare *sql.Stmt
 )
 
-// NewUserStorage use to new an use service with mysql
-func NewUserStorage(db *sql.DB, key string, logger logger.OpenAuthLogger) user.Storage {
-	return &manager{db: db, key: key, logger: logger}
-}
-
-type manager struct {
-	db     *sql.DB
-	key    string
-	logger logger.OpenAuthLogger
-}
-
-func (m *manager) CreateUser(domainID, name, password string, enabled bool, userExpires, passExpires int) (*user.User, error) {
+func (m *store) CreateUser(domainID, name, password string, enabled bool, userExpires, passExpires int) (*user.User, error) {
 	// check is user exist
 	ok, err := m.CheckUserNameIsExist(domainID, name)
 	if err != nil {
@@ -107,7 +95,7 @@ func (m *manager) CreateUser(domainID, name, password string, enabled bool, user
 	return &userI, nil
 }
 
-func (m *manager) ListUserProjects(userID string) ([]string, error) {
+func (m *store) ListUserProjects(userID string) ([]string, error) {
 	ok, err := m.CheckUserIsExistByID(userID)
 	if err != nil {
 		return nil, err
@@ -133,7 +121,7 @@ func (m *manager) ListUserProjects(userID string) ([]string, error) {
 	return projects, nil
 }
 
-func (m *manager) SetDefaultProject(userID, projectID string) error {
+func (m *store) SetDefaultProject(userID, projectID string) error {
 	projects, err := m.ListUserProjects(userID)
 	if err != nil {
 		return err
@@ -171,7 +159,7 @@ func (m *manager) SetDefaultProject(userID, projectID string) error {
 	return nil
 }
 
-func (m *manager) AddProjectsToUser(userID string, projectIDs ...string) error {
+func (m *store) AddProjectsToUser(userID string, projectIDs ...string) error {
 	// check the user is not exist
 	ok, err := m.CheckUserIsExistByID(userID)
 	if err != nil {
@@ -199,7 +187,7 @@ func (m *manager) AddProjectsToUser(userID string, projectIDs ...string) error {
 	return nil
 }
 
-func (m *manager) RemoveProjectsFromUser(userID string, projectIDs ...string) error {
+func (m *store) RemoveProjectsFromUser(userID string, projectIDs ...string) error {
 	// check the user is not exist
 	ok, err := m.CheckUserIsExistByID(userID)
 	if err != nil {
@@ -227,7 +215,7 @@ func (m *manager) RemoveProjectsFromUser(userID string, projectIDs ...string) er
 	return nil
 }
 
-func (m *manager) GetUserByID(userID string) (*user.User, error) {
+func (m *store) GetUserByID(userID string) (*user.User, error) {
 	// get user by id
 	userI := user.User{}
 	err := m.db.QueryRow("SELECT id,name,enabled,last_active_time,domain_id,create_at,expires_active_days,default_project_id FROM user WHERE id = ?", userID).Scan(
@@ -260,7 +248,7 @@ func (m *manager) GetUserByID(userID string) (*user.User, error) {
 	return &userI, nil
 }
 
-func (m *manager) QueryPhone(userID string) ([]*user.Phone, error) {
+func (m *store) QueryPhone(userID string) ([]*user.Phone, error) {
 	rows, err := m.db.Query("SELECT id,numbers,'primary',description FROM phone WHERE user_id = ?", userID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query user's phone error, %s", err)
@@ -279,7 +267,7 @@ func (m *manager) QueryPhone(userID string) ([]*user.Phone, error) {
 	return phones, nil
 }
 
-func (m *manager) QueryEmail(userID string) ([]*user.Email, error) {
+func (m *store) QueryEmail(userID string) ([]*user.Email, error) {
 	rows, err := m.db.Query("SELECT id,address,'primary',description FROM email WHERE user_id = ?", userID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query user's email error, %s", err)
@@ -298,7 +286,7 @@ func (m *manager) QueryEmail(userID string) ([]*user.Email, error) {
 	return emails, nil
 }
 
-func (m *manager) QueryPassword(userID string) (*user.Password, error) {
+func (m *store) QueryPassword(userID string) (*user.Password, error) {
 	pass := user.Password{}
 	err := m.db.QueryRow("SELECT password,expires_at,create_at,update_at FROM password WHERE user_id = ?", userID).Scan(
 		&pass.Password, &pass.ExpireAt, &pass.CreateAt, &pass.UpdateAt)
@@ -313,7 +301,7 @@ func (m *manager) QueryPassword(userID string) (*user.Password, error) {
 	return &pass, nil
 }
 
-func (m *manager) ListUser(domainID string) ([]*user.User, error) {
+func (m *store) ListUser(domainID string) ([]*user.User, error) {
 
 	rows, err := m.db.Query("SELECT id,name,enabled,last_active_time,create_at,expires_active_days,default_project_id FROM user WHERE domain_id = ?", domainID)
 	if err != nil {
@@ -352,13 +340,11 @@ func (m *manager) ListUser(domainID string) ([]*user.User, error) {
 		users = append(users, &u)
 	}
 
-	m.logger.Debug("get user: ", users)
-
 	return users, nil
 
 }
 
-func (m *manager) DeleteUser(userID string) error {
+func (m *store) DeleteUser(userID string) error {
 	tx, err := m.db.Begin()
 	if err != nil {
 		return exception.NewInternalServerError("start delete user transaction error, %s", err)
@@ -440,7 +426,7 @@ func (m *manager) DeleteUser(userID string) error {
 	return nil
 }
 
-func (m *manager) GetUserByName(domainID, userName string) (*user.User, error) {
+func (m *store) GetUserByName(domainID, userName string) (*user.User, error) {
 	userI := user.User{}
 	err := m.db.QueryRow("SELECT id,name,enabled,last_active_time,domain_id,create_at,expires_active_days,default_project_id FROM user WHERE name = ? AND domain_id = ?", userName, domainID).Scan(
 		&userI.ID, &userI.Name, &userI.Enabled, &userI.LastActiveTime, &userI.DomainID, &userI.CreateAt, &userI.ExpireActiveDays, &userI.DefaultProjectID)
@@ -472,7 +458,7 @@ func (m *manager) GetUserByName(domainID, userName string) (*user.User, error) {
 	return &userI, nil
 }
 
-func (m *manager) ValidateUser(domainID, userName, password string) (string, error) {
+func (m *store) ValidateUser(domainID, userName, password string) (string, error) {
 	var uid string
 	err := m.db.QueryRow("SELECT id FROM user WHERE name = ? AND domain_id = ?", userName, domainID).Scan(&uid)
 	if err != nil {
@@ -495,63 +481,7 @@ func (m *manager) ValidateUser(domainID, userName, password string) (string, err
 	return "", nil
 }
 
-func (m *manager) GetUser(cert user.Credential) (*user.User, error) {
-	return nil, nil
-}
-
-func (m *manager) AddPhone(cert user.Credential, number, phoneType, description string) error {
-	return nil
-}
-
-func (m *manager) RemovePhone(cert user.Credential, number string) error {
-	return nil
-}
-
-func (m *manager) AddEmail(cert user.Credential, address, description string, primary bool) error {
-	return nil
-}
-
-func (m *manager) RemoveEmail(cert user.Credential, address string) error {
-	return nil
-}
-
-func (m *manager) AddRoleToUser(cert user.Credential, roleID string) error {
-	return nil
-}
-
-func (m *manager) RemoveRoleFromUser(cert user.Credential, roleID string) error {
-	return nil
-}
-
-func (m *manager) QueryRole(cert user.Credential) ([]string, error) {
-	return nil, nil
-}
-
-func (m *manager) HasFeatures(cert user.Credential, features ...string) (bool, error) {
-	return false, nil
-}
-
-func (m *manager) AddUserToProject(cert user.Credential, projectID string) error {
-	return nil
-}
-
-func (m *manager) RemoveUserFromProject(cert user.Credential, projectID string) error {
-	return nil
-}
-
-func (m *manager) GetDefaultProject(cert user.Credential) (string, error) {
-	return "", nil
-}
-
-func (m *manager) IsSystemAdmin(cert user.Credential) (bool, error) {
-	return false, nil
-}
-
-func (m *manager) IsCloudAdmin(cert user.Credential) (bool, error) {
-	return false, nil
-}
-
-func (m *manager) CheckUserNameIsExist(domainID, userName string) (bool, error) {
+func (m *store) CheckUserNameIsExist(domainID, userName string) (bool, error) {
 	rows, err := m.db.Query("SELECT name FROM user WHERE name = ? AND domain_id = ?", userName, domainID)
 	if err != nil {
 		return false, exception.NewInternalServerError("query user name exist error, %s", err)
@@ -573,7 +503,7 @@ func (m *manager) CheckUserNameIsExist(domainID, userName string) (bool, error) 
 	return true, nil
 }
 
-func (m *manager) CheckUserIsExistByID(userID string) (bool, error) {
+func (m *store) CheckUserIsExistByID(userID string) (bool, error) {
 	var uid string
 	err := m.db.QueryRow("SELECT id FROM user WHERE id = ?", userID).Scan(&uid)
 	if err != nil {
@@ -586,7 +516,7 @@ func (m *manager) CheckUserIsExistByID(userID string) (bool, error) {
 	return true, nil
 }
 
-func (m *manager) hmacHash(msg string) string {
+func (m *store) hmacHash(msg string) string {
 	mac := hmac.New(sha256.New, []byte(m.key))
 	io.WriteString(mac, msg)
 

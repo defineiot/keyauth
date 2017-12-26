@@ -49,17 +49,20 @@ type Scope struct {
 	DomainID  string `json:"domain_id,omitempty"`
 }
 
-// Storage is auth service
-type Storage interface {
-	SaveToken(t *Token) (*Token, error)
+// Store is auth service
+type Store interface {
+	StoreReader
+	StoreWriter
+	Close() error
+
+}
+
+type StoreReader interface {
 	GetToken(accessToken string) (*Token, error)
-	// IssueTokenWithProject(userID, projectID string) (*Token, error)
-	// IssueTokenWithDomain(userID, domainID string) (*Token, error)
-	// IssueTokenByCode(code string) (*Token, error)
-	// IssueAuthCode(app *application.Application) (*Code, error)
-	// ValidateToken(accessToken string) (*Token, error)
-	// RefreshToken(refreshToken string) (*Token, error)
-	// RevokeToken(accessToken string) error
+}
+
+type StoreWriter interface {
+	SaveToken(t *Token) (*Token, error)
 }
 
 // Validate use to validate token to save
