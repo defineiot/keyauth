@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"fmt"
 
 	"openauth/api/exception"
 	"openauth/store/domain"
@@ -103,7 +104,7 @@ func prepareStmts(db *sql.DB, unprepared map[string]string) (map[string]*sql.Stm
 	for k, v := range unprepared {
 		stmt, err := db.Prepare(v)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("prepare statment: %s, %s", k, err)
 		}
 		prepared[k] = stmt
 	}

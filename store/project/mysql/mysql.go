@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"fmt"
 
 	"openauth/api/exception"
 	"openauth/store/project"
@@ -74,7 +75,7 @@ func NewProjectStore(db *sql.DB) (project.Store, error) {
 	// prepare all statements to verify syntax
 	stmts, err := prepareStmts(db, unprepared)
 	if err != nil {
-		return nil, exception.NewInternalServerError("prepare domain query statment error, %s", err)
+		return nil, exception.NewInternalServerError("prepare  project store query statment error, %s", err)
 	}
 
 	s := store{
@@ -104,7 +105,7 @@ func prepareStmts(db *sql.DB, unprepared map[string]string) (map[string]*sql.Stm
 	for k, v := range unprepared {
 		stmt, err := db.Prepare(v)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("prepare statment: %s, %s", k, err)
 		}
 		prepared[k] = stmt
 	}

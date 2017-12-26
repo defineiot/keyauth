@@ -73,7 +73,7 @@ CREATE TABLE `token` (
 `expire_at` int(64) NOT NULL DEFAULT 0,
 `client_id` varchar(64) NULL,
 `user_id` varchar(64) NULL,
-`domian_id` varchar(255) NOT NULL DEFAULT '',
+`domain_id` varchar(255) NOT NULL DEFAULT '',
 `project_id` varchar(255) NOT NULL DEFAULT '',
 `extra` text NOT NULL DEFAULT '',
 PRIMARY KEY (`id`) 
