@@ -54,7 +54,7 @@ function main() {
     docker run --rm -e 'CGO_ENABLED=0' -e 'GOOS=linux' -e 'GOARCH=amd64' \
         -v "$PWD":/go/src/openauth \
         -w /go/src/openauth golang:1.9 \
-        go build -v -a -o openauth -ldflags "-X '${Path}.GIT_TAG=${TAG}' -X '${Path}.GIT_BRANCH=${BRANCH}' -X '${Path}.GIT_COMMIT=${COMMIT}' -X '${Path}.BUILD_TIME=${DATE}' -X '${Path}.GO_VERSION=`go version`'" cmd/openauth/main.go
+        go build -v -a -o openauth -ldflags "-X '${Path}.GIT_TAG=${TAG}' -X '${Path}.GIT_BRANCH=${BRANCH}' -X '${Path}.GIT_COMMIT=${COMMIT}' -X '${Path}.BUILD_TIME=${DATE}' -X '${Path}.GO_VERSION=`go version`'" cmd/openauthd/main.go
     echo -e ""
 
     _info "build completed,the binary file in this directory."
