@@ -18,7 +18,7 @@ CREATE TABLE `user` (
 `id` varchar(255) NOT NULL,
 `name` varchar(255) NOT NULL,
 `enabled` int(1) NOT NULL DEFAULT 0,
-`last_active_time` int(64) NULL,
+`last_active_time` int(64) NOT NULL DEFAULT 0,
 `extra` text NOT NULL DEFAULT '',
 `domain_id` varchar(255) NOT NULL,
 `create_at` int(64) NOT NULL,
