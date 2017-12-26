@@ -1,4 +1,4 @@
-BINARY_NAME=openauth
+BINARY_NAME=openauthd
 
 ifndef	_info
 define _info

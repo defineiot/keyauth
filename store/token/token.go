@@ -54,15 +54,17 @@ type Store interface {
 	StoreReader
 	StoreWriter
 	Close() error
-
 }
 
+// StoreReader read information from store
 type StoreReader interface {
 	GetToken(accessToken string) (*Token, error)
 }
 
+// StoreWriter write information to store
 type StoreWriter interface {
 	SaveToken(t *Token) (*Token, error)
+	DeleteToken(accessToken string) error
 }
 
 // Validate use to validate token to save

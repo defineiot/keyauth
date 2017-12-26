@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	SaveToken = "save-token"
-	FindToken = "find-token"
+	SaveToken   = "save-token"
+	FindToken   = "find-token"
+	DeleteToken = "delete-token"
 )
 
 // NewTokenStore use to create domain storage service
@@ -22,6 +23,10 @@ func NewTokenStore(db *sql.DB) (token.Store, error) {
 		FindToken: `
 			SELECT t.grant_type, t.access_token, t.refresh_token, t.type, t.create_at, t.expire_at, t.client_id, t.user_id, t.domain_id, t.project_id 
 			FROM token t
+			WHERE access_token = ?;
+		`,
+		DeleteToken: `
+			DELETE FROM token 
 			WHERE access_token = ?;
 		`,
 	}
