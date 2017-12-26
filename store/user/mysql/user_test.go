@@ -54,7 +54,7 @@ func TestUserProject(t *testing.T) {
 	s := newTestStore()
 	defer s.Close()
 
-	user, err := s.CreateUser("test-domain-01", "test01", "123456", true, 3600, 3600)
+	user, err := s.CreateUser("test-domain-01", "test03", "123456", true, 3600, 3600)
 	if err != nil {
 		t.Fatal(err)
 	}
