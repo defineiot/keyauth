@@ -9,21 +9,98 @@ import (
 )
 
 const (
-	SaveToken = "save-token"
-	FindToken = "find-token"
+	SaveUser         = "save-user"
+	FindAllUsers     = "find-all-users"
+	FindUserByID     = "find-user-by-id"
+	FindUserByName   = "find-user-by-name"
+	FindUserPhones   = "find-user-phones"
+	FindUserEmails   = "find-user-emails"
+	FindUserPassword = "find-user-password"
+	DeleteUserByID   = "delete-user-by-id"
+	FindUserIDByName = "find-user-id-by-name"
+
+	FindUserProjects       = "find-user-projects"
+	SetUserDefaultProject  = "set-user-default-project"
+	AddProjectToUser       = "add-project-to-user"
+	RemoveProjectsFromUser = "remove-projects-from-user"
+
+	CheckUserExistByName = "check-user-exist-by-name"
+	CheckUserExistByID   = "check-user-exist-by-id"
 )
 
 // NewUserStore use to create domain storage service
 func NewUserStore(db *sql.DB, key string, logger logger.OpenAuthLogger) (user.Store, error) {
 	unprepared := map[string]string{
-		SaveToken: `
-			INSERT INTO token (grant_type, access_token, refresh_token, type, create_at, expire_at, client_id, user_id, domain_id, project_id) 
-			VALUES (?,?,?,?,?,?,?,?,?,?);
+		SaveUser: `
+			INSERT INTO user (id, name, enabled, domain_id, create_at, expires_active_days) 
+			VALUES (?,?,?,?,?,?);
 		`,
-		FindToken: `
-			SELECT t.grant_type, t.access_token, t.refresh_token, t.type, t.create_at, t.expire_at, t.client_id, t.user_id, t.domain_id, t.project_id 
-			FROM token t
-			WHERE access_token = ?;
+		FindAllUsers: `
+			SELECT u.id, u.name, u.enabled, u.last_active_time, u.create_at, u.expires_active_days, u.default_project_id 
+			FROM user u
+			WHERE domain_id = ?;
+		`,
+		FindUserByID: `
+			SELECT u.id, u.name, u.enabled, u.last_active_time, u.domain_id, u.create_at, u.expires_active_days, u.default_project_id 
+			FROM user u
+			WHERE id = ?;
+		`,
+		FindUserByName: `
+			SELECT u.id, u.name, u.enabled, u.last_active_time, u.domain_id, u.create_at, u.expires_active_days, u.default_project_id 
+			FROM user u 
+			WHERE name = ? 
+			AND domain_id = ?;
+		`,
+		FindUserProjects: `
+			SELECT project_id 
+			FROM mapping 
+			WHERE user_id = ?;
+		`,
+		SetUserDefaultProject: `
+			UPDATE user 
+			SET default_project_id = ? 
+			WHERE id = ?;
+		`,
+		AddProjectToUser: `
+			INSERT INTO mapping (user_id, project_id) 
+			VALUES (?,?);
+		`,
+		RemoveProjectsFromUser: `
+			DELETE FROM mapping 
+			WHERE user_id = ? 
+			AND project_id = ?;
+		`,
+		FindUserPhones: `
+			SELECT p.id, p.numbers, 'p.primary', p.description 
+			FROM phone p 
+			WHERE user_id = ?;
+		`,
+		FindUserEmails: `
+			SELECT e.id, e.address, 'e.primary', e.description 
+			FROM email e
+			WHERE user_id = ?;
+		`,
+		FindUserPassword: `
+			SELECT p.password, p.expires_at, p.create_at, p.update_at 
+			FROM password p
+			WHERE user_id = ?;
+		`,
+		FindUserIDByName: `
+			SELECT u.id 
+			FROM user u
+			WHERE name = ? 
+			AND domain_id = ?;
+		`,
+		CheckUserExistByName: `
+			SELECT u.name 
+			FROM user u
+			WHERE name = ? 
+			AND domain_id = ?;
+		`,
+		CheckUserExistByID: `
+			SELECT u.id 
+			FROM user u
+			WHERE id = ?;
 		`,
 	}
 

@@ -21,14 +21,15 @@ const (
 func NewAppStore(db *sql.DB) (application.Store, error) {
 	unprepared := map[string]string{
 		CreateAPP: `
-			"INSERT INTO application (id, name, user_id, client_id, client_secret, client_type, website, logo_image, description, redirect_uri, create_at) 
+			INSERT INTO application (id, name, user_id, client_id, client_secret, client_type, website, logo_image, description, redirect_uri, create_at) 
 			VALUES (?,?,?,?,?,?,?,?,?,?,?);
 		`,
 		GetUserAPPS: `
 			SELECT a.id, a.name, a.user_id, a.client_id, a.client_secret, a.client_type, a.website, a.logo_image, a.description, a.redirect_uri, a.create_at 
 			FROM application a 
 			WHERE user_id = ? 
-			ORDER BY create_at DESC;
+			ORDER BY create_at 
+			DESC;
 		`,
 		GetClient: `
 			SELECT a.client_id, a.client_secret, a.client_type, a.redirect_uri 
@@ -45,7 +46,8 @@ func NewAppStore(db *sql.DB) (application.Store, error) {
 		`,
 		CheckExistByName: `
 			SELECT id FROM application 
-			WHERE name = ? AND user_id = ?;
+			WHERE name = ? 
+			AND user_id = ?;
 		`,
 	}
 

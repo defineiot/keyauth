@@ -19,7 +19,7 @@ func (s *store) GetToken(accessToken string) (*token.Token, error) {
 	t := new(token.Token)
 	t.Scope = new(token.Scope)
 
-	err := s.stmts[FindToken].QueryRow("SELECT grant_type,access_token,refresh_token,type,create_at,expire_at,client_id,user_id,domain_id,project_id FROM token WHERE access_token = ?", accessToken).Scan(
+	err := s.stmts[FindToken].QueryRow(accessToken).Scan(
 		&t.GrantType, &t.AccessToken, &t.RefreshToken, &t.TokenType, &t.CreatedAt, &t.ExpiresIn, &t.ClientID, &t.UserID, &t.Scope.DomainID, &t.Scope.ProjectID)
 	if err != nil {
 		if err == sql.ErrNoRows {

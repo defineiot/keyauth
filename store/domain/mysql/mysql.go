@@ -31,13 +31,14 @@ func NewDomainStore(db *sql.DB) (domain.Store, error) {
 		FindDomains: `
 			SELECT d.id, d.name, d.display_name, d.description, d.enabled, d.create_at, d.update_at
 			FROM domain d
-			ORDER BY create_at DESC;
+			ORDER BY create_at 
+			DESC;
 		`,
 		FindDomainsWithPage: `
 			SELECT d.id, d.name, d.display_name, d.description, d.enabled, d.create_at, d.update_at
 			FROM domain d
-			ORDER BY create_at DESC
-			LIMIT ?,?;
+			ORDER BY create_at 
+			DESC LIMIT ?,?;
 		`,
 		FindDomainByID: `
 			SELECT d.id, d.name, d.display_name, d.description, d.enabled, d.create_at, d.update_at
@@ -58,11 +59,13 @@ func NewDomainStore(db *sql.DB) (domain.Store, error) {
 			FROM domain;
 		`,
 		FindDomainID: `
-			SELECT id FROM domain 
+			SELECT id 
+			FROM domain 
 			WHERE id = ?;
 		`,
 		FindDomainName: `
-			SELECT id FROM domain 
+			SELECT id 
+			FROM domain 
 			WHERE name = ?;
 		`,
 	}

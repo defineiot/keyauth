@@ -2,13 +2,13 @@ package project
 
 // Project tenant resource container
 type Project struct {
-	ID string `json:"id"`
-	Name string `json:"name"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
 	Description string `json:"description"`
-	Enabled bool `json:"enabled"`
-	CreateAt int64 `json:"create_at"`
-	DomainID string `json:"domain_id"`
-	Extra string `json:"-"`
+	Enabled     bool   `json:"enabled"`
+	CreateAt    int64  `json:"create_at"`
+	DomainID    string `json:"domain_id"`
+	Extra       string `json:"-"`
 }
 
 // Store is project service
@@ -18,7 +18,7 @@ type Store interface {
 	Close() error
 }
 
-
+// StoreReader read project information from store
 type StoreReader interface {
 	GetProject(id string) (*Project, error)
 	ListDomainProjects(domainID string) ([]*Project, error)
@@ -26,6 +26,7 @@ type StoreReader interface {
 	ListProjectUsers(projectID string) ([]string, error)
 }
 
+// StoreWriter write project information to store
 type StoreWriter interface {
 	CreateProject(domainID, name, description string, enabled bool) (*Project, error)
 	UpdateProject(id, name, description string) (*Project, error)

@@ -15,13 +15,9 @@ import (
 	"openauth/store/user"
 )
 
-var (
-	deletePrepare *sql.Stmt
-)
-
-func (m *store) CreateUser(domainID, name, password string, enabled bool, userExpires, passExpires int) (*user.User, error) {
+func (s *store) CreateUser(domainID, name, password string, enabled bool, userExpires, passExpires int) (*user.User, error) {
 	// check is user exist
-	ok, err := m.CheckUserNameIsExist(domainID, name)
+	ok, err := s.CheckUserNameIsExist(domainID, name)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +26,7 @@ func (m *store) CreateUser(domainID, name, password string, enabled bool, userEx
 	}
 
 	// start transaction
-	tx, err := m.db.Begin()
+	tx, err := s.db.Begin()
 	if err != nil {
 		return nil, fmt.Errorf("start create user transaction error, %s", err)
 	}
@@ -69,7 +65,7 @@ func (m *store) CreateUser(domainID, name, password string, enabled bool, userEx
 		return nil, exception.NewBadRequest("parse password time delta error, expires: %d, %s", passExpires, err)
 	}
 	exp := now.Add(delta)
-	hashPW := m.hmacHash(password)
+	hashPW := s.hmacHash(password)
 	pass := user.Password{CreateAt: now.Unix(), ExpireAt: exp.Unix(), Password: hashPW, UserID: userI.ID}
 	ret, err := passPre.Exec(pass.Password, pass.ExpireAt, pass.CreateAt, pass.UserID)
 	if err != nil {
@@ -95,8 +91,8 @@ func (m *store) CreateUser(domainID, name, password string, enabled bool, userEx
 	return &userI, nil
 }
 
-func (m *store) ListUserProjects(userID string) ([]string, error) {
-	ok, err := m.CheckUserIsExistByID(userID)
+func (s *store) ListUserProjects(userID string) ([]string, error) {
+	ok, err := s.CheckUserIsExistByID(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +100,7 @@ func (m *store) ListUserProjects(userID string) ([]string, error) {
 		return nil, exception.NewBadRequest("user %s not exist", userID)
 	}
 
-	rows, err := m.db.Query("SELECT project_id FROM mapping WHERE user_id = ?", userID)
+	rows, err := s.stmts[FindUserProjects].Query(userID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query user's project id error, %s", err)
 	}
@@ -121,8 +117,8 @@ func (m *store) ListUserProjects(userID string) ([]string, error) {
 	return projects, nil
 }
 
-func (m *store) SetDefaultProject(userID, projectID string) error {
-	projects, err := m.ListUserProjects(userID)
+func (s *store) SetDefaultProject(userID, projectID string) error {
+	projects, err := s.ListUserProjects(userID)
 	if err != nil {
 		return err
 	}
@@ -138,13 +134,7 @@ func (m *store) SetDefaultProject(userID, projectID string) error {
 		return exception.NewBadRequest("user %s hasn't project %s", userID, projectID)
 	}
 
-	mappPre, err := m.db.Prepare("UPDATE `user` SET default_project_id = ? WHERE id = ?")
-	if err != nil {
-		return exception.NewInternalServerError("prepare set user's default project error, user: %s, project: %s, %s", userID, projectID, err)
-	}
-	defer mappPre.Close()
-
-	ret, err := mappPre.Exec(projectID, userID)
+	ret, err := s.stmts[SetUserDefaultProject].Exec(projectID, userID)
 	if err != nil {
 		return exception.NewInternalServerError("set user's default project exec sql error, %s", err)
 	}
@@ -159,9 +149,9 @@ func (m *store) SetDefaultProject(userID, projectID string) error {
 	return nil
 }
 
-func (m *store) AddProjectsToUser(userID string, projectIDs ...string) error {
+func (s *store) AddProjectsToUser(userID string, projectIDs ...string) error {
 	// check the user is not exist
-	ok, err := m.CheckUserIsExistByID(userID)
+	ok, err := s.CheckUserIsExistByID(userID)
 	if err != nil {
 		return err
 	}
@@ -169,16 +159,9 @@ func (m *store) AddProjectsToUser(userID string, projectIDs ...string) error {
 		return exception.NewBadRequest("user %s not exist", userID)
 	}
 
-	// insert
-	mappPre, err := m.db.Prepare("INSERT INTO `mapping` (user_id, project_id) VALUES (?,?)")
-	if err != nil {
-		return fmt.Errorf("prepare add projects to user mapping stmt error, user: %s, project: %s, %s", userID, projectIDs, err)
-	}
-	defer mappPre.Close()
-
 	for _, projectID := range projectIDs {
 		//
-		_, err = mappPre.Exec(userID, projectID)
+		_, err = s.stmts[AddProjectToUser].Exec(userID, projectID)
 		if err != nil {
 			return fmt.Errorf("insert add projects to user mapping exec sql err, %s", err)
 		}
@@ -187,9 +170,9 @@ func (m *store) AddProjectsToUser(userID string, projectIDs ...string) error {
 	return nil
 }
 
-func (m *store) RemoveProjectsFromUser(userID string, projectIDs ...string) error {
+func (s *store) RemoveProjectsFromUser(userID string, projectIDs ...string) error {
 	// check the user is not exist
-	ok, err := m.CheckUserIsExistByID(userID)
+	ok, err := s.CheckUserIsExistByID(userID)
 	if err != nil {
 		return err
 	}
@@ -197,28 +180,20 @@ func (m *store) RemoveProjectsFromUser(userID string, projectIDs ...string) erro
 		return exception.NewBadRequest("user %s not exist", userID)
 	}
 
-	// insert
-	mappPre, err := m.db.Prepare("DELETE FROM `mapping` WHERE user_id = ? AND project_id = ?")
-	if err != nil {
-		return fmt.Errorf("prepare remove projects to user mapping stmt error, user: %s, project: %s, %s", userID, projectIDs, err)
-	}
-
 	for _, projectID := range projectIDs {
-		_, err = mappPre.Exec(userID, projectID)
+		_, err = s.stmts[RemoveProjectsFromUser].Exec(userID, projectID)
 		if err != nil {
-			mappPre.Close()
 			return fmt.Errorf("insert remove projects to user mapping exec sql err, %s", err)
 		}
 	}
-	mappPre.Close()
 
 	return nil
 }
 
-func (m *store) GetUserByID(userID string) (*user.User, error) {
+func (s *store) GetUserByID(userID string) (*user.User, error) {
 	// get user by id
 	userI := user.User{}
-	err := m.db.QueryRow("SELECT id,name,enabled,last_active_time,domain_id,create_at,expires_active_days,default_project_id FROM user WHERE id = ?", userID).Scan(
+	err := s.stmts[FindUserByID].QueryRow(userID).Scan(
 		&userI.ID, &userI.Name, &userI.Enabled, &userI.LastActiveTime, &userI.DomainID, &userI.CreateAt, &userI.ExpireActiveDays, &userI.DefaultProjectID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -229,14 +204,14 @@ func (m *store) GetUserByID(userID string) (*user.User, error) {
 	}
 
 	// get user's emails
-	emails, err := m.QueryEmail(userID)
+	emails, err := s.QueryEmail(userID)
 	if err != nil {
 		return nil, err
 	}
 	userI.Emails = emails
 
 	// get user's phones
-	phones, err := m.QueryPhone(userID)
+	phones, err := s.QueryPhone(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -248,8 +223,8 @@ func (m *store) GetUserByID(userID string) (*user.User, error) {
 	return &userI, nil
 }
 
-func (m *store) QueryPhone(userID string) ([]*user.Phone, error) {
-	rows, err := m.db.Query("SELECT id,numbers,'primary',description FROM phone WHERE user_id = ?", userID)
+func (s *store) QueryPhone(userID string) ([]*user.Phone, error) {
+	rows, err := s.stmts[FindUserPhones].Query(userID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query user's phone error, %s", err)
 	}
@@ -267,8 +242,8 @@ func (m *store) QueryPhone(userID string) ([]*user.Phone, error) {
 	return phones, nil
 }
 
-func (m *store) QueryEmail(userID string) ([]*user.Email, error) {
-	rows, err := m.db.Query("SELECT id,address,'primary',description FROM email WHERE user_id = ?", userID)
+func (s *store) QueryEmail(userID string) ([]*user.Email, error) {
+	rows, err := s.stmts[FindUserEmails].Query(userID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query user's email error, %s", err)
 	}
@@ -286,9 +261,9 @@ func (m *store) QueryEmail(userID string) ([]*user.Email, error) {
 	return emails, nil
 }
 
-func (m *store) QueryPassword(userID string) (*user.Password, error) {
+func (s *store) QueryPassword(userID string) (*user.Password, error) {
 	pass := user.Password{}
-	err := m.db.QueryRow("SELECT password,expires_at,create_at,update_at FROM password WHERE user_id = ?", userID).Scan(
+	err := s.stmts[FindUserPassword].QueryRow(userID).Scan(
 		&pass.Password, &pass.ExpireAt, &pass.CreateAt, &pass.UpdateAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -301,9 +276,9 @@ func (m *store) QueryPassword(userID string) (*user.Password, error) {
 	return &pass, nil
 }
 
-func (m *store) ListUser(domainID string) ([]*user.User, error) {
+func (s *store) ListUser(domainID string) ([]*user.User, error) {
 
-	rows, err := m.db.Query("SELECT id,name,enabled,last_active_time,create_at,expires_active_days,default_project_id FROM user WHERE domain_id = ?", domainID)
+	rows, err := s.stmts[FindAllUsers].Query(domainID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query user list error, %s", err)
 	}
@@ -316,19 +291,19 @@ func (m *store) ListUser(domainID string) ([]*user.User, error) {
 			return nil, exception.NewInternalServerError("scan project's user id error, %s", err)
 		}
 		// get user's emails
-		emails, err := m.QueryEmail(u.ID)
+		emails, err := s.QueryEmail(u.ID)
 		if err != nil {
 			return nil, err
 		}
 		u.Emails = emails
 		// get user's phone
-		phones, err := m.QueryPhone(u.ID)
+		phones, err := s.QueryPhone(u.ID)
 		if err != nil {
 			return nil, err
 		}
 		u.Phones = phones
 		// get user's password
-		pass, err := m.QueryPassword(u.ID)
+		pass, err := s.QueryPassword(u.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -344,8 +319,8 @@ func (m *store) ListUser(domainID string) ([]*user.User, error) {
 
 }
 
-func (m *store) DeleteUser(userID string) error {
-	tx, err := m.db.Begin()
+func (s *store) DeleteUser(userID string) error {
+	tx, err := s.db.Begin()
 	if err != nil {
 		return exception.NewInternalServerError("start delete user transaction error, %s", err)
 	}
@@ -426,9 +401,9 @@ func (m *store) DeleteUser(userID string) error {
 	return nil
 }
 
-func (m *store) GetUserByName(domainID, userName string) (*user.User, error) {
+func (s *store) GetUserByName(domainID, userName string) (*user.User, error) {
 	userI := user.User{}
-	err := m.db.QueryRow("SELECT id,name,enabled,last_active_time,domain_id,create_at,expires_active_days,default_project_id FROM user WHERE name = ? AND domain_id = ?", userName, domainID).Scan(
+	err := s.stmts[FindUserByName].QueryRow(userName, domainID).Scan(
 		&userI.ID, &userI.Name, &userI.Enabled, &userI.LastActiveTime, &userI.DomainID, &userI.CreateAt, &userI.ExpireActiveDays, &userI.DefaultProjectID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -439,14 +414,14 @@ func (m *store) GetUserByName(domainID, userName string) (*user.User, error) {
 	}
 
 	// get user's emails
-	emails, err := m.QueryEmail(userI.ID)
+	emails, err := s.QueryEmail(userI.ID)
 	if err != nil {
 		return nil, err
 	}
 	userI.Emails = emails
 
 	// get user's phones
-	phones, err := m.QueryPhone(userI.ID)
+	phones, err := s.QueryPhone(userI.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -458,9 +433,9 @@ func (m *store) GetUserByName(domainID, userName string) (*user.User, error) {
 	return &userI, nil
 }
 
-func (m *store) ValidateUser(domainID, userName, password string) (string, error) {
+func (s *store) ValidateUser(domainID, userName, password string) (string, error) {
 	var uid string
-	err := m.db.QueryRow("SELECT id FROM user WHERE name = ? AND domain_id = ?", userName, domainID).Scan(&uid)
+	err := s.stmts[FindUserIDByName].QueryRow(userName, domainID).Scan(&uid)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return "", exception.NewNotFound("user %s not find", userName)
@@ -469,20 +444,20 @@ func (m *store) ValidateUser(domainID, userName, password string) (string, error
 		return "", exception.NewInternalServerError("query single user error, %s", err)
 	}
 
-	pass, err := m.QueryPassword(uid)
+	pass, err := s.QueryPassword(uid)
 	if err != nil {
 		return "", err
 	}
 
-	if m.hmacHash(password) == pass.Password {
+	if s.hmacHash(password) == pass.Password {
 		return uid, nil
 	}
 
 	return "", nil
 }
 
-func (m *store) CheckUserNameIsExist(domainID, userName string) (bool, error) {
-	rows, err := m.db.Query("SELECT name FROM user WHERE name = ? AND domain_id = ?", userName, domainID)
+func (s *store) CheckUserNameIsExist(domainID, userName string) (bool, error) {
+	rows, err := s.stmts[CheckUserExistByName].Query(userName, domainID)
 	if err != nil {
 		return false, exception.NewInternalServerError("query user name exist error, %s", err)
 	}
@@ -503,9 +478,9 @@ func (m *store) CheckUserNameIsExist(domainID, userName string) (bool, error) {
 	return true, nil
 }
 
-func (m *store) CheckUserIsExistByID(userID string) (bool, error) {
+func (s *store) CheckUserIsExistByID(userID string) (bool, error) {
 	var uid string
-	err := m.db.QueryRow("SELECT id FROM user WHERE id = ?", userID).Scan(&uid)
+	err := s.stmts[CheckUserExistByID].QueryRow(userID).Scan(&uid)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return false, nil
@@ -516,8 +491,8 @@ func (m *store) CheckUserIsExistByID(userID string) (bool, error) {
 	return true, nil
 }
 
-func (m *store) hmacHash(msg string) string {
-	mac := hmac.New(sha256.New, []byte(m.key))
+func (s *store) hmacHash(msg string) string {
+	mac := hmac.New(sha256.New, []byte(s.key))
 	io.WriteString(mac, msg)
 
 	return fmt.Sprintf("%x", mac.Sum(nil))

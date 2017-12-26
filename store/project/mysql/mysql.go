@@ -33,7 +33,8 @@ func NewProjectStore(db *sql.DB) (project.Store, error) {
 			SELECT p.id, p.name, p.description, p.enabled, p.domain_id, p.create_at 
 			FROM project p
 			WHERE domain_id = ? 
-			ORDER BY create_at DESC;
+			ORDER BY create_at 
+			DESC;
 		`,
 		FindProjectByID: `
 			SELECT p.id, p.name, p.description, p.enabled, p.create_at, p.domain_id 
@@ -49,8 +50,10 @@ func NewProjectStore(db *sql.DB) (project.Store, error) {
 			WHERE id = ?;
 		`,
 		CheckProjectExistByName: `
-			SELECT name FROM project 
-			WHERE name = ? AND domain_id = ?;
+			SELECT name 
+			FROM project 
+			WHERE name = ? 
+			AND domain_id = ?;
 		`,
 		FindProjectUsers: `
 			SELECT user_id 
@@ -63,7 +66,8 @@ func NewProjectStore(db *sql.DB) (project.Store, error) {
 		`,
 		RemoveUsersFromProject: `
 			DELETE FROM mapping 
-			WHERE user_id = ? AND project_id = ?;
+			WHERE user_id = ? 
+			AND project_id = ?;
 		`,
 	}
 
