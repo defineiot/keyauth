@@ -2,14 +2,14 @@ package router
 
 import (
 	"net/http"
-	"openauth/api/http/response"
 	"reflect"
 	"runtime"
 	"strings"
 
-	"openauth/api/http/context"
-
 	"github.com/julienschmidt/httprouter"
+
+	"openauth/api/http/context"
+	"openauth/api/http/response"
 )
 
 // MyRouter is an hack for httprouter
