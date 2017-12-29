@@ -48,11 +48,5 @@ func NewDomainController() *domain.Controller {
 		return errors.New("unit-test-id not found")
 	}
 
-	domain.InitController(ds, log)
-	domainsvr, err := domain.GetController()
-	if err != nil {
-		panic(err)
-	}
-
-	return domainsvr
+	return domain.NewController(ds, log)
 }

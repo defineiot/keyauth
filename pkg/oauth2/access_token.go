@@ -24,13 +24,6 @@ type TokenRequest struct {
 
 // Validate validate the request
 func (t *TokenRequest) Validate() error {
-	// if t.Scope == nil {
-	// 	return exception.NewBadRequest("scope must'nt be nil")
-	// }
-	// if t.Scope.DomainID == "" && t.Scope.ProjectID == "" {
-	// 	return exception.NewBadRequest("scope's domain id or project id must choice one")
-	// }
-
 	switch t.GrantType {
 	case token.AUTHCODE:
 		if t.Code == "" {

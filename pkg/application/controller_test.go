@@ -65,11 +65,5 @@ func NewAppController() *appctr.Controller {
 		return false, nil
 	}
 
-	appctr.InitController(log, as, us)
-
-	appsvr, err := appctr.GetController()
-	if err != nil {
-		panic(err)
-	}
-	return appsvr
+	return appctr.NewController(log, as, us)
 }

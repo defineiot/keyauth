@@ -63,35 +63,14 @@ func InitController(conf *config.Config) error {
 			storeErr = append(storeErr, err)
 		}
 
-		domain.InitController(domainstr, log)
-		project.InitController(log, domainstr, projectstr, userstr)
-		user.InitController(log, userstr, domainstr, projectstr)
-		application.InitController(log, appstr, userstr)
-		oauth2.InitController(tokenstr, userstr, domainstr, appstr, log, conf.Token.Type, conf.Token.ExpiresIn)
+		domainsrv = domain.NewController(domainstr, log)
+		projectsrv = project.NewController(log, domainstr, projectstr, userstr)
+		usersrv = user.NewController(log, userstr, domainstr, projectstr)
+		appsrv = application.NewController(log, appstr, userstr)
+		authsrc = oauth2.NewController(tokenstr, userstr, domainstr, appstr, log, conf.Token.Type, conf.Token.ExpiresIn)
 	})
 	if len(storeErr) != 0 {
 		return exception.NewInternalServerError("get store error, %s", storeErr)
-	}
-
-	domainsrv, err = domain.GetController()
-	if err != nil {
-		return err
-	}
-	projectsrv, err = project.GetController()
-	if err != nil {
-		return err
-	}
-	usersrv, err = user.GetController()
-	if err != nil {
-		return err
-	}
-	appsrv, err = application.GetController()
-	if err != nil {
-		return err
-	}
-	authsrc, err = oauth2.GetController()
-	if err != nil {
-		return err
 	}
 
 	return nil
