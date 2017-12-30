@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"openauth/api/exception"
-	"openauth/api/http/response"
+	"openauth/api/server/http/response"
 )
 
 type notFoundHandler struct{}

@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"openauth/api/exception"
-	"openauth/api/http/context"
-	"openauth/api/http/request"
-	"openauth/api/http/response"
+	"openauth/api/server/http/context"
+	"openauth/api/server/http/request"
+	"openauth/api/server/http/response"
 )
 
 // TestDomainID Just for test

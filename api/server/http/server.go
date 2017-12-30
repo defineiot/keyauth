@@ -13,21 +13,22 @@ import (
 	"github.com/urfave/negroni"
 
 	"openauth/api/config"
-	"openauth/api/http/handler"
-	"openauth/api/http/router"
+	"openauth/api/server/http/handler"
+	"openauth/api/server/http/router"
+	"openauth/api/server"
 	"openauth/api/logger"
 )
 
 var stopSignal = make(chan bool, 1)
 
 // Service is gateway service
-type Service struct {
+type service struct {
 	conf   *config.Config
 	logger logger.OpenAuthLogger
 }
 
 // NewService use to new an gateway service
-func NewService(conf *config.Config) (*Service, error) {
+func NewService(conf *config.Config) (server.Service, error) {
 	err := conf.Validate()
 	if err != nil {
 		return nil, fmt.Errorf("config validate failed, %s", err)
@@ -38,11 +39,11 @@ func NewService(conf *config.Config) (*Service, error) {
 		return nil, err
 	}
 
-	return &Service{conf: conf, logger: logger}, nil
+	return &service{conf: conf, logger: logger}, nil
 }
 
 // Start use to start openauth http service
-func (s *Service) Start() error {
+func (s *service) Start() error {
 	n := negroni.New()
 
 	r := router.NewRouter()

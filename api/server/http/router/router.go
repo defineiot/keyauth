@@ -8,8 +8,8 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"openauth/api/http/context"
-	"openauth/api/http/response"
+	"openauth/api/server/http/context"
+	"openauth/api/server/http/response"
 )
 
 // MyRouter is an hack for httprouter

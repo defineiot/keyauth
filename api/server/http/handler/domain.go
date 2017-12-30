@@ -5,9 +5,9 @@ import (
 	"strconv"
 
 	"openauth/api/exception"
-	"openauth/api/http/context"
-	"openauth/api/http/request"
-	"openauth/api/http/response"
+	"openauth/api/server/http/context"
+	"openauth/api/server/http/request"
+	"openauth/api/server/http/response"
 )
 
 // CreateDomain use to create domain

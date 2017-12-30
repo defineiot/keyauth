@@ -10,7 +10,7 @@ import (
 	"openauth/api/config"
 	"openauth/api/config/env"
 	"openauth/api/config/file"
-	"openauth/api/http"
+	"openauth/api/server/http"
 )
 
 // startCmd represents the start command

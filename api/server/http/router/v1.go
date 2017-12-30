@@ -1,7 +1,7 @@
 package router
 
 import (
-	"openauth/api/http/handler"
+	"openauth/api/server/http/handler"
 )
 
 // RouteToV1 route to openauth v1 endpoint
