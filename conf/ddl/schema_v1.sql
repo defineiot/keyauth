@@ -124,7 +124,7 @@ CREATE TABLE `application` (
 `description` text NOT NULL DEFAULT '',
 `create_at` int(64) NOT NULL DEFAULT 0,
 `extra` text NOT NULL DEFAULT '',
-PRIMARY KEY (`client_id`) 
+PRIMARY KEY (`id`) 
 )
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8
