@@ -15,6 +15,15 @@ type Component struct {
 	Error     string   `json:"error"`
 }
 
+// Store service store interface
+type Store interface {
+	SaveService() (*Service, error)
+	UpdateService() (*Service, error)
+	DeleteService() (*Service, error)
+	FindAllService() ([]*Service, error)
+	FindServiceByID() (*Service, error)
+}
+
 // Manager is catalog service
 type Manager interface {
 	// List all Servers and the Description

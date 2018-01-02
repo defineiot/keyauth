@@ -23,7 +23,7 @@ before_install:
   - go get golang.org/x/tools/cmd/cover
 
 script:
-  - mysql -uopenauth -popenauth -Dopenauth < conf/ddl/openauthv01.sql
+  - mysql -uopenauth -popenauth -Dopenauth < conf/ddl/schema_v1.sql
   - $HOME/gopath/bin/goveralls -v -ignore 'store/*/mock/*,api/*/mock/*' -service=travis-ci -repotoken cjtC3u3ZHQZPLEJt6FgJS3LU6maKaGuYX
 
 

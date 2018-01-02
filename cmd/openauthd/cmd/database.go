@@ -129,5 +129,5 @@ func initialRecord(db *sql.DB) error {
 func init() {
 	RootCmd.AddCommand(databaseCmd)
 
-	databaseCmd.Flags().StringVarP(&sqlFile, "sqlfile", "s", "conf/dbsql/openauthv01.sql", "the initial database sql file")
+	databaseCmd.Flags().StringVarP(&sqlFile, "sqlfile", "s", "conf/ddl/schema_v1.sql", "the initial database sql file")
 }

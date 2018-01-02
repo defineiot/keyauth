@@ -45,9 +45,14 @@ func (s *store) Registration(userID, name, redirectURI, clientType, description,
 	app := application.Application{ID: uuid.NewV4().String(), Name: name, UserID: userID, Website: website, Description: description, CreateAt: time.Now().Unix()}
 	app.Client = &client
 
-	_, err = s.stmts[CreateAPP].Exec(app.ID, app.Name, app.UserID, client.ClientID, client.ClientSecret, client.ClientType, app.Website, app.LogoImage, app.Description, client.RedirectURI, app.CreateAt)
+	_, err = s.stmts[CreateAPP].Exec(app.ID, app.Name, app.UserID, app.Website, app.LogoImage, app.Description, app.CreateAt)
 	if err != nil {
 		return nil, exception.NewInternalServerError("insert application exec sql err, %s", err)
+	}
+
+	_, err = s.stmts[CreateClient].Exec(client.ClientID, client.ClientSecret, client.ClientType, client.RedirectURI, app.ID, "")
+	if err != nil {
+		return nil, exception.NewInternalServerError("insert client exec sql err, %s", err)
 	}
 
 	return &app, nil
@@ -100,6 +105,11 @@ func (s *store) Unregistration(id string) error {
 		return exception.NewBadRequest("application %s not exist", id)
 	}
 
+	_, err = s.stmts[DeleteClient].Exec(id)
+	if err != nil {
+		return exception.NewInternalServerError("delete application client exec sql error, %", err)
+	}
+
 	return nil
 }
 
@@ -114,7 +124,7 @@ func (s *store) GetUserApps(userID string) ([]*application.Application, error) {
 	for rows.Next() {
 		app := application.Application{}
 		cli := application.Client{}
-		if err := rows.Scan(&app.ID, &app.Name, &app.UserID, &cli.ClientID, &cli.ClientSecret, &cli.ClientType, &app.Website, &app.LogoImage, &app.Description, &cli.RedirectURI, &app.CreateAt); err != nil {
+		if err := rows.Scan(&app.ID, &app.Name, &app.UserID, &app.Website, &app.LogoImage, &app.Description, &app.CreateAt, &cli.ClientID, &cli.ClientSecret, &cli.ClientType, &cli.RedirectURI); err != nil {
 			return nil, exception.NewInternalServerError("scan application record error, %s", err)
 		}
 		app.Client = &cli

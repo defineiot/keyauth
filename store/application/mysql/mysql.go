@@ -9,10 +9,12 @@ import (
 )
 
 const (
-	CreateAPP   = "create-application"
-	DeleteAPP   = "delete-app"
-	GetUserAPPS = "get-user-apps"
-	GetClient   = "get-client"
+	CreateAPP    = "create-application"
+	CreateClient = "create-client"
+	DeleteAPP    = "delete-app"
+	DeleteClient = "delete-client"
+	GetUserAPPS  = "get-user-apps"
+	GetClient    = "get-client"
 
 	CheckExistByID   = "check-exist-by-id"
 	CheckExistByName = "check-exist-by-name"
@@ -22,24 +24,34 @@ const (
 func NewAppStore(db *sql.DB) (application.Store, error) {
 	unprepared := map[string]string{
 		CreateAPP: `
-			INSERT INTO application (id, name, user_id, client_id, client_secret, client_type, website, logo_image, description, redirect_uri, create_at) 
-			VALUES (?,?,?,?,?,?,?,?,?,?,?);
+			INSERT INTO application (id, name, user_id, website, logo_image, description, create_at) 
+			VALUES (?,?,?,?,?,?,?);
+		`,
+		CreateClient: `
+			INSERT INTO client (id, secret, type, redirect_uri, application_id, service_id)
+			VALUES (?,?,?,?,?,?)
 		`,
 		GetUserAPPS: `
-			SELECT a.id, a.name, a.user_id, a.client_id, a.client_secret, a.client_type, a.website, a.logo_image, a.description, a.redirect_uri, a.create_at 
-			FROM application a 
+			SELECT a.id, a.name, a.user_id, a.website, a.logo_image, a.description, a.create_at, c.id, c.secret, c.type, c.redirect_uri
+			FROM application a
+			LEFT JOIN client c
+			ON a.id = c.application_id
 			WHERE user_id = ? 
-			ORDER BY create_at 
+			ORDER BY a.create_at 
 			DESC;
 		`,
 		GetClient: `
-			SELECT a.client_id, a.client_secret, a.client_type, a.redirect_uri 
-			FROM application a 
-			WHERE client_id = ?;
+			SELECT c.id, c.secret, c.type, c.redirect_uri 
+			FROM client c
+			WHERE c.id = ?;
 		`,
 		DeleteAPP: `
 			DELETE FROM application 
 			WHERE id = ?;
+		`,
+		DeleteClient: `
+			DELETE FROM client
+			WHERE application_id = ?;
 		`,
 		CheckExistByID: `
 			SELECT id FROM application 

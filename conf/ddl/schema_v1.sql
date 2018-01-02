@@ -119,13 +119,9 @@ CREATE TABLE `application` (
 `id` varchar(255) NOT NULL,
 `name` varchar(255) NOT NULL,
 `user_id` varchar(64) NULL,
-`client_id` varchar(255) NOT NULL,
-`client_secret` varchar(255) NOT NULL,
-`client_type` varchar(64) NOT NULL,
 `website` varchar(255) NOT NULL DEFAULT '',
 `logo_image` varchar(255) NOT NULL DEFAULT '',
 `description` text NOT NULL DEFAULT '',
-`redirect_uri` varchar(255) NULL,
 `create_at` int(64) NOT NULL DEFAULT 0,
 `extra` text NOT NULL DEFAULT '',
 PRIMARY KEY (`client_id`) 
@@ -133,7 +129,22 @@ PRIMARY KEY (`client_id`)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8
 COLLATE = utf8_general_ci
-COMMENT = '服务开发者凭证表';
+COMMENT = '用户第三方应用';
+
+CREATE TABLE `client` (
+`client_id` varchar(255) NOT NULL,
+`client_secret` varchar(255) NOT NULL,
+`client_type` varchar(64) NOT NULL,
+`redirect_uri` varchar(255) NULL,
+`application_id` varchar(128) NOT NULL DEFAULT '',
+`service_id` varchar(128) NOT NULL DEFAULT '',
+`extra` text NOT NULL DEFAULT '',
+PRIMARY KEY (`client_id`) 
+)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8
+COLLATE = utf8_general_ci
+COMMENT = 'OAUTH2客户端凭证';
 
 CREATE TABLE `auth` (
 `id` int(11) NOT NULL AUTO_INCREMENT,
