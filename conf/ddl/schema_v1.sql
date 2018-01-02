@@ -132,14 +132,14 @@ COLLATE = utf8_general_ci
 COMMENT = '用户第三方应用';
 
 CREATE TABLE `client` (
-`client_id` varchar(255) NOT NULL,
-`client_secret` varchar(255) NOT NULL,
-`client_type` varchar(64) NOT NULL,
+`id` varchar(255) NOT NULL,
+`secret` varchar(255) NOT NULL,
+`type` varchar(64) NOT NULL,
 `redirect_uri` varchar(255) NULL,
 `application_id` varchar(128) NOT NULL DEFAULT '',
 `service_id` varchar(128) NOT NULL DEFAULT '',
 `extra` text NOT NULL DEFAULT '',
-PRIMARY KEY (`client_id`) 
+PRIMARY KEY (`id`) 
 )
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8
