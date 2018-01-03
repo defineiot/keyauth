@@ -34,7 +34,7 @@ func (s *store) CreateUser(domainID, name, password string, enabled bool, userEx
 	now := time.Now()
 
 	// insert user
-	userPre, err := tx.Prepare("INSERT INTO `user` (id, name, enabled, domain_id, create_at, expires_active_days) VALUES (?,?,?,?,?,?)")
+	userPre, err := tx.Prepare("INSERT INTO `users` (id, name, enabled, domain_id, create_at, expires_active_days) VALUES (?,?,?,?,?,?)")
 	if err != nil {
 		return nil, exception.NewInternalServerError("prepare insert user stmt error, user: %s, %s", name, err)
 	}
@@ -54,7 +54,7 @@ func (s *store) CreateUser(domainID, name, password string, enabled bool, userEx
 	userPre.Close()
 
 	// insert password
-	passPre, err := tx.Prepare("INSERT INTO `password` (password, expires_at, create_at, user_id) VALUES (?,?,?,?)")
+	passPre, err := tx.Prepare("INSERT INTO `passwords` (password, expires_at, create_at, user_id) VALUES (?,?,?,?)")
 	if err != nil {
 		return nil, exception.NewInternalServerError("prepare insert user password error, user: %s, %s", name, err)
 	}
@@ -326,7 +326,7 @@ func (s *store) DeleteUser(userID string) error {
 	}
 
 	// delete user
-	deleteUserPre, err := tx.Prepare("DELETE FROM user WHERE id = ?")
+	deleteUserPre, err := tx.Prepare("DELETE FROM users WHERE id = ?")
 	if err != nil {
 		deleteUserPre.Close()
 		return exception.NewInternalServerError("prepare delete user stmt error, %s", err)
@@ -349,7 +349,7 @@ func (s *store) DeleteUser(userID string) error {
 	deleteUserPre.Close()
 
 	// delete user's password
-	deletePassPre, err := tx.Prepare("DELETE FROM password WHERE user_id = ?")
+	deletePassPre, err := tx.Prepare("DELETE FROM passwords WHERE user_id = ?")
 	if err != nil {
 		deletePassPre.Close()
 		return exception.NewInternalServerError("prepare delete user pass stmt error, %s", err)
@@ -363,7 +363,7 @@ func (s *store) DeleteUser(userID string) error {
 	deletePassPre.Close()
 
 	// delete user's email
-	deleteEmailPre, err := tx.Prepare("DELETE FROM email WHERE user_id = ?")
+	deleteEmailPre, err := tx.Prepare("DELETE FROM emails WHERE user_id = ?")
 	if err != nil {
 		deleteEmailPre.Close()
 		return exception.NewInternalServerError("prepare delete user email stmt error, %s", err)
@@ -377,7 +377,7 @@ func (s *store) DeleteUser(userID string) error {
 	deleteEmailPre.Close()
 
 	// delete user's phone
-	deletePhonePre, err := tx.Prepare("DELETE FROM phone WHERE user_id = ?")
+	deletePhonePre, err := tx.Prepare("DELETE FROM phones WHERE user_id = ?")
 	if err != nil {
 		deletePhonePre.Close()
 		return exception.NewInternalServerError("prepare delete user phone stmt error, %s", err)

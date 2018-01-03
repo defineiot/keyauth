@@ -24,17 +24,17 @@ const (
 func NewAppStore(db *sql.DB) (application.Store, error) {
 	unprepared := map[string]string{
 		CreateAPP: `
-			INSERT INTO application (id, name, user_id, website, logo_image, description, create_at) 
+			INSERT INTO applications (id, name, user_id, website, logo_image, description, create_at) 
 			VALUES (?,?,?,?,?,?,?);
 		`,
 		CreateClient: `
-			INSERT INTO client (id, secret, type, redirect_uri, application_id, service_id)
+			INSERT INTO clients (id, secret, type, redirect_uri, application_id, service_id)
 			VALUES (?,?,?,?,?,?)
 		`,
 		GetUserAPPS: `
 			SELECT a.id, a.name, a.user_id, a.website, a.logo_image, a.description, a.create_at, c.id, c.secret, c.type, c.redirect_uri
-			FROM application a
-			LEFT JOIN client c
+			FROM applications a
+			LEFT JOIN clients c
 			ON a.id = c.application_id
 			WHERE user_id = ? 
 			ORDER BY a.create_at 
@@ -42,23 +42,23 @@ func NewAppStore(db *sql.DB) (application.Store, error) {
 		`,
 		GetClient: `
 			SELECT c.id, c.secret, c.type, c.redirect_uri 
-			FROM client c
+			FROM clients c
 			WHERE c.id = ?;
 		`,
 		DeleteAPP: `
-			DELETE FROM application 
+			DELETE FROM applications 
 			WHERE id = ?;
 		`,
 		DeleteClient: `
-			DELETE FROM client
+			DELETE FROM clients
 			WHERE application_id = ?;
 		`,
 		CheckExistByID: `
-			SELECT id FROM application 
+			SELECT id FROM applications 
 			WHERE id = ?;
 		`,
 		CheckExistByName: `
-			SELECT id FROM application 
+			SELECT id FROM applications 
 			WHERE name = ? 
 			AND user_id = ?;
 		`,

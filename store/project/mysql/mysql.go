@@ -27,46 +27,46 @@ const (
 func NewProjectStore(db *sql.DB) (project.Store, error) {
 	unprepared := map[string]string{
 		CreateProject: `
-			INSERT INTO project (id, name, description, enabled, domain_id, create_at) 
+			INSERT INTO projects (id, name, description, enabled, domain_id, create_at) 
 			VALUES (?,?,?,?,?,?);
 		`,
 		FindDomainPorjects: `
 			SELECT p.id, p.name, p.description, p.enabled, p.domain_id, p.create_at 
-			FROM project p
+			FROM projects p
 			WHERE domain_id = ? 
 			ORDER BY create_at 
 			DESC;
 		`,
 		FindProjectByID: `
 			SELECT p.id, p.name, p.description, p.enabled, p.create_at, p.domain_id 
-			FROM project p
+			FROM projects p
 			WHERE id = ?;
 		`,
 		DeleteProject: `
-			DELETE FROM project 
+			DELETE FROM projects 
 			WHERE id = ?;
 		`,
 		CheckProjectExistByID: `
-			SELECT id FROM project 
+			SELECT id FROM projects 
 			WHERE id = ?;
 		`,
 		CheckProjectExistByName: `
 			SELECT name 
-			FROM project 
+			FROM projects 
 			WHERE name = ? 
 			AND domain_id = ?;
 		`,
 		FindProjectUsers: `
 			SELECT user_id 
-			FROM mapping 
+			FROM users_projects_mapping 
 			WHERE project_id = ?;
 		`,
 		AddUsersToProject: `
-			INSERT INTO mapping (user_id, project_id) 
+			INSERT INTO users_projects_mapping (user_id, project_id) 
 			VALUES (?,?);
 		`,
 		RemoveUsersFromProject: `
-			DELETE FROM mapping 
+			DELETE FROM users_projects_mapping 
 			WHERE user_id = ? 
 			AND project_id = ?;
 		`,

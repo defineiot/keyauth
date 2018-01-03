@@ -26,47 +26,47 @@ const (
 func NewDomainStore(db *sql.DB) (domain.Store, error) {
 	unprepared := map[string]string{
 		CreateDomain: `
-			INSERT INTO domain (id, name, display_name, description, enabled, extra, create_at)
+			INSERT INTO domains (id, name, display_name, description, enabled, extra, create_at)
 			VALUES (?,?,?,?,?,?,?);
 		`,
 		FindDomains: `
 			SELECT d.id, d.name, d.display_name, d.description, d.enabled, d.create_at, d.update_at
-			FROM domain d
+			FROM domains d
 			ORDER BY create_at 
 			DESC;
 		`,
 		FindDomainsWithPage: `
 			SELECT d.id, d.name, d.display_name, d.description, d.enabled, d.create_at, d.update_at
-			FROM domain d
+			FROM domains d
 			ORDER BY create_at 
 			DESC LIMIT ?,?;
 		`,
 		FindDomainByID: `
 			SELECT d.id, d.name, d.display_name, d.description, d.enabled, d.create_at, d.update_at
-			FROM domain d
+			FROM domains d
 			WHERE id = ?;
 		`,
 		FindDomainByName: `
 			SELECT d.id, d.name, d.display_name, d.description, d.enabled, d.create_at, d.update_at
-			FROM domain d
+			FROM domains d
 			WHERE name = ?;
 		`,
 		DeleteDomain: `
-			DELETE FROM domain 
+			DELETE FROM domains 
 			WHERE id = ?;
 		`,
 		DomainCount: `
 			SELECT COUNT(*) 
-			FROM domain;
+			FROM domains;
 		`,
 		FindDomainID: `
 			SELECT id 
-			FROM domain 
+			FROM domains 
 			WHERE id = ?;
 		`,
 		FindDomainName: `
 			SELECT id 
-			FROM domain 
+			FROM domains 
 			WHERE name = ?;
 		`,
 	}

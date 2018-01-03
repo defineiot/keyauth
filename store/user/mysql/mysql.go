@@ -33,74 +33,74 @@ const (
 func NewUserStore(db *sql.DB, key string, logger logger.OpenAuthLogger) (user.Store, error) {
 	unprepared := map[string]string{
 		SaveUser: `
-			INSERT INTO user (id, name, enabled, domain_id, create_at, expires_active_days) 
+			INSERT INTO users (id, name, enabled, domain_id, create_at, expires_active_days) 
 			VALUES (?,?,?,?,?,?);
 		`,
 		FindAllUsers: `
 			SELECT u.id, u.name, u.enabled, u.last_active_time, u.create_at, u.expires_active_days, u.default_project_id 
-			FROM user u
+			FROM users u
 			WHERE domain_id = ?;
 		`,
 		FindUserByID: `
 			SELECT u.id, u.name, u.enabled, u.last_active_time, u.domain_id, u.create_at, u.expires_active_days, u.default_project_id 
-			FROM user u
+			FROM users u
 			WHERE id = ?;
 		`,
 		FindUserByName: `
 			SELECT u.id, u.name, u.enabled, u.last_active_time, u.domain_id, u.create_at, u.expires_active_days, u.default_project_id 
-			FROM user u 
+			FROM users u 
 			WHERE name = ? 
 			AND domain_id = ?;
 		`,
 		FindUserProjects: `
 			SELECT project_id 
-			FROM mapping 
+			FROM users_projects_mapping 
 			WHERE user_id = ?;
 		`,
 		SetUserDefaultProject: `
-			UPDATE user 
+			UPDATE users
 			SET default_project_id = ? 
 			WHERE id = ?;
 		`,
 		AddProjectToUser: `
-			INSERT INTO mapping (user_id, project_id) 
+			INSERT INTO users_projects_mapping (user_id, project_id) 
 			VALUES (?,?);
 		`,
 		RemoveProjectsFromUser: `
-			DELETE FROM mapping 
+			DELETE FROM users_projects_mapping 
 			WHERE user_id = ? 
 			AND project_id = ?;
 		`,
 		FindUserPhones: `
 			SELECT p.id, p.numbers, 'p.primary', p.description 
-			FROM phone p 
+			FROM phones p 
 			WHERE user_id = ?;
 		`,
 		FindUserEmails: `
 			SELECT e.id, e.address, 'e.primary', e.description 
-			FROM email e
+			FROM emails e
 			WHERE user_id = ?;
 		`,
 		FindUserPassword: `
 			SELECT p.password, p.expires_at, p.create_at, p.update_at 
-			FROM password p
+			FROM passwords p
 			WHERE user_id = ?;
 		`,
 		FindUserIDByName: `
 			SELECT u.id 
-			FROM user u
+			FROM users u
 			WHERE name = ? 
 			AND domain_id = ?;
 		`,
 		CheckUserExistByName: `
 			SELECT u.name 
-			FROM user u
+			FROM users u
 			WHERE name = ? 
 			AND domain_id = ?;
 		`,
 		CheckUserExistByID: `
 			SELECT u.id 
-			FROM user u
+			FROM users u
 			WHERE id = ?;
 		`,
 	}
