@@ -207,7 +207,7 @@ CREATE TABLE `features` (
 `id` int(11) NOT NULL AUTO_INCREMENT,
 `name` varchar(255) NOT NULL,
 `method` varchar(64) NOT NULL,
-`endpoint` varchar(256) NOT NULL, DEFAULT '',
+`endpoint` varchar(256) NOT NULL DEFAULT '',
 `description` text NOT NULL DEFAULT '',
 `is_deleted` int(2) NOT NULL DEFAULT 0,
 `when_deleted_version` varchar(255) NOT NULL DEFAULT '',
