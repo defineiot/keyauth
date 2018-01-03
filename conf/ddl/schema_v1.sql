@@ -237,7 +237,7 @@ COLLATE = utf8_general_ci
 COMMENT = '角色与功能映射表';
 
 CREATE TABLE `services` (
-`id` varchar(128) NOT NULL AUTO_INCREMENT,
+`id` varchar(128) NOT NULL,
 `name` varchar(255) NOT NULL,
 `description` text NOT NULL DEFAULT '',
 `enabled` int(2) NOT NULL DEFAULT 0,
