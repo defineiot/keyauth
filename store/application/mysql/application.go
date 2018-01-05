@@ -2,14 +2,13 @@ package mysql
 
 import (
 	"database/sql"
-	"math/rand"
-	"strings"
 	"time"
 
 	"github.com/satori/go.uuid"
 
 	"openauth/api/exception"
 	"openauth/store/application"
+	"openauth/tools"
 )
 
 func (s *store) Registration(userID, name, redirectURI, clientType, description, website string) (*application.Application, error) {
@@ -32,11 +31,11 @@ func (s *store) Registration(userID, name, redirectURI, clientType, description,
 		return nil, exception.NewBadRequest("application %s exist", name)
 	}
 
-	clientID, err := makeuuid(24)
+	clientID, err := tools.MakeUUID(24)
 	if err != nil {
 		return nil, exception.NewInternalServerError("initial client_id error, %s", err)
 	}
-	clientSecret, err := makeuuid(32)
+	clientSecret, err := tools.MakeUUID(32)
 	if err != nil {
 		return nil, exception.NewInternalServerError("initial client_secret error, %s", err)
 	}
@@ -145,17 +144,4 @@ func (s *store) GetClient(clientID string) (*application.Client, error) {
 	}
 
 	return cli, nil
-}
-
-func makeuuid(lenth int) (string, error) {
-	charlist := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	password := make([]string, lenth)
-	rand.Seed(time.Now().UnixNano() + int64(lenth))
-	for i := 0; i < lenth; i++ {
-		rn := rand.Intn(len(charlist))
-		w := charlist[rn : rn+1]
-		password = append(password, w)
-	}
-
-	return strings.Join(password, ""), nil
 }

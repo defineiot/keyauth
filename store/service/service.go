@@ -1,37 +1,37 @@
 package service
 
+import (
+	"openauth/store/application"
+)
+
 // Service is service provider
 type Service struct {
-	Features   []string
-	Status     string
-	Components []Component
-	Active     bool
-}
-
-// Component is service sub service
-type Component struct {
-	Name      string   `json:"name"`
-	Instances []string `json:"instances"`
-	Error     string   `json:"error"`
+	ID             string              `json:"id"`
+	Name           string              `json:"name"`
+	Description    string              `json:"description"`
+	Version        string              `json:"version"`
+	Enabled        bool                `json:"enabled"`
+	Status         string              `json:"status"`
+	StatusUpdateAt int64               `json:"status_update_at"`
+	CreateAt       int64               `json:"create_at"`
+	Client         *application.Client `json:"client"`
 }
 
 // Store service store interface
 type Store interface {
-	SaveService() (*Service, error)
-	UpdateService() (*Service, error)
-	DeleteService() (*Service, error)
+	StoreReader
+	StoreWriter
+	Close() error
+}
+
+// StoreReader read service information from store
+type StoreReader interface {
 	FindAllService() ([]*Service, error)
 	FindServiceByID() (*Service, error)
 }
 
-// Manager is catalog service
-type Manager interface {
-	// List all Servers and the Description
-	ListServer() ([]string, error)
-	// List all feature, return function list
-	ListFeature() ([]string, error)
-	// Verify that this feature is available
-	HaveFeatures(features ...string) (bool, error)
-	// Service Catalog
-	Catalog() (*[]map[string]Service, error)
+// StoreWriter write service information to store
+type StoreWriter interface {
+	SaveService(name, description string) (*Service, error)
+	DeleteService(sid string) error
 }

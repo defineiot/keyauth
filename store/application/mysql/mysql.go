@@ -2,10 +2,10 @@ package mysql
 
 import (
 	"database/sql"
-	"fmt"
 
 	"openauth/api/exception"
 	"openauth/store/application"
+	"openauth/tools"
 )
 
 const (
@@ -65,7 +65,7 @@ func NewAppStore(db *sql.DB) (application.Store, error) {
 	}
 
 	// prepare all statements to verify syntax
-	stmts, err := prepareStmts(db, unprepared)
+	stmts, err := tools.PrepareStmts(db, unprepared)
 	if err != nil {
 		return nil, exception.NewInternalServerError("prepare application store query statment error, %s", err)
 	}
@@ -87,20 +87,4 @@ type store struct {
 // Close closes the database, releasing any open resources.
 func (s *store) Close() error {
 	return s.db.Close()
-}
-
-// prepareStmts will attempt to prepare each unprepared
-// query on the database. If one fails, the function returns
-// with an error.
-func prepareStmts(db *sql.DB, unprepared map[string]string) (map[string]*sql.Stmt, error) {
-	prepared := map[string]*sql.Stmt{}
-	for k, v := range unprepared {
-		stmt, err := db.Prepare(v)
-		if err != nil {
-			return nil, fmt.Errorf("prepare statment: %s, %s", k, err)
-		}
-		prepared[k] = stmt
-	}
-
-	return prepared, nil
 }
