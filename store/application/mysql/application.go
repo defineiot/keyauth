@@ -31,14 +31,8 @@ func (s *store) Registration(userID, name, redirectURI, clientType, description,
 		return nil, exception.NewBadRequest("application %s exist", name)
 	}
 
-	clientID, err := tools.MakeUUID(24)
-	if err != nil {
-		return nil, exception.NewInternalServerError("initial client_id error, %s", err)
-	}
-	clientSecret, err := tools.MakeUUID(32)
-	if err != nil {
-		return nil, exception.NewInternalServerError("initial client_secret error, %s", err)
-	}
+	clientID := tools.MakeUUID(24)
+	clientSecret := tools.MakeUUID(32)
 
 	client := application.Client{ClientID: clientID, ClientSecret: clientSecret, ClientType: clientType, RedirectURI: redirectURI}
 	app := application.Application{ID: uuid.NewV4().String(), Name: name, UserID: userID, Website: website, Description: description, CreateAt: time.Now().Unix()}
