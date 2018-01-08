@@ -1,11 +1,12 @@
 package mysql
 
 import (
-	"openauth/api/exception"
+	"database/sql"
 	"time"
 
 	"github.com/satori/go.uuid"
 
+	"openauth/api/exception"
 	"openauth/store/application"
 	"openauth/store/service"
 	"openauth/tools"
@@ -61,13 +62,84 @@ func (s *store) SaveService(name, description string) (*service.Service, error) 
 }
 
 func (s *store) DeleteService(sid string) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return exception.NewInternalServerError("start transaction error, %s", err)
+	}
+	defer tx.Rollback()
+
+	// delete service
+	stmtS, err := tx.Prepare("DELETE FROM services WHERE id = ?")
+	if err != nil {
+		return exception.NewInternalServerError("parpare delete service sql error, %s", err)
+	}
+	res, err := stmtS.Exec(sid)
+	if err != nil {
+		stmtS.Close()
+		return exception.NewInternalServerError("exec delete sql error, %s", err)
+	}
+	aff, err := res.RowsAffected()
+	if err != nil {
+		stmtS.Close()
+		return exception.NewInternalServerError("exec delete sql affect error, %s", err)
+	}
+	if aff == 0 {
+		stmtS.Close()
+		return exception.NewBadRequest("service %s not found", sid)
+	}
+	stmtS.Close()
+
+	// delete client
+	stmtC, err := tx.Prepare("DELETE FROM clients WHERE service_id = ?")
+	if err != nil {
+		return exception.NewInternalServerError("parpare delete service client error, %s", err)
+	}
+	if _, err := stmtC.Exec(sid); err != nil {
+		stmtC.Close()
+		return exception.NewInternalServerError("delete service client error, %s", err)
+	}
+	stmtC.Close()
+
+	if err := tx.Commit(); err != nil {
+		return exception.NewInternalServerError("commit error, %s", err)
+	}
+
 	return nil
 }
 
 func (s *store) FindAllService() ([]*service.Service, error) {
-	return nil, nil
+	rows, err := s.stmts[FindAll].Query()
+	if err != nil {
+		return nil, exception.NewInternalServerError("query service list error, %s", err)
+	}
+	defer rows.Close()
+
+	svrs := []*service.Service{}
+	for rows.Next() {
+		svr := service.Service{}
+		cli := application.Client{}
+		if err := rows.Scan(&svr.ID, &svr.Name, &svr.Description, &svr.Enabled, &svr.Status, &svr.StatusUpdateAt, &svr.Version, &svr.CreateAt, &cli.ClientID, &cli.ClientSecret); err != nil {
+			return nil, exception.NewInternalServerError("scan service record error, %s", err)
+		}
+		svr.Client = &cli
+		svrs = append(svrs, &svr)
+	}
+
+	return svrs, nil
 }
 
-func (s *store) FindServiceByID() (*service.Service, error) {
-	return nil, nil
+func (s *store) FindServiceByID(sid string) (*service.Service, error) {
+	svr := service.Service{}
+	cli := application.Client{}
+	if err := s.stmts[FindOneByID].QueryRow(sid).Scan(&svr.ID, &svr.Name, &svr.Description, &svr.Enabled, &svr.Status, &svr.StatusUpdateAt, &svr.Version, &svr.CreateAt, &cli.ClientID, &cli.ClientSecret); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, exception.NewNotFound("service %s not find", sid)
+		}
+
+		return nil, exception.NewInternalServerError("query single service client error, %s", err)
+	}
+
+	svr.Client = &cli
+
+	return &svr, nil
 }

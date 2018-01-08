@@ -27,7 +27,7 @@ type Store interface {
 // StoreReader read service information from store
 type StoreReader interface {
 	FindAllService() ([]*Service, error)
-	FindServiceByID() (*Service, error)
+	FindServiceByID(sid string) (*Service, error)
 }
 
 // StoreWriter write service information to store
