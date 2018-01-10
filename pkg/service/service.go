@@ -15,15 +15,20 @@ func (c *Controller) CreateService(name, description string) (*service.Service, 
 
 // DeleteService delete service
 func (c *Controller) DeleteService(sid string) error {
+	if err := c.ss.DeleteService(sid); err != nil {
+		return err
+	}
 	return nil
 }
 
 // ListService list all service
 func (c *Controller) ListService() ([]*service.Service, error) {
-	return nil, nil
+	svrs, err := c.ss.FindAllService()
+	return svrs, err
 }
 
 // GetService get on service by id
 func (c *Controller) GetService(sid string) (*service.Service, error) {
-	return nil, nil
+	svr, err := c.ss.FindServiceByID(sid)
+	return svr, err
 }
