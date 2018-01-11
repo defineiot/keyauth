@@ -13,10 +13,10 @@ import (
 	"github.com/urfave/negroni"
 
 	"openauth/api/config"
+	"openauth/api/logger"
+	"openauth/api/server"
 	"openauth/api/server/http/handler"
 	"openauth/api/server/http/router"
-	"openauth/api/server"
-	"openauth/api/logger"
 )
 
 var stopSignal = make(chan bool, 1)
@@ -47,7 +47,7 @@ func (s *service) Start() error {
 	n := negroni.New()
 
 	r := router.NewRouter()
-	r.RouteToV1()
+	RouteToV1(r)
 
 	// includes some default middlewares
 	corsM := cors.New(cors.Options{

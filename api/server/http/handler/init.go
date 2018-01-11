@@ -10,11 +10,13 @@ import (
 	"openauth/pkg/domain"
 	"openauth/pkg/oauth2"
 	"openauth/pkg/project"
+	"openauth/pkg/service"
 	"openauth/pkg/user"
 
 	appmysql "openauth/store/application/mysql"
 	domainmysql "openauth/store/domain/mysql"
 	projectmysql "openauth/store/project/mysql"
+	svrmysql "openauth/store/service/mysql"
 	tokenmysql "openauth/store/token/mysql"
 	usermysql "openauth/store/user/mysql"
 )
@@ -25,6 +27,7 @@ var (
 	usersrv    *user.Controller
 	appsrv     *application.Controller
 	authsrc    *oauth2.Controller
+	svr        *service.Controller
 	log        logger.OpenAuthLogger
 	once       sync.Once
 )
@@ -62,12 +65,17 @@ func InitController(conf *config.Config) error {
 		if err != nil {
 			storeErr = append(storeErr, err)
 		}
+		svrstr, err := svrmysql.NewServiceStore(db)
+		if err != nil {
+			storeErr = append(storeErr, err)
+		}
 
 		domainsrv = domain.NewController(domainstr, log)
 		projectsrv = project.NewController(log, domainstr, projectstr, userstr)
 		usersrv = user.NewController(log, userstr, domainstr, projectstr)
 		appsrv = application.NewController(log, appstr, userstr)
 		authsrc = oauth2.NewController(tokenstr, userstr, domainstr, appstr, log, conf.Token.Type, conf.Token.ExpiresIn)
+		svr = service.NewController(svrstr, log)
 	})
 	if len(storeErr) != 0 {
 		return exception.NewInternalServerError("get store error, %s", storeErr)
