@@ -18,10 +18,15 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get did from token
-	did := TestDomainID
+	did := val.Get("domain_id").ToString()
 	name := val.Get("name").ToString()
 	pass := val.Get("password").ToString()
-	// desc := val.Get("description").ToString()
+	desc := val.Get("description").ToString()
+
+	if did == "" {
+		response.Failed(w, exception.NewBadRequest("domain_id is missed"))
+		return
+	}
 
 	if name == "" || pass == "" {
 		response.Failed(w, exception.NewBadRequest("name or password is missed"))
@@ -29,7 +34,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 交给业务控制层处理
-	user, err := usersrv.CreateUser(did, name, pass, "")
+	user, err := usersrv.CreateUser(did, name, pass, desc)
 	if err != nil {
 		response.Failed(w, err)
 		return

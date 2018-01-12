@@ -12,16 +12,45 @@ import (
 )
 
 var (
-	userID string
-	appID  string
+	domainID string
+	userID   string
+	appID    string
 )
+
+func TestCreateDomain(t *testing.T) {
+	t.Run("OK", testCreateDomainOK)
+}
+
+func testCreateDomainOK(t *testing.T) {
+	payload := strings.NewReader(`{"name": "unit-test-domain01", "display_name": "test"}`)
+
+	req, err := http.NewRequest("POST", "/v1/domains/", payload)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := newRequestRecorder(req, "POST", "/v1/domains/", handler.CreateDomain)
+
+	if status := rr.Code; status != http.StatusCreated {
+		msg, _ := ioutil.ReadAll(rr.Result().Body)
+		t.Errorf("handler returned wrong status code: got %v want %v, msg: %s", status, http.StatusOK, string(msg))
+	}
+
+	body, err := ioutil.ReadAll(rr.Result().Body)
+	if err != nil {
+		t.Errorf("read body data error, %s", err)
+	}
+
+	domainID = jsoniter.Get(body, "data", "id").ToString()
+}
 
 func TestCreateUser(t *testing.T) {
 	t.Run("OK", testCreateUserOK)
 }
 
 func testCreateUserOK(t *testing.T) {
-	payload := strings.NewReader(`{"name": "unit-test-user01", "password": "unit-test"}`)
+	data := fmt.Sprintf(`{"domain_id":"%s", "name": "unit-test-user01", "password": "unit-test"}`, domainID)
+	payload := strings.NewReader(data)
 
 	req, err := http.NewRequest("POST", "/v1/users/", payload)
 	if err != nil {
@@ -135,6 +164,28 @@ func testDeleteUserOK(t *testing.T) {
 	}
 
 	rr := newRequestRecorder(req, "DELETE", "/v1/users/:uid/", handler.DeleteUser)
+
+	if status := rr.Code; status != http.StatusNoContent {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusNoContent)
+	}
+}
+
+func TestDeleteDomain(t *testing.T) {
+	t.Run("OK", testDeleteDomainOK)
+}
+
+func testDeleteDomainOK(t *testing.T) {
+	if domainID == "" {
+		t.Fatal("create not save domain id")
+	}
+	url := fmt.Sprintf("/v1/domains/%s/", domainID)
+
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := newRequestRecorder(req, "DELETE", "/v1/domains/:did/", handler.DeleteDomain)
 
 	if status := rr.Code; status != http.StatusNoContent {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusNoContent)
