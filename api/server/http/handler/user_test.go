@@ -21,7 +21,7 @@ func TestCreateUser(t *testing.T) {
 }
 
 func testCreateUserOK(t *testing.T) {
-	payload := strings.NewReader(`{"name": "unit-test", "password": "unit-test"}`)
+	payload := strings.NewReader(`{"name": "unit-test-user01", "password": "unit-test"}`)
 
 	req, err := http.NewRequest("POST", "/v1/users/", payload)
 	if err != nil {
@@ -51,7 +51,7 @@ func testRegisteOK(t *testing.T) {
 		t.Fatal("create not save user id")
 	}
 
-	payload := strings.NewReader(`{"name": "unit-test01", "client_type": "public"}`)
+	payload := strings.NewReader(`{"name": "unit-test-app01", "client_type": "public"}`)
 
 	url := fmt.Sprintf("/v1/users/%s/applications/", userID)
 	req, err := http.NewRequest("POST", url, payload)
