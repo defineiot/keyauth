@@ -31,7 +31,8 @@ func testCreateUserOK(t *testing.T) {
 	rr := newRequestRecorder(req, "POST", "/v1/users/", handler.CreateUser)
 
 	if status := rr.Code; status != http.StatusCreated {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+		msg, _ := ioutil.ReadAll(rr.Result().Body)
+		t.Errorf("handler returned wrong status code: got %v want %v, msg: %s", status, http.StatusOK, string(msg))
 	}
 
 	body, err := ioutil.ReadAll(rr.Result().Body)
@@ -62,7 +63,8 @@ func testRegisteOK(t *testing.T) {
 	rr := newRequestRecorder(req, "POST", "/v1/users/:uid/applications/", handler.RegisteApplication)
 
 	if status := rr.Code; status != http.StatusCreated {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+		msg, _ := ioutil.ReadAll(rr.Result().Body)
+		t.Errorf("handler returned wrong status code: got %v want %v, msg: %s", status, http.StatusOK, string(msg))
 	}
 
 	body, err := ioutil.ReadAll(rr.Result().Body)
