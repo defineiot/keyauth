@@ -122,8 +122,8 @@ func TestDeleteUser(t *testing.T) {
 }
 
 func testDeleteUserOK(t *testing.T) {
-	if appID == "" {
-		t.Fatal("create not save app id")
+	if userID == "" {
+		t.Fatal("create not save user id")
 	}
 	url := fmt.Sprintf("/v1/users/%s/", userID)
 
