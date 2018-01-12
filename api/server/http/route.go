@@ -47,6 +47,10 @@ func RouteToV1(r *router.MyRouter) {
 	r.HandlerFunc("DELETE", "/v1/services/:sid/", handler.DeleteService)
 	r.HandlerFunc("GET", "/v1/services/", handler.ListService)
 	r.HandlerFunc("GET", "/v1/services/:sid/", handler.GetService)
+	r.HandlerFunc("POST", "/v1/services/:sid/instances/", handler.CreateService)
+	r.HandlerFunc("GET", "/v1/services/:sid/instances/", handler.ListService)
+	r.HandlerFunc("GET", "/v1/services/:sid/instances/:iid/", handler.GetService)
+	r.HandlerFunc("DELETE", "/v1/services/:sid/instances/:iid/", handler.DeleteService)
 
 	r.AddV1Root()
 }

@@ -23,9 +23,6 @@ func newRequestRecorder(req *http.Request, method string, path string, handleFun
 	r := router.NewRouter()
 	r.HandlerFunc(method, path, handleFunc)
 
-	// router.Handle(method, strPath, func(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	// 	context.SetParamsToContext(req, w, handler, ps)
-	// })
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 	rr := httptest.NewRecorder()
 	// Our handlers satisfy http.Handler, so we can call their ServeHTTP method
