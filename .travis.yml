@@ -1,9 +1,7 @@
 language: go
 
 go:
-  - 1.9
-
-go_import_path: "./openauth"
+  - 1.10
 
 notifications:
   email:
@@ -16,16 +14,16 @@ addons:
   mariadb: '10.2'
 
 before_install:
-  - mysql -e "DROP DATABASE IF EXISTS openauth;"
-  - mysql -e "CREATE DATABASE openauth;"
-  - mysql -e "GRANT ALL PRIVILEGES ON openauth.* TO 'openauth'@'localhost' IDENTIFIED BY 'openauth';"
+  - mysql -e "DROP DATABASE IF EXISTS keyauth;"
+  - mysql -e "CREATE DATABASE keyauth;"
+  - mysql -e "GRANT ALL PRIVILEGES ON keyauth.* TO 'keyauth'@'localhost' IDENTIFIED BY 'keyauth';"
   - go get github.com/mattn/goveralls
   - go get golang.org/x/tools/cmd/cover
 
 script:
-  - mysql -uopenauth -popenauth -Dopenauth < conf/ddl/schema_v1.sql
+  - mysql -uopenauth -popenauth -Dopenauth < .keyauth/ddl/schema_v1.sql
   - $HOME/gopath/bin/goveralls -v -ignore 'store/*/mock/*,api/*/mock/*' -service=travis-ci -repotoken cjtC3u3ZHQZPLEJt6FgJS3LU6maKaGuYX
 
 
 after_script:
-  - mysql -e "DROP DATABASE IF EXISTS openauth"
+  - mysql -e "DROP DATABASE IF EXISTS keyauth"

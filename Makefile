@@ -1,10 +1,11 @@
-BINARY_NAME=openauthd
+BINARY_NAME=keyauth
+MAIN_FILE_PAHT=cmd/keyauth/main.go
 
 all: test build
 
 run:
-		go build -o ${BINARY_NAME} cmd/openauthd/main.go
-		./${BINARY_NAME} service start
+		go build -o ${BINARY_NAME} ${MAIN_FILE_PAHT}
+		./${BINARY_NAME} service bootstrap -f .keyauth/keyauth.conf
 
 clean:
 		go clean
@@ -13,10 +14,15 @@ clean:
 test:
 		go test -v ./...
 
-build: build_in_local
+build: local_build
 
-build_in_docker:
-		bash ./hack/build.sh
+linux_build:
+		bash ./build/build.sh linux ${BINARY_NAME} ${MAIN_FILE_PAHT}
 
-build_in_local:
-		go build -o ${BINARY_NAME} cmd/openauthd/main.go
+local_build:
+		bash ./build/build.sh local ${BINARY_NAME} ${MAIN_FILE_PAHT}
+
+docker_build:
+		bash ./build/build.sh docker ${BINARY_NAME} ${MAIN_FILE_PAHT}
+
+
