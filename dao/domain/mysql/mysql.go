@@ -9,47 +9,47 @@ import (
 )
 
 const (
-	CreateDomain        = "create-domain"
-	DeleteDomainByID    = "delete-domain-by-id"
-	DeleteDomainByName  = "delete-domain-by-name"
-	UpdateDomainByID    = "update-domain-by-id"
+	CreateDomain       = "create-domain"
+	DeleteDomainByID   = "delete-domain-by-id"
+	DeleteDomainByName = "delete-domain-by-name"
+	UpdateDomainByID   = "update-domain-by-id"
+
 	FindDomains         = "find-domains"
 	FindDomainsWithPage = "find-domains-with-page"
 	FindDomainByID      = "find-domain-by-id"
 	FindDomainByName    = "find-domain-by-name"
-
-	DomainCount    = "domain-count"
-	FindDomainID   = "find-domain-id"
-	FindDomainName = "find-domain-name"
+	DomainCount         = "domain-count"
+	FindDomainID        = "find-domain-id"
+	FindDomainName      = "find-domain-name"
 )
 
 // NewDomainStore use to create domain storage service
 func NewDomainStore(db *sql.DB) (domain.Store, error) {
 	unprepared := map[string]string{
 		CreateDomain: `
-			INSERT INTO domains (id, name, display_name, description, enabled, extra, create_at)
-			VALUES (?,?,?,?,?,?,?);
+			INSERT INTO domains (id, name, display_name, logo_path, description, enabled, type, create_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email, owner_id)
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);
+		`,
+		FindDomainByID: `
+			SELECT id, name, display_name, logo_path, description, enabled, type, create_at, update_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email, owner_id
+			FROM domains 
+			WHERE id = ?;
 		`,
 		FindDomains: `
-			SELECT d.id, d.name, d.display_name, d.description, d.enabled, d.create_at, d.update_at
-			FROM domains d
+			SELECT id, name, display_name, logo_path, description, enabled, type, create_at, update_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email, owner_id 
+			FROM domains
 			ORDER BY create_at 
 			DESC;
 		`,
 		FindDomainsWithPage: `
-			SELECT d.id, d.name, d.display_name, d.description, d.enabled, d.create_at, d.update_at
-			FROM domains d
+			SELECT id, name, display_name, logo_path, description, enabled, type, create_at, update_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email, owner_id 
+			FROM domains
 			ORDER BY create_at 
 			DESC LIMIT ?,?;
 		`,
-		FindDomainByID: `
-			SELECT d.id, d.name, d.display_name, d.description, d.enabled, d.create_at, d.update_at
-			FROM domains d
-			WHERE id = ?;
-		`,
 		FindDomainByName: `
-			SELECT d.id, d.name, d.display_name, d.description, d.enabled, d.create_at, d.update_at
-			FROM domains d
+			SELECT id, name, display_name, logo_path, description, enabled, type, create_at, update_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email, owner_id
+			FROM domains 
 			WHERE name = ?;
 		`,
 		DeleteDomainByID: `

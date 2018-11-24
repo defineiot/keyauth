@@ -11,28 +11,41 @@ import (
 )
 
 // CreateDomain use to create an domain
-func (s *store) CreateDomain(name, description, displayName string, enabled bool) (*domain.Domain, error) {
-	ok, err := s.CheckDomainIsExistByName(name)
+func (s *store) CreateDomain(d *domain.Domain) (*domain.Domain, error) {
+	if err := d.Validate(); err != nil {
+		return nil, err
+	}
+
+	ok, err := s.CheckDomainIsExistByName(d.Name)
 	if err != nil {
 		return nil, err
 	}
+
 	if ok {
-		return nil, exception.NewBadRequest("domain %s exist", name)
+		return nil, exception.NewBadRequest("domain %s exist", d.Name)
 	}
 
-	dom := domain.Domain{ID: uuid.NewV4().String(), Name: name, DisplayName: displayName, Description: description, CreateAt: time.Now().Unix(), Enabled: enabled}
-	_, err = s.stmts[CreateDomain].Exec(dom.ID, dom.Name, dom.DisplayName, dom.Description, dom.Enabled, "", dom.CreateAt)
+	d.ID = uuid.NewV4().String()
+	d.CreateAt = time.Now().Unix()
+	_, err = s.stmts[CreateDomain].Exec(
+		d.ID, d.Name, d.DisplayName, d.LogoPath, d.Description, d.Enabled, d.Type, d.CreateAt,
+		d.Size, d.Location, d.Industry, d.Address, d.Fax, d.Phone,
+		d.ContactsName, d.ContactsTitle, d.ContactsMobile, d.ContactsEmail,
+		d.Owner)
 	if err != nil {
 		return nil, exception.NewInternalServerError("insert domain exec sql err, %s", err)
 	}
-	return &dom, nil
+	return d, nil
 }
 
 // GetDomain use to get domain detail
 func (s *store) GetDomainByID(domainID string) (*domain.Domain, error) {
-	dom := domain.Domain{}
+	d := new(domain.Domain)
 	err := s.stmts[FindDomainByID].QueryRow(domainID).Scan(
-		&dom.ID, &dom.Name, &dom.DisplayName, &dom.Description, &dom.Enabled, &dom.CreateAt, &dom.UpdateAt)
+		d.ID, d.Name, d.DisplayName, d.LogoPath, d.Description, d.Enabled, d.Type, d.CreateAt, d.UpdateAt,
+		d.Size, d.Location, d.Industry, d.Address, d.Fax, d.Phone,
+		d.ContactsName, d.ContactsTitle, d.ContactsMobile, d.ContactsEmail,
+		d.Owner)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewNotFound("domain %s not find", domainID)
@@ -41,13 +54,16 @@ func (s *store) GetDomainByID(domainID string) (*domain.Domain, error) {
 		return nil, exception.NewInternalServerError("query single domain error, %s", err)
 	}
 
-	return &dom, nil
+	return d, nil
 }
 
 func (s *store) GetDomainByName(name string) (*domain.Domain, error) {
-	dom := domain.Domain{}
+	d := new(domain.Domain)
 	err := s.stmts[FindDomainByName].QueryRow(name).Scan(
-		&dom.ID, &dom.Name, &dom.DisplayName, &dom.Description, &dom.Enabled, &dom.CreateAt, &dom.UpdateAt)
+		d.ID, d.Name, d.DisplayName, d.LogoPath, d.Description, d.Enabled, d.Type, d.CreateAt, d.UpdateAt,
+		d.Size, d.Location, d.Industry, d.Address, d.Fax, d.Phone,
+		d.ContactsName, d.ContactsTitle, d.ContactsMobile, d.ContactsEmail,
+		d.Owner)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewNotFound("domain %s not find", name)
@@ -56,7 +72,7 @@ func (s *store) GetDomainByName(name string) (*domain.Domain, error) {
 		return nil, exception.NewInternalServerError("query single domain error, %s", err)
 	}
 
-	return &dom, nil
+	return d, nil
 }
 
 // ListDomain use to list all domains
@@ -82,11 +98,16 @@ func (s *store) ListDomain(pageNumber, pageSize int64) ([]*domain.Domain, int64,
 
 	domains := []*domain.Domain{}
 	for rows.Next() {
-		dom := domain.Domain{}
-		if err := rows.Scan(&dom.ID, &dom.Name, &dom.DisplayName, &dom.Description, &dom.Enabled, &dom.CreateAt, &dom.UpdateAt); err != nil {
+		d := new(domain.Domain)
+		err := rows.Scan(
+			d.ID, d.Name, d.DisplayName, d.LogoPath, d.Description, d.Enabled, d.Type, d.CreateAt, d.UpdateAt,
+			d.Size, d.Location, d.Industry, d.Address, d.Fax, d.Phone,
+			d.ContactsName, d.ContactsTitle, d.ContactsMobile, d.ContactsEmail,
+			d.Owner)
+		if err != nil {
 			return nil, 0, exception.NewInternalServerError("scan domain record error, %s", err)
 		}
-		domains = append(domains, &dom)
+		domains = append(domains, d)
 	}
 
 	total, err := s.domainCount()
