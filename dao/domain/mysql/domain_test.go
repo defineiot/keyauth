@@ -2,103 +2,85 @@ package mysql_test
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
-func TestCreateDomain(t *testing.T) {
-	s := newTestStore()
-	defer s.Close()
+func TestDomainSuit(t *testing.T) {
 
-	dom, err := s.CreateDomain("test_create_domain", "test", "", true)
-	if err != nil {
-		t.Fatal(err)
-	}
+	suit := new(domainSuit)
+	suit.SetUp()
+	defer suit.TearDown()
 
-	if dom.Name != "test_create_domain" {
-		t.Fatal("domain name errror")
-	}
+	t.Run("CreateDomainOK", testCreateDomain(suit))
+	t.Run("GetDomainByIDOK", testGetDomainByID(suit))
+	t.Run("GetDomainByNameOK", testGetDomainByName(suit))
+	t.Run("ListDomainOK", testListDomain(suit))
+	t.Run("DeleteDomainByIDOK", testDeleteDomainByID(suit))
+	t.Run("DeleteDomainByNameOK", testDeleteDomainByName(suit))
+}
 
-	if err := s.DeleteDomainByID(dom.ID); err != nil {
-		t.Fatal(err)
+func testCreateDomain(s *domainSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		dom1, err := s.store.CreateDomain(s.d1)
+		should.NoError(err)
+		dom2, err := s.store.CreateDomain(s.d2)
+		should.NoError(err)
+
+		t.Logf("create domain(%s) success: %s", dom1.Name, dom1)
+		t.Logf("create domain(%s) success: %s", dom2.Name, dom2)
+		s.d1 = dom1
+		s.d2 = dom2
 	}
 }
 
-func TestGetDomain(t *testing.T) {
-	s := newTestStore()
-	defer s.Close()
+func testGetDomainByID(s *domainSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		dom1, err := s.store.GetDomainByID(s.d1.ID)
+		should.NoError(err)
 
-	dom, err := s.CreateDomain("test_get_domain", "test", "", true)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	dom1, err := s.GetDomainByID(dom.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	dom2, err := s.GetDomainByName(dom.Name)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if dom1.ID != dom2.ID {
-		t.Fatal("get domain by id and get domain by name no equal")
-	}
-
-	if err := s.DeleteDomainByID(dom.ID); err != nil {
-		t.Fatal(err)
-	}
-
-	ok, err := s.CheckDomainIsExistByID(dom.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if ok {
-		t.Fatal("the test_get_domain is not deleted")
+		t.Logf("get domain by id success: %s", dom1)
 	}
 }
 
-func TestListDomain(t *testing.T) {
-	s := newTestStore()
-	defer s.Close()
+func testGetDomainByName(s *domainSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		dom2, err := s.store.GetDomainByName(s.d2.Name)
+		should.NoError(err)
 
-	dom1, err := s.CreateDomain("test_list_domain1", "test", "", true)
-	if err != nil {
-		t.Fatal(err)
+		t.Logf("get domain by id success: %s", dom2)
 	}
+}
 
-	dom2, err := s.CreateDomain("test_list_domain2", "test", "", true)
-	if err != nil {
-		t.Fatal(err)
-	}
+func testListDomain(s *domainSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		doms, total, err := s.store.ListDomain(1, 2)
+		should.NoError(err)
 
-	domains, totalP, err := s.ListDomain(1, 1)
-	if err != nil {
-		if err := s.DeleteDomainByID(dom1.ID); err != nil {
-			t.Fatal(err)
-		}
-		if err := s.DeleteDomainByID(dom2.ID); err != nil {
-			t.Fatal(err)
-		}
-		t.Fatal(err)
+		t.Logf("list domain success: domains: %s, total_page: %d", doms, total)
 	}
+}
 
-	_, _, err = s.ListDomain(0, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
+func testDeleteDomainByID(s *domainSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		err := s.store.DeleteDomainByID(s.d1.ID)
+		should.NoError(err)
 
-	t.Log(domains)
-	t.Log(totalP)
-	if len(domains) != 1 {
-		t.Fatal("page size not equel")
+		t.Logf("delete domain by id success (%s)", s.d1.ID)
 	}
+}
 
-	if err := s.DeleteDomainByID(dom1.ID); err != nil {
-		t.Fatal(err)
-	}
-	if err := s.DeleteDomainByID(dom2.ID); err != nil {
-		t.Fatal(err)
-	}
+func testDeleteDomainByName(s *domainSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		err := s.store.DeleteDomainByName(s.d2.Name)
+		should.NoError(err)
 
+		t.Logf("delete domain by name success (%s)", s.d2.Name)
+	}
 }
