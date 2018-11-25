@@ -12,11 +12,11 @@ func NewConfig() *conf.Config {
 	app.Name = "keyauth"
 	app.Port = "8080"
 	mysql := new(conf.MySQLConf)
-	mysql.Host = "192.168.0.203"
+	mysql.Host = "127.0.0.1"
 	mysql.Port = "3306"
-	mysql.DB = "iot_auth"
-	mysql.User = "github.com/defineiot/keyauth"
-	mysql.Pass = "github.com/defineiot/keyauth"
+	mysql.DB = "keyauth"
+	mysql.User = "root"
+	mysql.Pass = "passwd"
 	log := new(conf.LogConf)
 	log.FilePath = "/tmp/keyauth.log"
 	log.Level = "debug"
