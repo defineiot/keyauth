@@ -3,100 +3,101 @@ package mysql_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
 	projectID string
 )
 
-func TestProject(t *testing.T) {
-	t.Run("CreateOK", testCreateProjectOK)
-	t.Run("CheckOK", testCheckProjectOK)
-	t.Run("GetOK", testGetProjectOK)
-	t.Run("AddUserOK", testAddUserToProject)
-	t.Run("RemoveUserOK", testRemoveUserFromProject)
-	t.Run("ListOK", testListProjectOK)
-	t.Run("DeleteOK", testListProjectOK)
+func TestProjectSuit(t *testing.T) {
+	suit := new(projectSuit)
+	suit.SetUp()
+	defer suit.TearDown()
+
+	t.Run("CreateProject", testCreateProjectOK(suit))
+	t.Run("GetProectByID", testGetProjectOK(suit))
+	t.Run("ListDomainProjects", testListDomainProjectsOK(suit))
+	t.Run("AddUserToProject", testAddUserToProject(suit))
+	t.Run("ListUserProjectsAddOK", testListUserProjectsAddOK(suit))
+	t.Run("RemoveUserFromProject", testRemoveUserFromProject(suit))
+	t.Run("ListUserProjectsDelOK", testListUserProjectsRemOK(suit))
+	t.Run("DeleteProjectByID", testDeleteProjectOK(suit))
 }
 
-func testCreateProjectOK(t *testing.T) {
-	s := newTestStore()
-	defer s.Close()
-	assert.NotNil(t, s)
+func testCreateProjectOK(s *projectSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		p, err := s.store.CreateProject(s.p)
+		should.NoError(err)
 
-	s.DeleteProjectByName("test-project-01", "unit-test-domain-id")
-	p1, err := s.CreateProject("unit-test-domain-id", "test-project-01", "", true)
-	assert.NoError(t, err)
-	assert.NotNil(t, p1)
-
-	assert.Equal(t, "test-project-01", p1.Name)
-
-	projectID = p1.ID
+		t.Logf("create project(%s) success: %s", p.Name, p)
+		s.p = p
+	}
 }
 
-func testCheckProjectOK(t *testing.T) {
-	s := newTestStore()
-	defer s.Close()
-	assert.NotNil(t, s)
+func testGetProjectOK(s *projectSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		p, err := s.store.GetProjectByID(s.p.ID)
+		should.NoError(err)
 
-	ok, err := s.CheckProjectIsExistByID(projectID)
-	assert.NoError(t, err)
-	assert.Equal(t, true, ok, "the project not create success")
+		t.Logf("get project(%s) success: %s", p.Name, p)
+	}
 }
 
-func testGetProjectOK(t *testing.T) {
-	s := newTestStore()
-	defer s.Close()
-	assert.NotNil(t, s)
+func testListDomainProjectsOK(s *projectSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		ps, err := s.store.ListDomainProjects(s.did)
+		should.NoError(err)
 
-	pGet, err := s.GetProject(projectID)
-	assert.NoError(t, err)
-
-	assert.Equal(t, projectID, pGet.ID)
+		t.Logf("list domain projects success: %s", ps)
+	}
 }
 
-func testListProjectOK(t *testing.T) {
-	s := newTestStore()
-	defer s.Close()
-
-	projects, err := s.ListDomainProjects("unit-test-domain-id")
-	assert.NoError(t, err)
-
-	assert.Equal(t, 1, len(projects), "create 1 project in this domain, but not get 1")
+func testAddUserToProject(s *projectSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		err := s.store.AddUsersToProject(s.p.ID, s.uid)
+		should.NoError(err)
+	}
 }
 
-func testDeleteProjectOK(t *testing.T) {
-	s := newTestStore()
-	defer s.Close()
+func testListUserProjectsAddOK(s *projectSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		projects, err := s.store.ListUserProjects(s.did, s.uid)
+		should.NoError(err)
+		should.Equal(len(projects), 1)
 
-	err := s.DeleteProjectByID(projectID)
-	assert.NoError(t, err)
-
+		t.Logf("add user(%s) to project ok: %s", s.uid, projects)
+	}
 }
 
-func testAddUserToProject(t *testing.T) {
-	s := newTestStore()
-	defer s.Close()
-	assert.NotNil(t, s)
+func testListUserProjectsRemOK(s *projectSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		projects, err := s.store.ListUserProjects(s.did, s.uid)
+		should.NoError(err)
+		should.Equal(len(projects), 0)
 
-	err := s.AddUsersToProject(projectID, "test-user-01", "test-user-02")
-	assert.NoError(t, err)
-
-	uids, err := s.ListProjectUsers(projectID)
-	assert.NoError(t, err)
-	assert.Equal(t, 2, len(uids), "add 2 user, but not equal 2")
+		t.Logf("remove user(%s) to project ok: %s", s.uid, projects)
+	}
 }
 
-func testRemoveUserFromProject(t *testing.T) {
-	s := newTestStore()
-	defer s.Close()
-	assert.NotNil(t, s)
+func testRemoveUserFromProject(s *projectSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		err := s.store.RemoveUsersFromProject(s.p.ID, s.uid)
+		should.NoError(err)
+	}
+}
 
-	err := s.RemoveUsersFromProject(projectID, "test-user-01", "test-user-02")
-	assert.NoError(t, err)
-
-	uids, err := s.ListProjectUsers(projectID)
-	assert.NoError(t, err)
-	assert.Equal(t, 0, len(uids), "remove 2 user, but user not equal 0")
+func testDeleteProjectOK(s *projectSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		err := s.store.DeleteProjectByID(s.p.ID)
+		should.NoError(err)
+	}
 }

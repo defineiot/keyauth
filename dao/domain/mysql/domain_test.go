@@ -7,7 +7,6 @@ import (
 )
 
 func TestDomainSuit(t *testing.T) {
-
 	suit := new(domainSuit)
 	suit.SetUp()
 	defer suit.TearDown()

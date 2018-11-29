@@ -13,13 +13,13 @@ const (
 	FindProjectByID     = "find-project-by-id"
 	UpdateProjectByID   = "update-project-by-id"
 	FindDomainPorjects  = "find-domain-projects"
+	FindUserProjects    = "find-user-projects"
 	DeleteProjectByID   = "delete-project-by-id"
 	DeleteProjectByName = "delete-project-by-name"
 
-	FindProjectUsers       = "find-project-users"
-	AddUsersToProject      = "add-users-to-project"
-	RemoveUsersFromProject = "remove-users-from-project"
-
+	FindProjectUsers        = "find-project-users"
+	AddUsersToProject       = "add-users-to-project"
+	RemoveUsersFromProject  = "remove-users-from-project"
 	CheckProjectExistByID   = "check-project-exist-by-id"
 	CheckProjectExistByName = "check-project-exist-by-name"
 )
@@ -28,19 +28,29 @@ const (
 func NewProjectStore(db *sql.DB) (project.Store, error) {
 	unprepared := map[string]string{
 		CreateProject: `
-			INSERT INTO projects (id, name, description, enabled, domain_id, create_at) 
-			VALUES (?,?,?,?,?,?);
+			INSERT INTO projects (id, name, picture, latitude, longitude, enabled, owner_id,  description, domain_id, create_at) 
+			VALUES (?,?,?,?,?,?,?,?,?,?);
 		`,
 		FindDomainPorjects: `
-			SELECT p.id, p.name, p.description, p.enabled, p.domain_id, p.create_at 
-			FROM projects p
+			SELECT id, name, picture, latitude, longitude, enabled, owner_id,  description, domain_id, create_at, update_at 
+			FROM projects
 			WHERE domain_id = ? 
 			ORDER BY create_at 
 			DESC;
 		`,
+		FindUserProjects: `
+			SELECT id, name, picture, latitude, longitude, enabled, owner_id, description, domain_id, create_at, update_at 
+			FROM projects p 
+			LEFT JOIN user_project_mappings m 
+			ON p.id = m.project_id
+			WHERE p.domain_id = ? 
+			AND m.user_id = ? 
+			ORDER BY p.create_at 
+			DESC;
+		`,
 		FindProjectByID: `
-			SELECT p.id, p.name, p.description, p.enabled, p.create_at, p.domain_id 
-			FROM projects p
+			SELECT id, name, picture, latitude, longitude, enabled, owner_id,  description, domain_id, create_at, update_at 
+			FROM projects
 			WHERE id = ?;
 		`,
 		DeleteProjectByID: `
@@ -64,15 +74,15 @@ func NewProjectStore(db *sql.DB) (project.Store, error) {
 		`,
 		FindProjectUsers: `
 			SELECT user_id 
-			FROM users_projects_mapping 
+			FROM user_project_mappings
 			WHERE project_id = ?;
 		`,
 		AddUsersToProject: `
-			INSERT INTO users_projects_mapping (user_id, project_id) 
+			INSERT INTO user_project_mappings (user_id, project_id) 
 			VALUES (?,?);
 		`,
 		RemoveUsersFromProject: `
-			DELETE FROM users_projects_mapping 
+			DELETE FROM user_project_mappings 
 			WHERE user_id = ? 
 			AND project_id = ?;
 		`,

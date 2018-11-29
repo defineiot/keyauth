@@ -11,30 +11,37 @@ import (
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
-func (s *store) CreateProject(domainID, name, description string, enabled bool) (*project.Project, error) {
+func (s *store) CreateProject(p *project.Project) (*project.Project, error) {
+	if err := p.Validate(); err != nil {
+		return nil, err
+	}
 
-	ok, err := s.projectNameExist(domainID, name)
+	ok, err := s.projectNameExist(p.DomainID, p.Name)
 	if err != nil {
 		return nil, exception.NewInternalServerError("check project name exist error, %s", err)
 	}
 	if ok {
-		return nil, exception.NewBadRequest("project name %s in this domain is exists", name)
+		return nil, exception.NewBadRequest("project name %s in this domain is exists", p.Name)
 	}
+	p.ID = uuid.NewV4().String()
+	p.CreateAt = time.Now().Unix()
 
-	proj := project.Project{ID: uuid.NewV4().String(), Name: name, Description: description, CreateAt: time.Now().Unix(), Enabled: enabled, DomainID: domainID}
-	_, err = s.stmts[CreateProject].Exec(proj.ID, proj.Name, proj.Description, proj.Enabled, proj.DomainID, proj.CreateAt)
+	_, err = s.stmts[CreateProject].Exec(
+		&p.ID, &p.Name, &p.Picture, &p.Latitude, &p.Longitude, &p.Enabled,
+		&p.Owner, &p.Description, &p.DomainID, &p.CreateAt)
 	if err != nil {
 		return nil, exception.NewInternalServerError("insert project exec sql err, %s", err)
 	}
 
-	return &proj, nil
+	return p, nil
 }
 
 // Notice: if project not exits return nil
-func (s *store) GetProject(id string) (*project.Project, error) {
-	proj := project.Project{}
+func (s *store) GetProjectByID(id string) (*project.Project, error) {
+	p := new(project.Project)
 	err := s.stmts[FindProjectByID].QueryRow(id).Scan(
-		&proj.ID, &proj.Name, &proj.Description, &proj.Enabled, &proj.CreateAt, &proj.DomainID)
+		&p.ID, &p.Name, &p.Picture, &p.Latitude, &p.Longitude, &p.Enabled,
+		&p.Owner, &p.Description, &p.DomainID, &p.CreateAt, &p.UpdateAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewNotFound("project %s not find", id)
@@ -43,7 +50,7 @@ func (s *store) GetProject(id string) (*project.Project, error) {
 		return nil, exception.NewInternalServerError("query single project error, %s", err)
 	}
 
-	return &proj, nil
+	return p, nil
 }
 
 func (s *store) ListDomainProjects(domainID string) ([]*project.Project, error) {
@@ -55,11 +62,32 @@ func (s *store) ListDomainProjects(domainID string) ([]*project.Project, error) 
 
 	projects := []*project.Project{}
 	for rows.Next() {
-		proj := project.Project{}
-		if err := rows.Scan(&proj.ID, &proj.Name, &proj.Description, &proj.Enabled, &proj.DomainID, &proj.CreateAt); err != nil {
+		p := new(project.Project)
+		if err := rows.Scan(&p.ID, &p.Name, &p.Picture, &p.Latitude, &p.Longitude, &p.Enabled,
+			&p.Owner, &p.Description, &p.DomainID, &p.CreateAt, &p.UpdateAt); err != nil {
 			return nil, exception.NewInternalServerError("scan project record error, %s", err)
 		}
-		projects = append(projects, &proj)
+		projects = append(projects, p)
+	}
+
+	return projects, nil
+}
+
+func (s *store) ListUserProjects(domainID, userID string) ([]*project.Project, error) {
+	rows, err := s.stmts[FindUserProjects].Query(domainID, userID)
+	if err != nil {
+		return nil, exception.NewInternalServerError("query project list error, %s", err)
+	}
+	defer rows.Close()
+
+	projects := []*project.Project{}
+	for rows.Next() {
+		p := new(project.Project)
+		if err := rows.Scan(&p.ID, &p.Name, &p.Picture, &p.Latitude, &p.Longitude, &p.Enabled,
+			&p.Owner, &p.Description, &p.DomainID, &p.CreateAt, &p.UpdateAt); err != nil {
+			return nil, exception.NewInternalServerError("scan project record error, %s", err)
+		}
+		projects = append(projects, p)
 	}
 
 	return projects, nil
@@ -201,6 +229,7 @@ func (s *store) AddUsersToProject(projectID string, userIDs ...string) error {
 	}
 
 	for _, userID := range userIDs {
+		fmt.Println("xxx", userID, projectID)
 		_, err = s.stmts[AddUsersToProject].Exec(userID, projectID)
 		if err != nil {
 			return fmt.Errorf("insert add users to project mapping exec sql err, %s", err)

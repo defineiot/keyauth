@@ -1,5 +1,6 @@
 DROP INDEX `name` ON `domains`;
 DROP INDEX `name` ON `roles`;
+DROP INDEX `name` ON `services`;
 DROP INDEX `token` ON `tokens`;
 DROP INDEX `user` ON `users`;
 
@@ -24,38 +25,6 @@ DROP TABLE `users`;
 DROP TABLE `user_project_mappings`;
 DROP TABLE `verification_code`;
 DROP TABLE `departments`;
-
-CREATE TABLE `domains` (
-`id` char(64) NOT NULL,
-`name` varchar(128) NOT NULL DEFAULT '' COMMENT '域名称, 不允许重复',
-`display_name` varchar(255) NOT NULL DEFAULT '' COMMENT '域显示名称, 用于界面进行展示, 一般为公司名称',
-`logo_path` varchar(128) NOT NULL DEFAULT '' COMMENT '公司的LOGO',
-`description` text NOT NULL COMMENT '域描述信息',
-`enabled` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否启用或者禁用改域(0, 1)',
-`type` tinyint(1) NOT NULL DEFAULT 0 COMMENT '域类型(1: 个人域, 2:  企业域, 3: 合作伙伴域)',
-`create_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建时间(时间戳)',
-`update_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '更新时间(时间戳)',
-`size` varchar(64) NOT NULL DEFAULT '' COMMENT '公司规模 ',
-`location` varchar(64) NOT NULL DEFAULT '' COMMENT '公司所处位置, 比如成都',
-`industry` varchar(64) NOT NULL DEFAULT '' COMMENT '公司所属行业',
-`address` varchar(64) NOT NULL DEFAULT '' COMMENT '公司地址',
-`fax` varchar(64) NOT NULL DEFAULT '' COMMENT '公司传真',
-`phone` varchar(64) NOT NULL DEFAULT '' COMMENT '公司固定电话',
-`contacts_name` varchar(32) NOT NULL DEFAULT '' COMMENT '公司联系人姓名',
-`contacts_title` varchar(32) NOT NULL DEFAULT '' COMMENT '联系人的职位',
-`contacts_mobile` varchar(32) NOT NULL DEFAULT '' COMMENT '联系人电话',
-`contacts_email` varchar(32) NOT NULL DEFAULT '' COMMENT '联系人邮箱',
-`owner_id` char(64) NOT NULL DEFAULT '' COMMENT '域的持有者, 如果持有者注销了自己的账号, 该域也需要被回收',
-`extra` text NOT NULL COMMENT '保留字段',
-PRIMARY KEY (`id`) ,
-UNIQUE INDEX `name` (`name` ASC)
-)
-ENGINE = InnoDB
-AUTO_INCREMENT = 0
-DEFAULT CHARACTER SET = utf8
-COLLATE = utf8_general_ci
-COMMENT = '域(用户空间)'
-ROW_FORMAT = dynamic;
 
 CREATE TABLE `applications` (
 `id` char(64) NOT NULL,
@@ -138,18 +107,50 @@ COLLATE = utf8_general_ci
 COMMENT = '数据库版本管理表'
 ROW_FORMAT = dynamic;
 
+CREATE TABLE `domains` (
+`id` char(64) NOT NULL,
+`name` varchar(128) NOT NULL DEFAULT '' COMMENT '域名称, 不允许重复',
+`display_name` varchar(255) NOT NULL DEFAULT '' COMMENT '域显示名称, 用于界面进行展示, 一般为公司名称',
+`logo_path` varchar(128) NOT NULL DEFAULT '' COMMENT '公司的LOGO',
+`description` text NOT NULL COMMENT '域描述信息',
+`enabled` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否启用或者禁用改域(0, 1)',
+`type` tinyint(1) NOT NULL DEFAULT 0 COMMENT '域类型(1: 个人域, 2:  企业域, 3: 合作伙伴域)',
+`create_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建时间(时间戳)',
+`update_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '更新时间(时间戳)',
+`size` varchar(64) NOT NULL DEFAULT '' COMMENT '公司规模 ',
+`location` varchar(64) NOT NULL DEFAULT '' COMMENT '公司所处位置, 比如成都',
+`industry` varchar(64) NOT NULL DEFAULT '' COMMENT '公司所属行业',
+`address` varchar(64) NOT NULL DEFAULT '' COMMENT '公司地址, 长度不能超过255',
+`fax` varchar(128) NOT NULL DEFAULT '' COMMENT '公司传真',
+`phone` varchar(128) NOT NULL DEFAULT '' COMMENT '公司固定电话',
+`contacts_name` varchar(32) NOT NULL DEFAULT '' COMMENT '公司联系人姓名',
+`contacts_title` varchar(32) NOT NULL DEFAULT '' COMMENT '联系人的职位',
+`contacts_mobile` varchar(32) NOT NULL DEFAULT '' COMMENT '联系人电话',
+`contacts_email` varchar(32) NOT NULL DEFAULT '' COMMENT '联系人邮箱',
+`owner_id` char(64) NOT NULL DEFAULT '' COMMENT '域的持有者, 如果持有者注销了自己的账号, 该域也需要被回收',
+`extra` text NOT NULL COMMENT '保留字段',
+PRIMARY KEY (`id`) ,
+UNIQUE INDEX `name` (`name` ASC)
+)
+ENGINE = InnoDB
+AUTO_INCREMENT = 0
+DEFAULT CHARACTER SET = utf8
+COLLATE = utf8_general_ci
+COMMENT = '域(用户空间)'
+ROW_FORMAT = dynamic;
+
 CREATE TABLE `features` (
 `id` char(64) NOT NULL,
-`name` varchar(32) NOT NULL,
-`method` varchar(64) NOT NULL,
-`endpoint` varchar(256) NOT NULL DEFAULT '\'\'',
-`description` text NOT NULL,
-`is_deleted` int(2) NOT NULL DEFAULT 0,
-`when_deleted_version` varchar(255) NOT NULL DEFAULT '\'\'',
-`is_added` int(2) NOT NULL DEFAULT 0,
-`when_added_version` varchar(255) NOT NULL DEFAULT '\'\'',
-`create_at` int(64) NOT NULL DEFAULT 0,
-`service_name` varchar(255) NOT NULL,
+`name` varchar(32) NOT NULL DEFAULT '' COMMENT '实例功能名称',
+`method` varchar(64) NOT NULL DEFAULT '' COMMENT 'HTTP 方法的名称',
+`endpoint` varchar(256) NOT NULL DEFAULT '' COMMENT '功能的对应的URL',
+`description` text NOT NULL COMMENT '功能描述',
+`is_deleted` int(2) NOT NULL DEFAULT 0 COMMENT '该功能是否已经被删除',
+`when_deleted_version` varchar(255) NOT NULL DEFAULT '' COMMENT '在那个版本被删除',
+`is_added` int(2) NOT NULL DEFAULT 0 COMMENT '是否是新增的功能',
+`when_added_version` varchar(255) NOT NULL DEFAULT '' COMMENT '那个版本新增的功能',
+`create_at` int(64) NOT NULL DEFAULT 0 COMMENT '功能注册的时间',
+`service_id` char(64) NOT NULL DEFAULT '' COMMENT '该功能属于那个服务',
 `extra` text NOT NULL,
 PRIMARY KEY (`id`) 
 )
@@ -210,9 +211,9 @@ CREATE TABLE `projects` (
 `enabled` int(1) NOT NULL DEFAULT 0 COMMENT '是否启用或者禁用此项目',
 `owner_id` char(64) NOT NULL DEFAULT '' COMMENT ' 项目拥有者ID',
 `description` text NOT NULL COMMENT '项目描述',
-`last_access_time` int(64) NOT NULL DEFAULT 0 COMMENT '最近一次访问时间',
 `domain_id` char(64) NOT NULL DEFAULT '' COMMENT '项目所属域',
 `create_at` int(64) NOT NULL DEFAULT 0 COMMENT '项目创建时间',
+`update_at` int(64) NOT NULL DEFAULT 0 COMMENT '最近一次访问时间',
 `extra` text NOT NULL COMMENT '预留字段',
 PRIMARY KEY (`id`) 
 )
@@ -261,16 +262,18 @@ COMMENT = '用于在同步域的角色对应表'
 ROW_FORMAT = dynamic;
 
 CREATE TABLE `services` (
-`name` varchar(255) NOT NULL,
-`description` text NOT NULL,
-`enabled` int(2) NOT NULL DEFAULT 0,
-`status` varchar(255) NOT NULL DEFAULT '\'\'',
+`id` char(64) NOT NULL COMMENT '服务的ID',
+`name` varchar(255) NOT NULL DEFAULT '' COMMENT '服务名称',
+`description` text NOT NULL COMMENT '服务的功能简介',
+`enabled` int(2) NOT NULL DEFAULT 0 COMMENT '服务状态',
+`status` varchar(255) NOT NULL DEFAULT '' COMMENT '服务状态',
 `status_update_at` int(64) NOT NULL DEFAULT 0,
-`version` varchar(255) NOT NULL DEFAULT '\'\'',
+`version` varchar(255) NOT NULL DEFAULT '',
 `create_at` int(64) NOT NULL DEFAULT 0,
+`client_id` varchar(128) NOT NULL DEFAULT '',
 `extra` text NOT NULL,
-`client_id` varchar(128) NOT NULL DEFAULT '\'\'',
-PRIMARY KEY (`name`) 
+PRIMARY KEY (`id`) ,
+INDEX `name` (`name` ASC)
 )
 ENGINE = InnoDB
 AUTO_INCREMENT = 0
@@ -305,7 +308,8 @@ CREATE TABLE `tokens` (
 `user_id` char(64) NOT NULL DEFAULT '' COMMENT '令牌的持有者ID',
 `domain_id` char(64) NOT NULL DEFAULT '' COMMENT '令牌的作用域 - 域内可用',
 `project_id` char(64) NOT NULL DEFAULT '' COMMENT '令牌的作用域 - 仅能作用在某一个项目内使用',
-`service_name` varchar(128) NOT NULL DEFAULT '' COMMENT '服务名称, 仅用于当 client模式, 专门颁发给 服务注册使用',
+`application_id` char(64) NOT NULL DEFAULT '' COMMENT '如果token是发放给app就存在该值',
+`service_id` char(64) NOT NULL DEFAULT '' COMMENT '服务名称, 仅用于当 client模式, 专门颁发给 服务注册使用',
 `description` text NOT NULL COMMENT '令牌的描述信息',
 `extra` text NOT NULL COMMENT '预留字段',
 PRIMARY KEY (`access_token`) ,
