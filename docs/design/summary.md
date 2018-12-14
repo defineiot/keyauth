@@ -4,6 +4,9 @@ iot-auth的设计参考了下面2个项目:
 + [openstack keystone](https://developer.openstack.org/api-ref/identity/v3/?expanded=password-authentication-with-unscoped-authorization-detail,password-authentication-with-scoped-authorization-detail)
 + [cloud foundry uaa](http://docs.cloudfoundry.org/api/uaa/#user-token-grant-21336)
 
+用于实现多个子系统建建立一套统一的rbac权限管理中心:
+![](./images/distributed_rbac.png)
+
 ## 核心概念
 
 系统涉及到如下概念:
@@ -17,7 +20,7 @@ iot-auth的设计参考了下面2个项目:
 + 令牌(Token): 用户访问服务的凭证, 通过OAuth2的几种方式获得
 
 关系如下:
-![](xxx)
+![](./images/multi_tenent.png)
 
 
 ## 认证逻辑
@@ -28,14 +31,14 @@ iot-auth的设计参考了下面2个项目:
 3. 资源服务获取到用户token后, 去openauth获取该token的相关信息, 然后根据这些用户信息返回用户访问的资源。
 
 详细的过程如下:
-![](xxx)
+![](./images/auth_logic.png)
 
 
 ## 鉴权逻辑
 
 服务将自己的功能列表注册到 注册中心, 系统管理员根据需要创建角色, 并且将这些角色和服务功能进行关联, 服务验证token,获取用户的角色对应的功能列表, 进行校验, 从而实现RBAC的访问控制, 逻辑流程如下:
 
-![](xxx)
+![](./images/rbac_logic.jpg)
 
 1. 服务将自己的功能列表注册到etcd的服务功能列表注册中心
 2. 系统管理员选择合适的功能列表进行分配, 创建响应的角色
