@@ -1,96 +1,76 @@
 package user
 
 import (
+	"github.com/defineiot/keyauth/dao/domain"
 	"github.com/defineiot/keyauth/dao/project"
+	"github.com/defineiot/keyauth/internal/exception"
 )
 
 // User info
 type User struct {
-	ID               string           `json:"id"`
-	Name             string           `json:"name"`
-	LastActiveTime   int64            `json:"last_active_time"`
-	Enabled          bool             `json:"enabled"`
-	CreateAt         int64            `json:"create_at"`
-	Password         *Password        `json:"-"`
-	Phones           []*Phone         `json:"phones,omitempty"`
-	Emails           []*Email         `json:"emails,omitempty"`
-	RoleNames        []string         `json:"roles"`
-	DomainID         string           `json:"domain_id"`
-	DefaultProjectID string           `json:"-"`
-	DefaultProject   *project.Project `json:"home_project,omitempty"`
-	ExpireActiveDays int64            `json:"expires_active_days"`
+	ID                string    `json:"id"`                  // 用户UUID
+	Account           string    `json:"account"`             // 用户账号名称
+	Mobile            string    `json:"mobile"`              // 手机号码, 用户可以通过手机进行注册和密码找回, 还可以通过手机号进行登录
+	Email             string    `json:"email"`               // 邮箱, 用户可以通过邮箱进行注册和照明密码
+	Phone             string    `json:"phone"`               // 用户的座机号码
+	Address           string    `json:"address"`             // 用户住址
+	RealName          string    `json:"real_name"`           // 用户真实姓名
+	NickName          string    `json:"nick_name"`           // 用户昵称, 用于在界面进行展示
+	Gender            string    `json:"gender"`              // 性别
+	Avatar            string    `json:"avatar"`              // 头像
+	Locked            string    `json:"locked"`              // 是否冻结次用户
+	LastLogoutTime    string    `json:"last_logout_time"`    // 用户最近一次退出系统的时间, 用于评估用户使用系统的时长
+	LastLoginTime     string    `json:"last_login_time"`     // 用户最近一次登录系统的时间
+	LastLoginIP       string    `json:"last_login_ip"`       // 用户最近一次登录系统的客户端IP地址
+	LoginFailedTimes  string    `json:"login_failed_times"`  // 用户连续登录失败的次数, 如果登录成功则清零
+	LoginSuccessTimes string    `json:"login_success_times"` // 用户登录成功的次数, 及用户访问系统的次数
+	CreateAt          string    `json:"create_at"`           // 用户创建的时间
+	ExpiresActiveDays string    `json:"expires_active_days"` // 用户多久未登录时(天), 冻结改用户, 防止僵尸用户的账号被利用
+	Password          *Password `json:"password"`            // 密码相关信息
 
-	Extra string `json:"-"`
-}
-
-// VerifyCode code
-type VerifyCode struct {
-	ID           int64  `json:"id"`
-	EmailAddress string `json:"email_address"`
-	PhoneNumber  string `json:"phone_number"`
-	Code         int    `json:"code"`
-	CreateAt     int64  `json:"create_at"`
-	ExpireAt     int64  `json:"expire_at"`
-	Status       int    `json:"status"`
-	Type         int    `json:"type"`
-}
-
-// InvitationCode code
-type InvitationCode struct {
-	ID                   int64    `json:"-"`
-	InviterID            string   `json:"inviter_id"`
-	InvitedUserID        string   `json:"invited_user_id,omitempty"`
-	InvitedUserDomainID  string   `json:"invited_user_domain_id,omitempty"`
-	InvitedTime          int64    `json:"invited_time"`
-	AcceptTime           int64    `json:"accept_time,omitempty"`
-	ExpireTime           int64    `json:"expire_time,omitempty"`
-	Code                 string   `json:"code"`
-	InvitationURL        string   `json:"invitation_url"`
-	InvitedUserRoleNames []string `json:"invited_user_role_names"`
-	AccessProjects       []string `json:"access_project_ids"`
-}
-
-// Phone user's phone
-type Phone struct {
-	ID          int64  `json:"-"`
-	UserID      string `json:"-"`
-	Number      string `json:"number"`
-	Primary     bool   `json:"primary"`
-	Description string `json:"descrption"`
-
-	Extra string `json:"-"`
-}
-
-// Email use's email
-type Email struct {
-	ID          int64  `json:"-"`
-	UserID      string `json:"-"`
-	Address     string `json:"address"`
-	Primary     bool   `json:"primary"`
-	Description string `json:"description"`
-
-	Extra string `json:"-"`
+	Domain         *domain.Domain   `json:"domain"`     // 如果需要对象由上层进行查找
+	DefaultProject *project.Project `json:"project"`    //  如果需要对象由上层进行查找
+	Department     *Department      `json:"department"` // 所属部门信息
+	RoleNames      []string         `json:"roles"`      // 角色列表
 }
 
 // Password user's password
 type Password struct {
 	ID       int64  `json:"-"`
-	Password string `json:"-"`
-	ExpireAt int64  `json:"expire_at"`
-	CreateAt int64  `json:"create_at"`
-	UpdateAt int64  `json:"update_at,omitempty"`
 	UserID   string `json:"-"`
-
-	Extra string `json:"-"`
+	Password string `json:"-"`
+	ExpireAt int64  `json:"expire_at"`           // 密码过期时间
+	CreateAt int64  `json:"create_at"`           // 密码创建时间
+	UpdateAt int64  `json:"update_at,omitempty"` // 密码更新时间
 }
 
-// Credential is user's credential
-type Credential struct {
-	UserID      string
-	Password    string
-	AccessToken string
-	DomainID    string
-	UserName    string
+// Validate 校验创建时的参数
+func (u *User) Validate() error {
+	if u.Account == "" {
+		return exception.NewBadRequest("the user's account required!")
+	}
+
+	if len(u.Account) > 128 {
+		return exception.NewBadRequest("user's account is too long,  max length is 128")
+	}
+
+	if u.Password == nil {
+		return exception.NewBadRequest("the user's password required!")
+	}
+
+	if len(u.Password.Password) < 6 {
+		return exception.NewBadRequest("user password length must not be less than 6")
+	}
+
+	if u.Domain == nil || u.Domain.ID == "" {
+		return exception.NewBadRequest("the user's domain required!")
+	}
+
+	if u.Department == nil || u.Department.ID == "" {
+		return exception.NewBadRequest("the user's department required!")
+	}
+
+	return nil
 }
 
 // Store is user service
@@ -118,6 +98,8 @@ type Reader interface {
 
 // Writer use to write user information to store
 type Writer interface {
+	CreateUser(u *User) (*User, error)
+
 	SaveVerifyCode(toEmail, phoneNumber string, code int) (*VerifyCode, error)
 	GetVerifyCodeByMail(toEmail string, code int) (*VerifyCode, error)
 	GetVerifyCodeByPhone(phoneNumber string, code int) (*VerifyCode, error)
@@ -125,7 +107,7 @@ type Writer interface {
 
 	SaveUserOtherDomain(userID, otherDomainID string) error
 	DeleteUserOtherDomain(userID, otherDomainID string) error
-	CreateUser(domainID, userName, password string, enabled bool, userExpires, passExpires int) (*User, error)
+
 	DeleteUser(domainID, userID string) error
 
 	SetUserPassword(userID, oldPass, newPass string) error

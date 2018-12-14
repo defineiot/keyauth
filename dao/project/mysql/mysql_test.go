@@ -29,9 +29,9 @@ type projectSuit struct {
 }
 
 func (s *projectSuit) TearDown() {
-	// if s.p.ID != "" {
-	// 	s.store.DeleteProjectByID(s.p.ID)
-	// }
+	if s.p.ID != "" {
+		s.store.DeleteProjectByID(s.p.ID)
+	}
 
 	s.store.Close()
 }

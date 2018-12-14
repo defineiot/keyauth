@@ -15,6 +15,7 @@ import (
 	"github.com/urfave/negroni"
 
 	"github.com/defineiot/keyauth/api/global"
+	"github.com/defineiot/keyauth/api/http/middleware"
 	"github.com/defineiot/keyauth/api/http/router"
 	"github.com/defineiot/keyauth/dao/service"
 	"github.com/defineiot/keyauth/internal/cache"
@@ -183,11 +184,13 @@ func (s *Service) prepare() error {
 	r := router.NewRouter()
 	RouteToV1(r)
 
+	http.TimeoutHandler
 	// includes some default middlewares
 	corsM := cors.AllowAll()
 	corsM.Log = stdlog.New(os.Stdout, "Info: ", stdlog.Ltime|stdlog.Lshortfile)
 	recoverM := negroni.NewRecovery()
 	accessL := negroni.NewLogger()
+	timeout := middleware.NewTimeoutHandler(3*time.Second, "test")
 	n.Use(corsM)
 	n.Use(accessL)
 	n.Use(recoverM)
