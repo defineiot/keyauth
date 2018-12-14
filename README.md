@@ -1,14 +1,13 @@
-# iot-auth
-iot平台身份(identity)服务, 提供用户认证,鉴权,服务发现等功能。
+# keyauth
+微服务平台身份(identity)服务, 提供用户认证,鉴权,服务发现,资源配置等功能。
 
 功能:
 + 支持多租户
 + 支持OAuth2.0的中心化的身份管理
 + 支持RBAC的鉴权管理
 
-iot-auth的具体设计请参考: [iot-auth概要设计](./docs/design/summary.md)
+keyauth的具体设计请参考: [iot-auth概要设计](./docs/design/summary.md)
 
-
 ## 快速开发
 环境要求:
 + Golang 1.10
@@ -48,7 +47,7 @@ $ make docker_build
 #### 启动
 1. 将编译好的二进制包和配置文件,数据库DDL, copy到服务器上进行启动:
 ```bash
-$ scp keyauth .keyauth/keyauth.conf ./keyauth/ddl/schema_v1.sql root@172.168.1.240:~
+$ scp keyauth .keyauth/keyauth.conf ./keyauth/ddl/schema_v1.sql root@your_server_ip:~
 ```
 
 2. 初始化数据库:
@@ -69,11 +68,11 @@ $ mkdir -pv /var/log/keyauth
 3. 编写systemd的服务启动文件: /usr/lib/systemd/system/keyauth.service
 ```
 [Unit]
-Description=IOT Identity Service
+Description=Distributed Service Identity Service
 After=network.target
 After=network-online.target
 Wants=network-online.target
-Documentation=http://172.168.1.240:10080/xiniu-cloud/iot-auth
+Documentation=https://github.com/defineiot/keyauth
 [Service]
 Type=simple
 WorkingDirectory=/var/log/keyauth
@@ -99,7 +98,7 @@ $ systemctl is-enabled keyauth
 ```bash
 $ keyauth -v
 Version   : v0.0.2
-Build Time: 2018-05-18 21:24:45
+Build Time: 2017-05-18 21:24:45
 Git Branch: master
 Git Commit: fcb2dd60b6346fb0bd8944bd70514e4b59b4af56
 Go Version: go1.10.1 darwin/amd64
@@ -111,5 +110,4 @@ Go Version: go1.10.1 darwin/amd64
 
 
 ## 开发者手册
-
 + [API 文档]()

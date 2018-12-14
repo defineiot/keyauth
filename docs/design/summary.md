@@ -1,10 +1,10 @@
 # 概要设计
 
-iot-auth的设计参考了下面2个项目:
+keyauth的设计参考了下面2个项目:
 + [openstack keystone](https://developer.openstack.org/api-ref/identity/v3/?expanded=password-authentication-with-unscoped-authorization-detail,password-authentication-with-scoped-authorization-detail)
 + [cloud foundry uaa](http://docs.cloudfoundry.org/api/uaa/#user-token-grant-21336)
 
-用于实现多个子系统建建立一套统一的rbac权限管理中心:
+用于实现多个子系统建立一套统一的rbac权限管理中心:
 ![](../images/distributed_rbac.png)
 
 ## 核心概念
