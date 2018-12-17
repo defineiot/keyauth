@@ -25,21 +25,21 @@ const (
 func NewAppStore(db *sql.DB) (application.Store, error) {
 	unprepared := map[string]string{
 		CreateAPP: `
-			INSERT INTO applications (id, name, user_id, website, logo_image, description, create_at, client_id) 
-			VALUES (?,?,?,?,?,?,?,?);
+			INSERT INTO applications (id, name, user_id, website, logo_image, description, create_at, redirect_uri, client_id, client_secret, locked, token_expire_time) 
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?);
 		`,
 		ListUserAPPS: `
-			SELECT a.id, a.name, a.user_id, a.website, a.logo_image, a.description, a.create_at, a.client_id 
-			FROM applications a
+			SELECT id, name, user_id, website, logo_image, description, create_at, redirect_uri, client_id, client_secret, locked, last_login_time, last_login_ip, login_failed_times, login_success_times, token_expire_time
+			FROM applications 
 			WHERE user_id = ? 
-			ORDER BY a.create_at 
+			ORDER BY create_at 
 			DESC;
 		`,
 		GetUserAPP: `
-		    SELECT a.id, a.name, a.user_id, a.website, a.logo_image, a.description, a.create_at, a.client_id
-		    FROM applications a
-		    WHERE a.id = ? 
-		    ORDER BY a.create_at 
+		    SELECT id, name, user_id, website, logo_image, description, create_at, redirect_uri, client_id, client_secret, locked, last_login_time, last_login_ip, login_failed_times, login_success_times, token_expire_time
+		    FROM applications 
+		    WHERE id = ? 
+		    ORDER BY create_at 
 		    DESC;
 	    `,
 		DeleteAPP: `

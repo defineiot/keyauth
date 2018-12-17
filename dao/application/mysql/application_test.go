@@ -2,42 +2,57 @@ package mysql_test
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
-func TestRegistration(t *testing.T) {
-	s := newTestStore()
-	defer s.Close()
+func TestApplicationSuit(t *testing.T) {
+	suit := new(applicationSuit)
+	suit.SetUp()
+	defer suit.TearDown()
 
-	app1, err := s.Registration("unit-test-user-id", "unit-test-app1", "http://127.0.0.1/test", "public", "", "")
-	if err != nil {
-		t.Fatal(err)
-	}
+	t.Run("CreateApplicationOK", testCreateApplicationOK(suit))
+	t.Run("ListUserApplicationsOK", testListUserApplicationsOK(suit))
+	t.Run("GetApplicationOK", testGetUserApplicationOK(suit))
+	t.Run("DeleteApplicationOK", testDeleteApplicationOK(suit))
+}
 
-	app2, err := s.Registration("unit-test-user-id", "unit-test-app2", "http://127.0.0.1/test", "public", "", "")
-	if err != nil {
-		t.Fatal(err)
-	}
+func testCreateApplicationOK(s *applicationSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		err := s.store.CreateApplication(s.app)
+		should.NoError(err)
 
-	if app1.Name != "unit-test-app1" {
-		t.Fatal("app name not equal")
+		t.Logf("create application(%s) success: %s", s.app.Name, s.app)
 	}
-	if app2.Name != "unit-test-app2" {
-		t.Fatal("app name not equal")
-	}
+}
 
-	apps, err := s.ListApplications("unit-test-user-id")
-	if err != nil {
-		t.Fatal(err)
-	}
+func testListUserApplicationsOK(s *applicationSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		apps, err := s.store.ListUserApplications(s.userID)
+		should.NoError(err)
 
-	if len(apps) != 2 {
-		t.Fatal("the user app not equal 2")
+		t.Logf("list user applications(%s) success: %s", s.userID, apps)
 	}
+}
 
-	if err := s.Unregistration(app1.ID); err != nil {
-		t.Fatal(err)
+func testGetUserApplicationOK(s *applicationSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		app, err := s.store.GetApplication(s.app.ID)
+		should.NoError(err)
+
+		t.Logf("get application(%s) success: %s", s.app.ID, app)
 	}
-	if err := s.Unregistration(app2.ID); err != nil {
-		t.Fatal(err)
+}
+
+func testDeleteApplicationOK(s *applicationSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		err := s.store.DeleteApplication(s.app.ID)
+		should.NoError(err)
+
+		t.Logf("delete application(%s) success: %s", s.app.ID, s.app)
 	}
 }

@@ -8,33 +8,33 @@ import (
 
 	"github.com/defineiot/keyauth/dao/application"
 	"github.com/defineiot/keyauth/internal/exception"
+	"github.com/defineiot/keyauth/internal/tools"
 )
 
-func (s *store) Registration(userID, name, description, website, clientID string) (*application.Application, error) {
-
-	if userID == "" {
-		return nil, exception.NewBadRequest("application user_id is missed")
-	}
-	if name == "" {
-		return nil, exception.NewBadRequest("application name is missed")
+func (s *store) CreateApplication(app *application.Application) error {
+	if err := app.Validate(); err != nil {
+		return err
 	}
 
-	ok, err := s.CheckAPPIsExistByName(userID, name)
+	ok, err := s.CheckAPPIsExistByName(app.UserID, app.Name)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if ok {
-		return nil, exception.NewBadRequest("application %s exist", name)
+		return exception.NewBadRequest("application %s exist", app.Name)
 	}
 
-	app := application.Application{ID: uuid.NewV4().String(), Name: name, UserID: userID, Website: website, Description: description, CreateAt: time.Now().Unix(), ClientID: clientID}
+	app.ClientID = tools.MakeUUID(24)
+	app.ClientSecret = tools.MakeUUID(32)
+	app.CreateAt = time.Now().Unix()
+	app.ID = uuid.NewV4().String()
 
-	_, err = s.stmts[CreateAPP].Exec(app.ID, app.Name, app.UserID, app.Website, app.LogoImage, app.Description, app.CreateAt, app.ClientID)
+	_, err = s.stmts[CreateAPP].Exec(app.ID, app.Name, app.UserID, app.Website, app.LogoImage, app.Description, app.CreateAt, app.RedirectURI, app.ClientID, app.ClientSecret, app.Locked, app.TokenExpireTime)
 	if err != nil {
-		return nil, exception.NewInternalServerError("insert application exec sql err, %s", err)
+		return exception.NewInternalServerError("insert application exec sql err, %s", err)
 	}
 
-	return &app, nil
+	return nil
 }
 
 func (s *store) CheckAPPIsExistByID(appID string) (bool, error) {
@@ -63,16 +63,16 @@ func (s *store) CheckAPPIsExistByName(userID, name string) (bool, error) {
 	return true, nil
 }
 
-func (s *store) Unregistration(id string) error {
-	ok, err := s.CheckAPPIsExistByID(id)
+func (s *store) DeleteApplication(appID string) error {
+	ok, err := s.CheckAPPIsExistByID(appID)
 	if err != nil {
 		return err
 	}
 	if !ok {
-		return exception.NewBadRequest("application %s not exist", id)
+		return exception.NewBadRequest("application %s not exist", appID)
 	}
 
-	ret, err := s.stmts[DeleteAPP].Exec(id)
+	ret, err := s.stmts[DeleteAPP].Exec(appID)
 	if err != nil {
 		return exception.NewInternalServerError("delete application exec sql error, %s", err)
 	}
@@ -81,13 +81,13 @@ func (s *store) Unregistration(id string) error {
 		return exception.NewInternalServerError("get delete row affected error, %s", err)
 	}
 	if count == 0 {
-		return exception.NewBadRequest("application %s not exist", id)
+		return exception.NewBadRequest("application %s not exist", appID)
 	}
 
 	return nil
 }
 
-func (s *store) ListApplications(userID string) ([]*application.Application, error) {
+func (s *store) ListUserApplications(userID string) ([]*application.Application, error) {
 	rows, err := s.stmts[ListUserAPPS].Query(userID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query domain list error, %s", err)
@@ -96,19 +96,22 @@ func (s *store) ListApplications(userID string) ([]*application.Application, err
 
 	applications := []*application.Application{}
 	for rows.Next() {
-		app := application.Application{}
-		if err := rows.Scan(&app.ID, &app.Name, &app.UserID, &app.Website, &app.LogoImage, &app.Description, &app.CreateAt, &app.ClientID); err != nil {
+		app := new(application.Application)
+		if err := rows.Scan(&app.ID, &app.Name, &app.UserID, &app.Website, &app.LogoImage, &app.Description, &app.CreateAt,
+			&app.RedirectURI, &app.ClientID, &app.ClientSecret, &app.Locked,
+			&app.LastLoginTime, &app.LastLoginIP, &app.LoginFailedTimes, &app.LoginSuccessTimes, &app.TokenExpireTime); err != nil {
 			return nil, exception.NewInternalServerError("scan application record error, %s", err)
 		}
-		applications = append(applications, &app)
+		applications = append(applications, app)
 	}
 	return applications, nil
 }
 
 func (s *store) GetApplication(appid string) (*application.Application, error) {
 	app := application.Application{}
-	err := s.stmts[GetUserAPP].QueryRow(appid).Scan(
-		&app.ID, &app.Name, &app.UserID, &app.Website, &app.LogoImage, &app.Description, &app.CreateAt, &app.ClientID)
+	err := s.stmts[GetUserAPP].QueryRow(appid).Scan(&app.ID, &app.Name, &app.UserID, &app.Website, &app.LogoImage, &app.Description, &app.CreateAt,
+		&app.RedirectURI, &app.ClientID, &app.ClientSecret, &app.Locked,
+		&app.LastLoginTime, &app.LastLoginIP, &app.LoginFailedTimes, &app.LoginSuccessTimes, &app.TokenExpireTime)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewNotFound("application %s not find", appid)

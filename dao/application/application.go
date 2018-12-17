@@ -1,20 +1,55 @@
 package application
 
 import (
-	"github.com/defineiot/keyauth/dao/client"
+	"encoding/json"
+	"fmt"
+	"log"
+
+	"github.com/defineiot/keyauth/internal/exception"
 )
 
 // Application is oauth2's client: https://tools.ietf.org/html/rfc6749#section-2
 type Application struct {
-	ID          string `json:"id"`
-	UserID      string `json:"user_id"`
-	Name        string `json:"name"`
-	Website     string `json:"website,omitempty"`
-	LogoImage   string `json:"logo_image,omitempty"`
-	Description string `json:"description"`
-	CreateAt    int64  `json:"create_at"`
-	ClientID    string `json:"-"`
-	*client.Client
+	ID          string `json:"id"`                   // 唯一ID
+	Name        string `json:"name"`                 // 应用名称
+	UserID      string `json:"user_id"`              // 应用属于那个用户
+	Website     string `json:"website,omitempty"`    // 应用的网站地址
+	LogoImage   string `json:"logo_image,omitempty"` // 应用的LOGO
+	Description string `json:"description"`          // 应用简单的描述
+	CreateAt    int64  `json:"create_at"`            // 应用创建的时间
+
+	RedirectURI       string `json:"redirect_uri"`        // 应用重定向URI, Oauht2时需要改参数
+	ClientID          string `json:"client_id"`           // 应用客户端ID
+	ClientSecret      string `json:"client_secret"`       // 应用客户端秘钥
+	Locked            bool   `json:"locked"`              // 是否冻结应用, 冻结应用后, 该应用无法通过凭证获取访问凭证(token)
+	LastLoginTime     int64  `json:"last_login_time"`     // 应用最近一次登录的时间
+	LastLoginIP       string `json:"last_login_ip"`       // 最近一次登录的IP
+	LoginFailedTimes  int    `json:"login_failed_times"`  // 应用最近一次连续登录失败的次数, 成功过后清零
+	LoginSuccessTimes int64  `json:"login_success_times"` // 应用成功登录的次数
+	TokenExpireTime   int64  `json:"token_expire_time"`   // 应用申请的token的过期时间
+}
+
+func (a *Application) String() string {
+	strD, err := json.Marshal(a)
+	if err != nil {
+		log.Printf("E! marshal domain to string error: %s", err)
+		return fmt.Sprintf("ID: %s, Name: %s", a.ID, a.Name)
+	}
+
+	return string(strD)
+}
+
+// Validate 应用创建校验
+func (a *Application) Validate() error {
+	if a.Name == "" {
+		return exception.NewBadRequest("the application's name is required!")
+	}
+
+	if a.UserID == "" {
+		return exception.NewBadRequest("the application's user id is required!")
+	}
+
+	return nil
 }
 
 // Store application storage
@@ -26,8 +61,8 @@ type Store interface {
 
 // Reader use to read application information from store
 type Reader interface {
-	ListApplications(userID string) ([]*Application, error)
-	GetApplication(appid string) (*Application, error)
+	ListUserApplications(userID string) ([]*Application, error)
+	GetApplication(appID string) (*Application, error)
 
 	CheckAPPIsExistByID(appID string) (bool, error)
 	CheckAPPIsExistByName(userID, name string) (bool, error)
@@ -35,6 +70,6 @@ type Reader interface {
 
 // Writer use to write application information from store
 type Writer interface {
-	Registration(userID, name, description, website, clientID string) (*Application, error)
-	Unregistration(id string) error
+	CreateApplication(app *Application) error
+	DeleteApplication(appID string) error
 }
