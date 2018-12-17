@@ -10,12 +10,9 @@ import (
 
 const (
 	CreateAPP    = "create-application"
-	CreateClient = "create-client"
 	DeleteAPP    = "delete-app"
-	DeleteClient = "delete-client"
 	ListUserAPPS = "list-user-apps"
 	GetUserAPP   = "get-user-app"
-	GetClient    = "get-client"
 
 	CheckExistByID   = "check-exist-by-id"
 	CheckExistByName = "check-exist-by-name"
