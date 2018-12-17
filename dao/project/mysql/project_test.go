@@ -6,10 +6,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var (
-	projectID string
-)
-
 func TestProjectSuit(t *testing.T) {
 	suit := new(projectSuit)
 	suit.SetUp()
