@@ -335,10 +335,10 @@ COLLATE = utf8_general_ci
 ROW_FORMAT = dynamic;
 
 CREATE TABLE `verification_code` (
-`code` int(16) UNSIGNED NOT NULL COMMENT '验证码',
+`code` char(8) NOT NULL COMMENT '验证码',
 `purpose` tinyint(2) UNSIGNED NOT NULL DEFAULT 0 COMMENT '验证码的用途  (1: 注册码,  2: 密码找回,  3:  登录)',
 `sending_mode` tinyint(2) UNSIGNED NOT NULL DEFAULT 0 COMMENT '验证码的发送方式 (1: 邮箱, 2: 短信)',
-`sending_value` varchar(128) NOT NULL DEFAULT '' COMMENT '发送者的具体值和sending_mode对应',
+`sending_target` varchar(128) NOT NULL DEFAULT '' COMMENT '发送者的具体值和sending_mode对应',
 `create_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建时间',
 `expire_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '过期时间',
 `status` int(64) UNSIGNED NOT NULL DEFAULT 0,
