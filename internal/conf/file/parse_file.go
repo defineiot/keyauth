@@ -65,6 +65,7 @@ func initConfig(configpath string) error {
 	config.APP = new(conf.AppConf)
 	config.Log = new(conf.LogConf)
 	config.MySQL = new(conf.MySQLConf)
+	config.Etcd = new(conf.ETCDConf)
 	config.Token = new(conf.TokenConf)
 	config.Admin = new(conf.AdminCount)
 	config.Mail = new(conf.MailConf)

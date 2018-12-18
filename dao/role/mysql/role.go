@@ -58,7 +58,7 @@ func (s *store) ListRole() ([]*role.Role, error) {
 		}
 
 		//  查询该role的功能列表
-		features, err := s.getRoleFeature(r.ID)
+		features, err := s.getRoleFeatures(r.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -82,7 +82,7 @@ func (s *store) GetRole(id string) (*role.Role, error) {
 	}
 
 	//  查询该role的功能列表
-	features, err := s.getRoleFeature(r.ID)
+	features, err := s.getRoleFeatures(r.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (s *store) DeleteRole(id string) error {
 	return nil
 }
 
-func (s *store) getRoleFeature(id string) ([]*service.Feature, error) {
+func (s *store) getRoleFeatures(id string) ([]*service.Feature, error) {
 	rows, err := s.stmts[GetRoleFeatures].Query(id)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query role features error, %s", err)

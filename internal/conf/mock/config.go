@@ -23,12 +23,16 @@ func NewConfig() *conf.Config {
 	token := new(conf.TokenConf)
 	token.Type = "bearer"
 	token.ExpiresIn = 86400
+	etcd := new(conf.ETCDConf)
+	etcd.Endpoints = []string{"127.0.0.1:2379"}
+	etcd.InstanceRegistryPrefix = "/registry/instances"
 
 	conf := new(conf.Config)
 	conf.APP = app
 	conf.MySQL = mysql
 	conf.Token = token
 	conf.Log = log
+	conf.Etcd = etcd
 
 	return conf
 }

@@ -24,6 +24,7 @@ type Config struct {
 	APP        *AppConf       `toml:"app"`
 	Log        *LogConf       `toml:"log"`
 	MySQL      *MySQLConf     `toml:"mysql"`
+	Etcd       *ETCDConf      `toml:"etcd"`
 	Token      *TokenConf     `toml:"token"`
 	Admin      *AdminCount    `toml:"admin"`
 	Mail       *MailConf      `toml:"mail"`
@@ -58,6 +59,17 @@ type MySQLConf struct {
 	MaxOpenConn int    `toml:"max_open_conn"`
 	MaxIdleConn int    `toml:"max_idle_conn"`
 	MaxLifeTime int    `toml:"max_life_time"`
+}
+
+// ETCDConf todo
+type ETCDConf struct {
+	EnableRegisteInstance  string   `toml:"enable_registe_instance"`
+	InstanceTTL            int      `toml:"instance_ttl"`
+	EnableRegisteFeatures  string   `toml:"enable_registe_features"`
+	InstanceRegistryPrefix string   `toml:"instance_registry_prefix"`
+	Endpoints              []string `toml:"endpoints"`
+	UserName               string   `toml:"username"`
+	Password               string   `toml:"password"`
 }
 
 // TokenConf token config
@@ -107,6 +119,13 @@ func (c *Config) Validate() error {
 
 	if c.MySQL.Host == "" || c.MySQL.Port == "" || c.MySQL.User == "" || c.MySQL.Pass == "" {
 		return errors.New("mysql host,port,user,pass required")
+	}
+
+	if len(c.Etcd.Endpoints) == 0 {
+		return errors.New("etcd endpoints is required")
+	}
+	if c.Etcd.InstanceRegistryPrefix == "" {
+		c.Etcd.InstanceRegistryPrefix = "/registry/instances"
 	}
 
 	if c.Token.Type == "" {

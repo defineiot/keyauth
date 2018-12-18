@@ -8,23 +8,13 @@ import (
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
-// Instance 服务实例
-type Instance struct {
-	Name        string `json:"name"`
-	Type        string `json:"type"`
-	Address     string `json:"address"`
-	Version     string `json:"version"`
-	GitBranch   string `json:"git_branch"`
-	GitCommit   string `json:"git_commit"`
-	BuildEnv    string `json:"build_env"`
-	BuildAt     string `json:"build_at"`
-	ServiceName string `json:"service_name"`
-	ServiceType string `json:"service_type"`
+const (
+	HTTP_API_SERVICE Type = iota
+	AGENT_WORKER_SERVICE
+)
 
-	Status  string `json:"status"`
-	Online  int64  `json:"online_at"`
-	Offline int64  `json:"offline_at"`
-}
+// Type 服务类型
+type Type int
 
 // Feature Service's features
 type Feature struct {
@@ -37,7 +27,7 @@ type Feature struct {
 	WhenDeletedVersion string `json:"when_deleted_version,omitempty"`
 	IsAdded            bool   `json:"is_added,omitempty"`
 	WhenAddedVersion   string `json:"when_added_version,omitempty"`
-	ServiceID          string `json:"service_id"`
+	ServiceID          string `json:"service_id,omitempty"`
 }
 
 // Service is service provider
@@ -52,6 +42,7 @@ type Service struct {
 	CreateAt       int64      `json:"create_at"`
 	ClientID       string     `json:"client_id"`
 	ClientSecret   string     `json:"client_secret"`
+	Type           Type       `json:"service_type"`
 	Features       []*Feature `json:"features,omitempty"`
 }
 
@@ -84,7 +75,6 @@ type Store interface {
 // Reader read service information from store
 type Reader interface {
 	CheckInstanceExist(instanceName, serviceName string) (bool, error)
-	FindAllInstances() ([]*Instance, error)
 
 	ListServices() ([]*Service, error)
 	GetService(name string) (*Service, error)
@@ -104,7 +94,5 @@ type Writer interface {
 	RegistryServiceFeatures(name string, features ...Feature) error
 	DeleteService(id string) error
 
-	SaveInstance(*Instance) error
-	UpdateInstance(instance *Instance) error
 	UpdateInstanceOffline(instanceName, serviceName string) error
 }
