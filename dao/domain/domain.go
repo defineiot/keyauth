@@ -42,13 +42,13 @@ type Domain struct {
 }
 
 func (d *Domain) String() string {
-	strD, err := json.Marshal(d)
+	str, err := json.Marshal(d)
 	if err != nil {
 		log.Printf("E! marshal domain to string error: %s", err)
 		return fmt.Sprintf("ID: %s, Name: %s", d.ID, d.Name)
 	}
 
-	return string(strD)
+	return string(str)
 }
 
 // Validate 创建时校验参数合法性

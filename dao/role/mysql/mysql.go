@@ -22,21 +22,21 @@ const (
 func NewRoleStore(db *sql.DB, log log.IOTAuthLogger) (role.Store, error) {
 	unprepared := map[string]string{
 		SaveRole: `
-			INSERT INTO roles (name, description, create_at) 
-			VALUES (?,?,?);
+			INSERT INTO roles (id, name, description, create_at) 
+			VALUES (?, ?,?,?);
 		`,
 		FindAllRole: `
-			SELECT id, name, description, create_at 
+			SELECT id, name, description, create_at, update_at  
 			FROM roles;
 		`,
 		FindOneRole: `
-		    SELECT id, name, description, create_at 
+		    SELECT id, name, description, create_at, update_at 
 			FROM roles
-			WHERE name = ?;
+			WHERE id = ?;
 	    `,
 		DeleteRole: `
 			DELETE FROM roles 
-			WHERE name = ?;
+			WHERE id = ?;
 		`,
 		CheckRole: `
 		    SELECT name 
@@ -44,9 +44,11 @@ func NewRoleStore(db *sql.DB, log log.IOTAuthLogger) (role.Store, error) {
 		    WHERE name = ?;
 		`,
 		GetRoleFeatures: `
-			SELECT feature_id
-			FROM roles_features_mapping
-			WHERE role_name = ?; 
+			SELECT f.id, f.name, f.method, f.endpoint, f.description, f.is_deleted, f.when_deleted_version, f.is_added, f.when_added_version, f.service_id
+			FROM features f 
+			LEFT JOIN role_feature_mappings m
+			ON m.feature_id = f.id 
+			WHERE m.role_id = ?; 
 		`,
 	}
 

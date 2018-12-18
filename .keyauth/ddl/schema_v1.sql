@@ -176,6 +176,7 @@ CREATE TABLE `roles` (
 `name` varchar(64) NOT NULL DEFAULT '' COMMENT '名称',
 `description` text NOT NULL COMMENT '描述',
 `create_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建时间',
+`update_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '更新时间',
 `extra` text NOT NULL COMMENT '预留字段',
 PRIMARY KEY (`id`) ,
 UNIQUE INDEX `name` (`name` ASC)
@@ -219,6 +220,7 @@ CREATE TABLE `services` (
 `create_at` int(64) UNSIGNED NOT NULL DEFAULT 0,
 `client_id` char(128) NOT NULL DEFAULT '' COMMENT '客户端id',
 `client_secret` char(255) NOT NULL DEFAULT '' COMMENT '客户端凭证',
+`token_expire_time` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'token过期时间',
 `extra` text NOT NULL,
 PRIMARY KEY (`id`) ,
 INDEX `name` (`name` ASC, `client_id` ASC)

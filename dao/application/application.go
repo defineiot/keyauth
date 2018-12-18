@@ -30,13 +30,13 @@ type Application struct {
 }
 
 func (a *Application) String() string {
-	strD, err := json.Marshal(a)
+	str, err := json.Marshal(a)
 	if err != nil {
-		log.Printf("E! marshal domain to string error: %s", err)
+		log.Printf("E! marshal application to string error: %s", err)
 		return fmt.Sprintf("ID: %s, Name: %s", a.ID, a.Name)
 	}
 
-	return string(strD)
+	return string(str)
 }
 
 // Validate 应用创建校验

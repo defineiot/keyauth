@@ -24,13 +24,13 @@ type Project struct {
 }
 
 func (p *Project) String() string {
-	strD, err := json.Marshal(p)
+	str, err := json.Marshal(p)
 	if err != nil {
-		log.Printf("E! marshal domain to string error: %s", err)
+		log.Printf("E! marshal project to string error: %s", err)
 		return fmt.Sprintf("ID: %s, Name: %s", p.ID, p.Name)
 	}
 
-	return string(strD)
+	return string(str)
 }
 
 // Validate todo

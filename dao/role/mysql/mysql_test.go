@@ -1,9 +1,9 @@
 package mysql_test
 
 import (
+	"github.com/defineiot/keyauth/dao/role"
+	"github.com/defineiot/keyauth/dao/role/mysql"
 	"github.com/defineiot/keyauth/internal/conf/mock"
-	"github.com/defineiot/keyauth/store/role"
-	"github.com/defineiot/keyauth/store/role/mysql"
 )
 
 func newTestStore() role.Store {
@@ -24,4 +24,26 @@ func newTestStore() role.Store {
 	}
 
 	return store
+}
+
+type roleSuit struct {
+	store role.Store
+	r     *role.Role
+	name  string
+}
+
+func (s *roleSuit) TearDown() {
+	s.store.Close()
+}
+
+func (s *roleSuit) SetUp() {
+	s.name = "role-unit-test-01"
+
+	s.r = &role.Role{
+		Name:        s.name,
+		Description: "unit-test",
+	}
+
+	s.store = newTestStore()
+
 }

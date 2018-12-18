@@ -1,16 +1,41 @@
 package role
 
 import (
+	"encoding/json"
+	"fmt"
+	"log"
+
 	"github.com/defineiot/keyauth/dao/service"
+	"github.com/defineiot/keyauth/internal/exception"
 )
 
 // Role is rbac's role
 type Role struct {
-	ID          int64              `json:"-"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	CreateAt    int64              `json:"create_at"`
-	Featrues    []*service.Feature `json:"features"`
+	ID          string             `json:"id"`
+	Name        string             `json:"name"`        // 角色名称
+	Description string             `json:"description"` // 角色描述
+	CreateAt    int64              `json:"create_at"`   // 创建时间
+	UpdateAt    int64              `json:"update_at"`   // 更新时间
+	Featrues    []*service.Feature `json:"features"`    // 角色功能列表
+}
+
+func (r *Role) String() string {
+	str, err := json.Marshal(r)
+	if err != nil {
+		log.Printf("E! marshal role to string error: %s", err)
+		return fmt.Sprintf("ID: %s, Name: %s", r.ID, r.Name)
+	}
+
+	return string(str)
+}
+
+// Validate 校验检查
+func (r *Role) Validate() error {
+	if r.Name == "" {
+		return exception.NewBadRequest("the role's name is required!")
+	}
+
+	return nil
 }
 
 // Store is an role service
@@ -22,31 +47,17 @@ type Store interface {
 
 // Reader for read data from store
 type Reader interface {
-	// Get a role with id, domain admin & super admin Only
-	// Get the role information, it will automatically refresh
-	// the role of the list of properties, filter to the offline features
 	GetRole(name string) (*Role, error)
-	GetRoleFeature(name string) ([]int64, error)
 	CheckRoleExist(name string) (bool, error)
-	// List role, super admin only
 	ListRole() ([]*Role, error)
-	// Verify that the role has permission to operate a function
-	VerifyRole(name string, feature string) (bool, error)
+	// VerifyRole(name string, feature string) (bool, error)
 }
 
 // Writer for write data to store
 type Writer interface {
-	// Create a role with features, super admin only
-	CreateRole(name, description string) (*Role, error)
-	// Associate features to roles
-	AssociateFeaturesToRole(name string, features ...int64) error
-	// Unlink feature to role
-	// Note that when a character's list of properties is empty,
-	// it should be a space, and can not use "" instead
-	UnlinkFeatureFromRole(name string, features ...int64) (bool, error)
-	// Update role with id, modify name or description
+	CreateRole(role *Role) error
+	// AssociateFeaturesToRole(name string, features ...int64) error
+	// UnlinkFeatureFromRole(name string, features ...int64) (bool, error)
 	UpdateRole(name, description string) (*Role, error)
-
-	// Soft delete role, only target it delete,not real delete
 	DeleteRole(name string) error
 }

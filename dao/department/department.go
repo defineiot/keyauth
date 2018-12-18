@@ -23,13 +23,13 @@ type Department struct {
 }
 
 func (d *Department) String() string {
-	strD, err := json.Marshal(d)
+	str, err := json.Marshal(d)
 	if err != nil {
-		log.Printf("E! marshal domain to string error: %s", err)
+		log.Printf("E! marshal department to string error: %s", err)
 		return fmt.Sprintf("ID: %s, Name: %s", d.ID, d.Name)
 	}
 
-	return string(strD)
+	return string(str)
 }
 
 // Validate 校验创建的数据
