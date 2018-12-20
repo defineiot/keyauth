@@ -11,37 +11,51 @@ import (
 
 const (
 	SaveService           = "save-service"
-	SaveFeature           = "save-feature"
-	UpdateService         = "update-service"
+	FindAllServices       = "find-all-service"
+	FindServiceByID       = "find-service-by-id"
+	FindServiceByClient   = "find-service-by-client"
 	DeleteService         = "delete-service"
 	DeleteServiceFeatures = "delete-services-features"
-	FindAll               = "find-all-service"
-	FindOneByID           = "find-one-service"
-	FindOneByClient       = "find-one-service-by-client-id"
-	FindAllFeatures       = "find-one-service-features"
-	FindFullAllFeatures   = "find-all-featrues"
 	CheckServiceExist     = "check-service-exist"
-	CheckFeatureExist     = "check-service-feature-exist"
-	CheckFeatureIDExist   = "check-feature-exist"
-	FindRoleFeatures      = "find-role-features"
+
+	SaveFeature   = "save-feature"
+	UpdateService = "update-service"
+
+	FindAllFeatures     = "find-one-service-features"
+	FindFullAllFeatures = "find-all-featrues"
+	CheckFeatureExist   = "check-service-feature-exist"
+	CheckFeatureIDExist = "check-feature-exist"
+	FindRoleFeatures    = "find-role-features"
 )
 
 // NewServiceStore use to create domain storage service
 func NewServiceStore(db *sql.DB, log log.IOTAuthLogger) (service.Store, error) {
 	unprepared := map[string]string{
 		SaveService: `
-			INSERT INTO services (name, description, enabled, status, status_update_at, version, create_at, client_id) 
-			VALUES (?,?,?,?,?,?,?,?);
+			INSERT INTO services (id, type, name, description, enabled, create_at, client_id, client_secret, token_expire_time) 
+			VALUES (?,?,?,?,?,?,?,?,?);
 		`,
-		SaveFeature: `
-			INSERT INTO features (name, method, endpoint, description, is_deleted, when_deleted_version, is_added, when_added_version, service_name) 
-			VALUES (?,?,?,?,?,?,?,?,?)
+		FindAllServices: `
+			INSERT INTO features (id, type, name, description, enabled, status, status_update_at, current_version, upgrade_version, downgrade_version, create_at, update_at, client_id, client_secret, token_expire_time) 
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
 		`,
-		FindAll: `
-			SELECT name, description, enabled, status, status_update_at, version, create_at, client_id 
+		FindServiceByID: `
+			SELECT id, type, name, description, enabled, status, status_update_at, current_version, upgrade_version, downgrade_version, create_at, update_at, client_id, client_secret, token_expire_time 
 			FROM services 
-			ORDER BY create_at
-			DESC;
+			WHERE id = ?;
+		`,
+		FindServiceByClient: `
+			SELECT id, type, name, description, enabled, status, status_update_at, current_version, upgrade_version, downgrade_version, create_at, update_at, client_id, client_secret, token_expire_time 
+			FROM services 
+			WHERE client_id = ?;
+		`,
+		DeleteService: `
+    		DELETE FROM services 
+	    	WHERE id =?;
+		`,
+		DeleteServiceFeatures: `
+			DELETE FROM features 
+			WHERE service_id = ?;
 		`,
 		FindAllFeatures: `
 			SELECT id, name, method, endpoint, description, is_deleted, when_deleted_version, is_added, when_added_version, service_name
@@ -65,28 +79,10 @@ func NewServiceStore(db *sql.DB, log log.IOTAuthLogger) (service.Store, error) {
 		    ORDER BY method
 		    DESC;
 		`,
-		FindOneByID: `
-			SELECT s.name, s.description, s.enabled, s.status, s.status_update_at, s.version, s.create_at, client_id
-			FROM services s
-			WHERE s.name = ?;
-		`,
-		FindOneByClient: `
-		    SELECT s.name, s.description, s.enabled, s.status, s.status_update_at, s.version, s.create_at, client_id
-		    FROM services s
-		    WHERE s.client_id = ?;
-		`,
-		DeleteService: `
-			DELETE FROM services 
-			WHERE name =?;
-		`,
-		DeleteServiceFeatures: `
-		    DELETE FROM features 
-			WHERE service_name = ?;
-		`,
 		CheckServiceExist: `
-		    SELECT name
+		    SELECT id
 		    FROM services
-		    WHERE name = ?;
+		    WHERE id = ?;
 	    `,
 		CheckFeatureExist: `
 		    SELECT name

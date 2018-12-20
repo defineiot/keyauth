@@ -89,7 +89,7 @@ ROW_FORMAT = dynamic;
 CREATE TABLE `features` (
 `id` char(64) NOT NULL,
 `name` varchar(32) NOT NULL DEFAULT '' COMMENT '实例功能名称',
-`method` varchar(64) NOT NULL DEFAULT '' COMMENT 'HTTP 方法的名称',
+`tag` varchar(256) NOT NULL DEFAULT '' COMMENT 'HTTP 方法的名称',
 `endpoint` varchar(256) NOT NULL DEFAULT '' COMMENT '功能的对应的URL',
 `description` text NOT NULL COMMENT '功能描述',
 `is_deleted` int(2) UNSIGNED NOT NULL DEFAULT 0 COMMENT '该功能是否已经被删除',

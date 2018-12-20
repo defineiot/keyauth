@@ -5,77 +5,28 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/satori/go.uuid"
+
 	"github.com/defineiot/keyauth/dao/service"
 	"github.com/defineiot/keyauth/internal/exception"
+	"github.com/defineiot/keyauth/internal/tools"
 )
 
-var (
-	domainSkip = []string{"CreateService", "ListServices", "GetService", "DeleteService",
-		"RegistryServiceFeatures", "ListServiceFeatures", "CreateRole", "DeleteRole",
-		"AddFeaturesToRole", "RemoveFeaturesFromRole", "CreateDomain", "DeleteDomain",
-		"IssueToken", "ValidateToken", "RevolkToken"}
+func (s *store) CreateService(svr *service.Service) error {
+	svr.CreateAt = time.Now().Unix()
+	svr.ID = uuid.NewV4().String()
+	svr.ClientID = tools.MakeUUID(24)
+	svr.ClientSecret = tools.MakeUUID(32)
 
-	memberSkip = []string{"ListServices", "GetService", "ListServiceFeatures",
-		"ListApplications", "GetApplication", "ValidateToken"}
-)
-
-func (s *store) CreateService(name, description, clientID string) (*service.Service, error) {
-	ok, err := s.CheckServiceIsExist(name)
-	if err != nil {
-		return nil, err
-	}
-	if ok {
-		return nil, exception.NewBadRequest("service %s existed", name)
-	}
-
-	svr := service.Service{Name: name, Description: description, CreateAt: time.Now().Unix(), Enabled: true}
-
-	_, err = s.stmts[SaveService].Exec(svr.Name, svr.Description, svr.Enabled, svr.Status, svr.StatusUpdateAt, svr.Version, svr.CreateAt, clientID)
-	if err != nil {
-		return nil, exception.NewInternalServerError("insert client exec sql err, %s", err)
-	}
-
-	return &svr, nil
-}
-
-func (s *store) CheckServiceIsExist(name string) (bool, error) {
-	var n string
-	if err := s.stmts[CheckServiceExist].QueryRow(name).Scan(&n); err != nil {
-		if err == sql.ErrNoRows {
-			return false, nil
-		}
-
-		return false, exception.NewInternalServerError("query check service %s error, %s", name, err)
-	}
-
-	return true, nil
-}
-
-func (s *store) DeleteService(name string) error {
-	// delete service
-	ret, err := s.stmts[DeleteService].Exec(name)
-	if err != nil {
-		return exception.NewInternalServerError("delete service exec sql error, %s", err)
-	}
-	count, err := ret.RowsAffected()
-	if err != nil {
-		return exception.NewInternalServerError("get delete service row affected error, %s", err)
-	}
-	if count == 0 {
-		return exception.NewBadRequest("service %s not exist", name)
-	}
-
-	// delete service features
-	_, err = s.stmts[DeleteServiceFeatures].Exec(name)
-	if err != nil {
-		return exception.NewInternalServerError("delete service features exec sql error, %s", err)
+	if _, err := s.stmts[SaveService].Exec(svr.ID, string(svr.Type), svr.Name, svr.Description,
+		svr.Enabled, svr.CreateAt, svr.ClientID, svr.ClientSecret, svr.TokenExpireTime); err != nil {
+		return exception.NewInternalServerError("insert service exec sql err, %s", err)
 	}
 
 	return nil
 }
-
 func (s *store) ListServices() ([]*service.Service, error) {
-	rows, err := s.stmts[FindAll].Query()
+	rows, err := s.stmts[FindAllServices].Query()
 	if err != nil {
 		return nil, exception.NewInternalServerError("query service list error, %s", err)
 	}
@@ -83,21 +34,26 @@ func (s *store) ListServices() ([]*service.Service, error) {
 
 	svrs := []*service.Service{}
 	for rows.Next() {
-		svr := service.Service{}
-		if err := rows.Scan(&svr.Name, &svr.Description, &svr.Enabled, &svr.Status, &svr.StatusUpdateAt, &svr.Version, &svr.CreateAt, &svr.ClientID); err != nil {
+		svr := new(service.Service)
+		if err := rows.Scan(&svr.ID, &svr.Type, &svr.Name, &svr.Description, &svr.Enabled, &svr.Status,
+			&svr.StatusUpdateAt, &svr.CurrentVersion, &svr.UpgradeVersion, &svr.DowngradeVersion,
+			&svr.CreateAt, &svr.UpdateAt, &svr.ClientID, &svr.ClientSecret, &svr.TokenExpireTime); err != nil {
 			return nil, exception.NewInternalServerError("scan service record error, %s", err)
 		}
-		svrs = append(svrs, &svr)
+		svrs = append(svrs, svr)
 	}
 
 	return svrs, nil
 }
 
-func (s *store) GetService(name string) (*service.Service, error) {
+func (s *store) GetService(id string) (*service.Service, error) {
 	svr := service.Service{}
-	if err := s.stmts[FindOneByID].QueryRow(name).Scan(&svr.Name, &svr.Description, &svr.Enabled, &svr.Status, &svr.StatusUpdateAt, &svr.Version, &svr.CreateAt, &svr.ClientID); err != nil {
+	if err := s.stmts[FindServiceByID].QueryRow(id).Scan(&svr.ID, &svr.Type, &svr.Name, &svr.Description,
+		&svr.Enabled, &svr.Status, &svr.StatusUpdateAt, &svr.CurrentVersion, &svr.UpgradeVersion,
+		&svr.DowngradeVersion, &svr.CreateAt, &svr.UpdateAt, &svr.ClientID, &svr.ClientSecret,
+		&svr.TokenExpireTime); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, exception.NewNotFound("service %s not find", name)
+			return nil, exception.NewNotFound("service %s not find", id)
 		}
 
 		return nil, exception.NewInternalServerError("query single service client error, %s", err)
@@ -107,8 +63,11 @@ func (s *store) GetService(name string) (*service.Service, error) {
 }
 
 func (s *store) GetServiceByClientID(clientID string) (*service.Service, error) {
-	svr := service.Service{}
-	if err := s.stmts[FindOneByClient].QueryRow(clientID).Scan(&svr.Name, &svr.Description, &svr.Enabled, &svr.Status, &svr.StatusUpdateAt, &svr.Version, &svr.CreateAt, &svr.ClientID); err != nil {
+	svr := new(service.Service)
+	if err := s.stmts[FindServiceByClient].QueryRow(clientID).Scan(&svr.ID, &svr.Type, &svr.Name, &svr.Description,
+		&svr.Enabled, &svr.Status, &svr.StatusUpdateAt, &svr.CurrentVersion, &svr.UpgradeVersion,
+		&svr.DowngradeVersion, &svr.CreateAt, &svr.UpdateAt, &svr.ClientID, &svr.ClientSecret,
+		&svr.TokenExpireTime); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewNotFound("client %s service not find", clientID)
 		}
@@ -116,7 +75,43 @@ func (s *store) GetServiceByClientID(clientID string) (*service.Service, error) 
 		return nil, exception.NewInternalServerError("query single service client error, %s", err)
 	}
 
-	return &svr, nil
+	return svr, nil
+}
+
+func (s *store) DeleteService(id string) error {
+	// 清除服务的功能列表
+	_, err := s.stmts[DeleteServiceFeatures].Exec(id)
+	if err != nil {
+		return exception.NewInternalServerError("delete service features exec sql error, %s", err)
+	}
+
+	// 清除服务
+	ret, err := s.stmts[DeleteService].Exec(id)
+	if err != nil {
+		return exception.NewInternalServerError("delete service exec sql error, %s", err)
+	}
+	count, err := ret.RowsAffected()
+	if err != nil {
+		return exception.NewInternalServerError("get delete service row affected error, %s", err)
+	}
+	if count == 0 {
+		return exception.NewBadRequest("service %s not exist", id)
+	}
+
+	return nil
+}
+
+func (s *store) CheckServiceIsExist(id string) (bool, error) {
+	var n string
+	if err := s.stmts[CheckServiceExist].QueryRow(id).Scan(&n); err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+
+		return false, exception.NewInternalServerError("query check service %s error, %s", id, err)
+	}
+
+	return true, nil
 }
 
 func (s *store) RegistryServiceFeatures(name string, features ...service.Feature) error {
@@ -180,7 +175,7 @@ func (s *store) RegistryServiceFeatures(name string, features ...service.Feature
 	for _, f := range added {
 		s.log.Infof("service: %s add feature: %s", name, f.Name)
 		// exec sql
-		_, err := addFeaturePre.Exec(f.Name, f.Method, f.Endpoint, f.Description, f.IsDeleted, f.WhenDeletedVersion, f.IsAdded, f.WhenAddedVersion, name)
+		_, err := addFeaturePre.Exec(f.Name, f.Tag, f.HTTPEndpoint, f.Description, f.IsDeleted, f.WhenDeletedVersion, f.IsAdded, f.WhenAddedVersion, name)
 		if err != nil {
 			if err := tx.Rollback(); err != nil {
 				s.log.Errorf("insert feature transaction rollback error, %s", err)
@@ -220,7 +215,7 @@ func (s *store) ListServiceFeatures(name string) ([]*service.Feature, error) {
 	features := []*service.Feature{}
 	for rows.Next() {
 		f := service.Feature{}
-		if err := rows.Scan(&f.ID, &f.Name, &f.Method, &f.Endpoint, &f.Description, &f.IsDeleted, &f.WhenDeletedVersion, &f.IsAdded, &f.WhenAddedVersion, &f.ServiceName); err != nil {
+		if err := rows.Scan(&f.ID, &f.Name, &f.Tag, &f.HTTPEndpoint, &f.Description, &f.IsDeleted, &f.WhenDeletedVersion, &f.IsAdded, &f.WhenAddedVersion, &f.ServiceID); err != nil {
 			return nil, exception.NewInternalServerError("scan service feature record error, %s", err)
 		}
 		features = append(features, &f)
@@ -242,58 +237,58 @@ func (s *store) CheckServiceHasFeature(serviceName, featureName string) (bool, e
 	return true, nil
 }
 
-func (s *store) ListDomainFeatures() ([]*service.Feature, error) {
-	df := []*service.Feature{}
-	features, err := s.listFeatures()
-	if err != nil {
-		return nil, err
-	}
+// func (s *store) ListDomainFeatures() ([]*service.Feature, error) {
+// 	df := []*service.Feature{}
+// 	features, err := s.listFeatures()
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	for _, f := range features {
-		isok := true
-		for _, skip := range domainSkip {
-			if f.Name == skip {
-				isok = false
-				break
-			}
-		}
+// 	for _, f := range features {
+// 		isok := true
+// 		for _, skip := range domainSkip {
+// 			if f.Name == skip {
+// 				isok = false
+// 				break
+// 			}
+// 		}
 
-		if isok {
-			df = append(df, f)
-		}
-	}
+// 		if isok {
+// 			df = append(df, f)
+// 		}
+// 	}
 
-	return df, nil
+// 	return df, nil
 
-}
+// }
 
-func (s *store) ListMemberFeatures() ([]*service.Feature, error) {
-	df := []*service.Feature{}
-	features, err := s.listFeatures()
-	if err != nil {
-		return nil, err
-	}
+// func (s *store) ListMemberFeatures() ([]*service.Feature, error) {
+// 	df := []*service.Feature{}
+// 	features, err := s.listFeatures()
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	for _, f := range features {
-		isok := true
-		for _, skip := range memberSkip {
-			if f.Name == skip {
-				isok = false
-				break
-			}
-		}
+// 	for _, f := range features {
+// 		isok := true
+// 		for _, skip := range memberSkip {
+// 			if f.Name == skip {
+// 				isok = false
+// 				break
+// 			}
+// 		}
 
-		if f.Name == "SetUserPassword" {
-			df = append(df, f)
-		}
+// 		if f.Name == "SetUserPassword" {
+// 			df = append(df, f)
+// 		}
 
-		if isok && f.Method == "GET" {
-			df = append(df, f)
-		}
-	}
+// 		if isok && f.Tag == "GET" {
+// 			df = append(df, f)
+// 		}
+// 	}
 
-	return df, nil
-}
+// 	return df, nil
+// }
 
 func (s *store) CheckFeatureIsExist(featureID int64) (bool, error) {
 	var id string
@@ -318,7 +313,7 @@ func (s *store) ListRoleFeatures(name string) ([]*service.Feature, error) {
 	features := []*service.Feature{}
 	for rows.Next() {
 		f := service.Feature{}
-		if err := rows.Scan(&f.ID, &f.Name, &f.Method, &f.Endpoint, &f.Description, &f.IsDeleted, &f.WhenDeletedVersion, &f.IsAdded, &f.WhenAddedVersion, &f.ServiceName); err != nil {
+		if err := rows.Scan(&f.ID, &f.Name, &f.Tag, &f.HTTPEndpoint, &f.Description, &f.IsDeleted, &f.WhenDeletedVersion, &f.IsAdded, &f.WhenAddedVersion, &f.ServiceID); err != nil {
 			return nil, exception.NewInternalServerError("scan service feature record error, %s", err)
 		}
 		features = append(features, &f)
@@ -338,7 +333,7 @@ func (s *store) listFeatures() ([]*service.Feature, error) {
 	features := []*service.Feature{}
 	for rows.Next() {
 		f := service.Feature{}
-		if err := rows.Scan(&f.ID, &f.Name, &f.Method, &f.Endpoint, &f.Description, &f.IsDeleted, &f.WhenDeletedVersion, &f.IsAdded, &f.WhenAddedVersion, &f.ServiceName); err != nil {
+		if err := rows.Scan(&f.ID, &f.Name, &f.Tag, &f.HTTPEndpoint, &f.Description, &f.IsDeleted, &f.WhenDeletedVersion, &f.IsAdded, &f.WhenAddedVersion, &f.ServiceID); err != nil {
 			return nil, exception.NewInternalServerError("scan service feature record error, %s", err)
 		}
 		features = append(features, &f)

@@ -44,18 +44,18 @@ func (s *instanceSuit) SetUp() {
 	}
 
 	f1 := &service.Feature{
-		ID:          "b5fa6ac8fa056aa18ed2fc6a0eb12497e7db1be1",
-		Name:        "CreateDevice",
-		Method:      "POST",
-		Endpoint:    "/resurce_service/devices/",
-		Description: "unit-test-for-feature",
+		ID:           "b5fa6ac8fa056aa18ed2fc6a0eb12497e7db1be1",
+		Name:         "CreateDevice",
+		Tag:          "POST",
+		HTTPEndpoint: "/resurce_service/devices/",
+		Description:  "unit-test-for-feature",
 	}
 	f2 := &service.Feature{
-		ID:          "718a4ed919c0fc59a5157b02e594ff2411c041c0",
-		Name:        "GetDevice",
-		Method:      "GET",
-		Endpoint:    "/resurce_service/devices/",
-		Description: "unit-test-for-feature",
+		ID:           "718a4ed919c0fc59a5157b02e594ff2411c041c0",
+		Name:         "GetDevice",
+		Tag:          "GET",
+		HTTPEndpoint: "/resurce_service/devices/",
+		Description:  "unit-test-for-feature",
 	}
 	ins.Features = []*service.Feature{f1, f2}
 
