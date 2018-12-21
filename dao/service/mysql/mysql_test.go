@@ -25,3 +25,23 @@ func newTestStore() service.Store {
 
 	return store
 }
+
+type serviceSuit struct {
+	store service.Store
+	svr   *service.Service
+}
+
+func (s *serviceSuit) TearDown() {
+	s.store.Close()
+}
+
+func (s *serviceSuit) SetUp() {
+	s.svr = &service.Service{
+		Name:        "unit-test-service-name01",
+		Description: "just for unit test",
+		Type:        service.Public,
+	}
+
+	s.store = newTestStore()
+
+}

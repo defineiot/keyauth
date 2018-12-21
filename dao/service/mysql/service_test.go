@@ -3,77 +3,67 @@ package mysql_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
-	"github.com/defineiot/keyauth/dao/service"
+	"github.com/stretchr/testify/require"
 )
 
-var serviceName string
+func TestProjectSuit(t *testing.T) {
+	suit := new(serviceSuit)
+	suit.SetUp()
+	defer suit.TearDown()
 
-func TestService(t *testing.T) {
-	t.Run("CreateServiceOK", testCreateServiceOK)
-	t.Run("ListServiceOK", testListServiceOK)
-	t.Run("GetServiceOK", testListServiceOK)
-	t.Run("RegistryFeatures", testRegistryServiceFeatures)
-	t.Run("ListServiceFeatures", testListServiceFeatures)
-	t.Run("DeleteServiceOK", testDeleteServiceOK)
+	t.Run("CreateServiceOK", testCreateServiceOK(suit))
+	t.Run("GetServiceByIDOK", testGetServiceByIDOK(suit))
+	t.Run("GetServiceByClientOK", testGetServiceByClientOK(suit))
+	t.Run("ListServiceOK", testListServiceOK(suit))
+	t.Run("DeleteServiceOK", testDeleteServiceOK(suit))
 }
 
-func testCreateServiceOK(t *testing.T) {
-	s := newTestStore()
-	defer s.Close()
+func testCreateServiceOK(s *serviceSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		err := s.store.CreateService(s.svr)
+		should.NoError(err)
 
-	svr, err := s.CreateService("test_service02", "just for unit test", "ooxxooxxooxx")
-	assert.NoError(t, err)
-	assert.NotNil(t, svr)
-	assert.Equal(t, "test_service02", svr.Name)
-
-	serviceName = svr.Name
+		t.Logf("create service(%s) success: %s", s.svr.Name, s.svr)
+	}
 }
 
-func testListServiceOK(t *testing.T) {
-	s := newTestStore()
-	defer s.Close()
+func testGetServiceByIDOK(s *serviceSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		svr, err := s.store.GetServiceByID(s.svr.ID)
+		should.NoError(err)
 
-	services, err := s.ListServices()
-	assert.NoError(t, err)
-	assert.NotEmpty(t, len(services))
+		t.Logf("get service by id(%s) success: %s", s.svr.Name, svr)
+	}
 }
 
-func testGetServiceOK(t *testing.T) {
-	s := newTestStore()
-	defer s.Close()
+func testGetServiceByClientOK(s *serviceSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		svr, err := s.store.GetServiceByClientID(s.svr.ClientID)
+		should.NoError(err)
 
-	svr, err := s.GetService(serviceName)
-	assert.NoError(t, err)
-	assert.NotNil(t, svr)
-	assert.Equal(t, "test_service02", svr.Name)
+		t.Logf("get service by client(%s) success: %s", s.svr.Name, svr)
+	}
 }
 
-func testRegistryServiceFeatures(t *testing.T) {
-	s := newTestStore()
-	defer s.Close()
+func testListServiceOK(s *serviceSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		svrs, err := s.store.ListServices()
+		should.NoError(err)
 
-	f1 := service.Feature{Name: "F1", Method: "GET", Endpoint: "/v1/F1"}
-	f2 := service.Feature{Name: "F2", Method: "POST", Endpoint: "/v1/F2"}
-	f3 := service.Feature{Name: "F3", Method: "DELETE", Endpoint: "/v1/F3"}
-	err := s.RegistryServiceFeatures(serviceName, f1, f2, f3)
-	assert.NoError(t, err)
+		t.Logf("list services success: %s", svrs)
+	}
 }
 
-func testListServiceFeatures(t *testing.T) {
-	s := newTestStore()
-	defer s.Close()
+func testDeleteServiceOK(s *serviceSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		err := s.store.DeleteService(s.svr.ID)
+		should.NoError(err)
 
-	features, err := s.ListServiceFeatures(serviceName)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, len(features))
-}
-
-func testDeleteServiceOK(t *testing.T) {
-	s := newTestStore()
-	defer s.Close()
-
-	err := s.DeleteService(serviceName)
-	assert.NoError(t, err)
+		t.Logf("delete service(%s) success: %s", s.svr.Name, s.svr)
+	}
 }

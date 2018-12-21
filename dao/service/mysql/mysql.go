@@ -36,8 +36,8 @@ func NewServiceStore(db *sql.DB, log log.IOTAuthLogger) (service.Store, error) {
 			VALUES (?,?,?,?,?,?,?,?,?);
 		`,
 		FindAllServices: `
-			INSERT INTO features (id, type, name, description, enabled, status, status_update_at, current_version, upgrade_version, downgrade_version, create_at, update_at, client_id, client_secret, token_expire_time) 
-			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+			SELECT id, type, name, description, enabled, status, status_update_at, current_version, upgrade_version, downgrade_version, create_at, update_at, client_id, client_secret, token_expire_time 
+			FROM services;
 		`,
 		FindServiceByID: `
 			SELECT id, type, name, description, enabled, status, status_update_at, current_version, upgrade_version, downgrade_version, create_at, update_at, client_id, client_secret, token_expire_time 
@@ -58,25 +58,25 @@ func NewServiceStore(db *sql.DB, log log.IOTAuthLogger) (service.Store, error) {
 			WHERE service_id = ?;
 		`,
 		FindAllFeatures: `
-			SELECT id, name, method, endpoint, description, is_deleted, when_deleted_version, is_added, when_added_version, service_name
+			SELECT id, name, tag, endpoint, description, is_deleted, when_deleted_version, is_added, when_added_version, service_id
 			FROM features
-			WHERE service_name = ? 
-			ORDER BY method
+			WHERE service_id = ? 
+			ORDER BY tag
 			DESC;
 		`,
 		FindRoleFeatures: `
-		    SELECT f.id, f.name, f.method, f.endpoint, f.description, f.is_deleted, f.when_deleted_version, f.is_added, f.when_added_version, service_name
+		    SELECT f.id, f.name, f.tag, f.endpoint, f.description, f.is_deleted, f.when_deleted_version, f.is_added, f.when_added_version, service_id
 			FROM features f
-			LEFT JOIN roles_features_mapping m
+			LEFT JOIN role_feature_mappings m
 			ON f.id = m.feature_id
-		    WHERE m.role_name = ? 
-		    ORDER BY f.method
+		    WHERE m.role_id = ? 
+		    ORDER BY f.tag
 		    DESC;
 	    `,
 		FindFullAllFeatures: `
-		    SELECT id, name, method, endpoint, description, is_deleted, when_deleted_version, is_added, when_added_version, service_name
+		    SELECT id, name, tag, endpoint, description, is_deleted, when_deleted_version, is_added, when_added_version, service_id
 		    FROM features
-		    ORDER BY method
+		    ORDER BY tag
 		    DESC;
 		`,
 		CheckServiceExist: `
@@ -88,7 +88,7 @@ func NewServiceStore(db *sql.DB, log log.IOTAuthLogger) (service.Store, error) {
 		    SELECT name
 		    FROM features
 			WHERE name = ? 
-			AND service_name = ?;
+			AND service_id = ?;
 		`,
 		CheckFeatureIDExist: `
 		    SELECT id

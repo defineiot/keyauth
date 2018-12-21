@@ -73,7 +73,11 @@ func (s *Service) String() string {
 // Validate 服务创建检查
 func (s *Service) Validate() error {
 	if s.Name == "" {
-		exception.NewBadRequest("the service's name is required!")
+		return exception.NewBadRequest("the service's name is required!")
+	}
+
+	if s.Type == "" {
+		return exception.NewBadRequest("the service's type is required!")
 	}
 
 	return nil
@@ -89,13 +93,14 @@ type Store interface {
 // Reader read service information from store
 type Reader interface {
 	ListServices() ([]*Service, error)
-	GetService(name string) (*Service, error)
+	GetServiceByID(name string) (*Service, error)
+	GetServiceByClientID(clientID string) (*Service, error)
 
 	ListRoleFeatures(name string) ([]*Feature, error)
 	ListServiceFeatures(name string) ([]*Feature, error)
 
 	CheckServiceIsExist(name string) (bool, error)
-	ListDomainFeatures() ([]*Feature, error)
+	// ListDomainFeatures() ([]*Feature, error)
 	// ListMemberFeatures() ([]*Feature, error)
 
 	CheckFeatureIsExist(featureID int64) (bool, error)

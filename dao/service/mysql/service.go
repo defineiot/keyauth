@@ -13,6 +13,10 @@ import (
 )
 
 func (s *store) CreateService(svr *service.Service) error {
+	if err := svr.Validate(); err != nil {
+		return err
+	}
+
 	svr.CreateAt = time.Now().Unix()
 	svr.ID = uuid.NewV4().String()
 	svr.ClientID = tools.MakeUUID(24)
@@ -46,7 +50,7 @@ func (s *store) ListServices() ([]*service.Service, error) {
 	return svrs, nil
 }
 
-func (s *store) GetService(id string) (*service.Service, error) {
+func (s *store) GetServiceByID(id string) (*service.Service, error) {
 	svr := service.Service{}
 	if err := s.stmts[FindServiceByID].QueryRow(id).Scan(&svr.ID, &svr.Type, &svr.Name, &svr.Description,
 		&svr.Enabled, &svr.Status, &svr.StatusUpdateAt, &svr.CurrentVersion, &svr.UpgradeVersion,
