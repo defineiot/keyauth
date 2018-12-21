@@ -16,16 +16,16 @@ const (
 	FindServiceByClient   = "find-service-by-client"
 	DeleteService         = "delete-service"
 	DeleteServiceFeatures = "delete-services-features"
-	CheckServiceExist     = "check-service-exist"
 
-	SaveFeature   = "save-feature"
-	UpdateService = "update-service"
+	SaveFeature             = "save-feature"
+	MarkDeleteFeature       = "mark-delete-feature"
+	AssociateFeaturesToRole = "add-feature-to-role"
+	UnlinkFeatureFromRole   = "delete-feature-to-role"
+	UpdateService           = "update-service"
+	GetRoleFeatures         = "get-role-features"
 
-	FindAllFeatures     = "find-one-service-features"
-	FindFullAllFeatures = "find-all-featrues"
-	CheckFeatureExist   = "check-service-feature-exist"
-	CheckFeatureIDExist = "check-feature-exist"
-	FindRoleFeatures    = "find-role-features"
+	FindAllFeatures  = "find-one-service-features"
+	FindRoleFeatures = "find-role-features"
 )
 
 // NewServiceStore use to create domain storage service
@@ -53,9 +53,28 @@ func NewServiceStore(db *sql.DB, log log.IOTAuthLogger) (service.Store, error) {
     		DELETE FROM services 
 	    	WHERE id =?;
 		`,
+		SaveFeature: `
+			INSERT INTO features (id, name, tag, endpoint, description, is_deleted, when_deleted_version, is_added, when_added_version, create_at, service_id) 
+			VALUES (?,?,?,?,?,?,?,?,?,?,?)
+		`,
+		MarkDeleteFeature: `
+			UPDATE features 
+			SET is_deleted=? 
+			WHERE name=? 
+			AND service_id=?
+		`,
 		DeleteServiceFeatures: `
 			DELETE FROM features 
 			WHERE service_id = ?;
+		`,
+		AssociateFeaturesToRole: `
+			INSERT INTO roles_features_mapping (feature_id, role_id) 
+			VALUES (?,?);
+		`,
+		UnlinkFeatureFromRole: `
+			DELETE FROM roles_features_mapping 
+			WHERE feature_id = ? 
+			AND role_id = ?;
 		`,
 		FindAllFeatures: `
 			SELECT id, name, tag, endpoint, description, is_deleted, when_deleted_version, is_added, when_added_version, service_id
@@ -73,27 +92,12 @@ func NewServiceStore(db *sql.DB, log log.IOTAuthLogger) (service.Store, error) {
 		    ORDER BY f.tag
 		    DESC;
 	    `,
-		FindFullAllFeatures: `
-		    SELECT id, name, tag, endpoint, description, is_deleted, when_deleted_version, is_added, when_added_version, service_id
-		    FROM features
-		    ORDER BY tag
-		    DESC;
-		`,
-		CheckServiceExist: `
-		    SELECT id
-		    FROM services
-		    WHERE id = ?;
-	    `,
-		CheckFeatureExist: `
-		    SELECT name
-		    FROM features
-			WHERE name = ? 
-			AND service_id = ?;
-		`,
-		CheckFeatureIDExist: `
-		    SELECT id
-		    FROM features
-		    WHERE id = ?;
+		GetRoleFeatures: `
+			SELECT f.id, f.name, f.tag, f.endpoint, f.description, f.is_deleted, f.when_deleted_version, f.is_added, f.when_added_version, f.service_id
+			FROM features f 
+			LEFT JOIN role_feature_mappings m
+			ON m.feature_id = f.id 
+			WHERE m.role_id = ?; 
 		`,
 	}
 
@@ -106,17 +110,20 @@ func NewServiceStore(db *sql.DB, log log.IOTAuthLogger) (service.Store, error) {
 	s := store{
 		db:    db,
 		stmts: stmts,
-		log:   log,
+		sql:   unprepared,
 	}
+	s.IOTAuthLogger = log
 
 	return &s, nil
 }
 
 // DomainManager is use mongodb as storage
 type store struct {
+	log.IOTAuthLogger
+
 	db    *sql.DB
-	log   log.IOTAuthLogger
 	stmts map[string]*sql.Stmt
+	sql   map[string]string
 }
 
 // Close closes the database, releasing any open resources.

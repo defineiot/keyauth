@@ -105,28 +105,55 @@ func (s *store) DeleteService(id string) error {
 	return nil
 }
 
-func (s *store) CheckServiceIsExist(id string) (bool, error) {
-	var n string
-	if err := s.stmts[CheckServiceExist].QueryRow(id).Scan(&n); err != nil {
-		if err == sql.ErrNoRows {
-			return false, nil
-		}
+func (s *store) ListServiceFeatures(serviceID string) ([]*service.Feature, error) {
+	rows, err := s.stmts[FindAllFeatures].Query(serviceID)
+	if err != nil {
+		return nil, exception.NewInternalServerError("query service feature list error, %s", err)
+	}
+	defer rows.Close()
 
-		return false, exception.NewInternalServerError("query check service %s error, %s", id, err)
+	features := []*service.Feature{}
+	for rows.Next() {
+		f := new(service.Feature)
+		if err := rows.Scan(&f.ID, &f.Name, &f.Tag, &f.HTTPEndpoint, &f.Description, &f.IsDeleted,
+			&f.WhenDeletedVersion, &f.IsAdded, &f.WhenAddedVersion, &f.ServiceID); err != nil {
+			return nil, exception.NewInternalServerError("scan service feature record error, %s", err)
+		}
+		features = append(features, f)
 	}
 
-	return true, nil
+	return features, nil
 }
 
-func (s *store) RegistryServiceFeatures(name string, features ...service.Feature) error {
-	s.log.Debugf("registry service :%s features: %v", name, features)
+func (s *store) ListRoleFeatures(roleID string) ([]*service.Feature, error) {
+	rows, err := s.stmts[GetRoleFeatures].Query(roleID)
+	if err != nil {
+		return nil, exception.NewInternalServerError("query role features error, %s", err)
+	}
+	defer rows.Close()
 
-	hasF, err := s.ListServiceFeatures(name)
+	features := []*service.Feature{}
+	for rows.Next() {
+		f := new(service.Feature)
+		if err := rows.Scan(&f.ID, &f.Name, &f.Tag, &f.HTTPEndpoint, &f.Description, &f.IsDeleted,
+			&f.WhenDeletedVersion, &f.IsAdded, &f.WhenAddedVersion, &f.ServiceID); err != nil {
+			return nil, exception.NewInternalServerError("scan role feature mapping record error, %s", err)
+		}
+		features = append(features, f)
+	}
+
+	return features, nil
+}
+
+func (s *store) RegistryServiceFeatures(serviceID string, features ...*service.Feature) error {
+	s.Debugf("registry service :%s features: %v", serviceID, features)
+
+	hasF, err := s.ListServiceFeatures(serviceID)
 	if err != nil {
 		return err
 	}
 
-	// find need add
+	// 找出需要新增的功能
 	added := []*service.Feature{}
 	for i, in := range features {
 		exist := false
@@ -137,11 +164,11 @@ func (s *store) RegistryServiceFeatures(name string, features ...service.Feature
 			}
 		}
 		if !exist {
-			added = append(added, &features[i])
+			added = append(added, features[i])
 		}
 	}
 
-	// find need delete
+	// 找出需要删除的功能
 	deleted := []*service.Feature{}
 	for _, has := range hasF {
 		var exist bool
@@ -157,7 +184,7 @@ func (s *store) RegistryServiceFeatures(name string, features ...service.Feature
 		}
 	}
 
-	// start transaction
+	// 启动事物
 	tx, err := s.db.Begin()
 	if err != nil {
 		return fmt.Errorf("start save features transaction error, %s", err)
@@ -165,183 +192,113 @@ func (s *store) RegistryServiceFeatures(name string, features ...service.Feature
 	// commit transaction
 	defer func() {
 		if err := tx.Commit(); err != nil {
-			s.log.Errorf("feature transaction commit error, %s", err)
+			s.Errorf("feature transaction commit error, %s", err)
 		}
 	}()
 
-	// added new features
-	addFeaturePre, err := tx.Prepare("INSERT INTO features (name, method, endpoint, description, is_deleted, when_deleted_version, is_added, when_added_version, service_name) VALUES (?,?,?,?,?,?,?,?,?)")
+	// 添加需要的新功能
+	addFeaturePre, err := tx.Prepare(s.sql[SaveFeature])
 	if err != nil {
-		return exception.NewInternalServerError("prepare insert feature stmt error, name: %s, %s", name, err)
+		return exception.NewInternalServerError("prepare insert feature stmt error, name: %s, %s", serviceID, err)
 	}
 	defer addFeaturePre.Close()
 
 	for _, f := range added {
-		s.log.Infof("service: %s add feature: %s", name, f.Name)
-		// exec sql
-		_, err := addFeaturePre.Exec(f.Name, f.Tag, f.HTTPEndpoint, f.Description, f.IsDeleted, f.WhenDeletedVersion, f.IsAdded, f.WhenAddedVersion, name)
-		if err != nil {
+		s.Infof("service: %s add feature: %s", serviceID, f.Name)
+		if _, err := addFeaturePre.Exec(f.ID, f.Name, f.Tag, f.HTTPEndpoint, f.Description, f.IsDeleted,
+			f.WhenDeletedVersion, f.IsAdded, f.WhenAddedVersion, serviceID); err != nil {
 			if err := tx.Rollback(); err != nil {
-				s.log.Errorf("insert feature transaction rollback error, %s", err)
+				s.Errorf("insert feature transaction rollback error, %s", err)
 			}
 			return exception.NewInternalServerError("insert feature exec sql err, %s", err)
 		}
 	}
 
-	// mark delete features
-	delFeaturePre, err := tx.Prepare("UPDATE features SET is_deleted=? WHERE name=? AND service_name=?")
+	// 标记需要删除的功能
+	delFeaturePre, err := tx.Prepare(s.sql[MarkDeleteFeature])
 	if err != nil {
-		return exception.NewInternalServerError("prepare update delete mark feature stmt error, name: %s, %s", name, err)
+		return exception.NewInternalServerError("prepare update delete mark feature stmt error, name: %s, %s", serviceID, err)
 	}
 	defer delFeaturePre.Close()
 
 	for _, f := range deleted {
-		s.log.Infof("service: %s del feature: %s", name, f.Name)
-		// exec sql
-		_, err := delFeaturePre.Exec(1, f.Name, name)
+		s.Infof("service: %s del feature: %s", serviceID, f.Name)
+		_, err := delFeaturePre.Exec(1, f.Name, serviceID)
 		if err != nil {
 			if err := tx.Rollback(); err != nil {
-				s.log.Errorf("update delete mark feature feature transaction rollback error, %s", err)
+				s.Errorf("update delete mark feature feature transaction rollback error, %s", err)
 			}
 			return exception.NewInternalServerError("update delete mark feature feature exec sql err, %s", err)
 		}
 	}
+
 	return nil
 }
 
-func (s *store) ListServiceFeatures(name string) ([]*service.Feature, error) {
-	rows, err := s.stmts[FindAllFeatures].Query(name)
+func (s *store) AssociateFeaturesToRole(roleID string, features ...*service.Feature) error {
+	// start transaction
+	tx, err := s.db.Begin()
 	if err != nil {
-		return nil, exception.NewInternalServerError("query service feature list error, %s", err)
+		return fmt.Errorf("start associate features to role transaction error, %s", err)
 	}
-	defer rows.Close()
 
-	features := []*service.Feature{}
-	for rows.Next() {
-		f := service.Feature{}
-		if err := rows.Scan(&f.ID, &f.Name, &f.Tag, &f.HTTPEndpoint, &f.Description, &f.IsDeleted, &f.WhenDeletedVersion, &f.IsAdded, &f.WhenAddedVersion, &f.ServiceID); err != nil {
-			return nil, exception.NewInternalServerError("scan service feature record error, %s", err)
+	// prepare insert feature
+	mappingPre, err := tx.Prepare(s.sql[AssociateFeaturesToRole])
+	if err != nil {
+		return exception.NewInternalServerError("prepare insert feature role mapping stmt error, name: %s, %s", roleID, err)
+	}
+	defer mappingPre.Close()
+
+	for _, f := range features {
+		_, err := mappingPre.Exec(f.ID, roleID)
+		if err != nil {
+			if err := tx.Rollback(); err != nil {
+				s.Errorf("insert feature role mapping transaction rollback error, %s", err)
+			}
+			return exception.NewInternalServerError("insert feature role mapping exec sql err, %s", err)
 		}
-		features = append(features, &f)
+
 	}
 
-	return features, nil
+	// commit transaction
+	if err := tx.Commit(); err != nil {
+		s.Errorf("insert feature transaction rollback error, %s", err)
+		return exception.NewInternalServerError("insert feature transaction commit error, but rollback success, %s", err)
+	}
+
+	return nil
 }
 
-func (s *store) CheckServiceHasFeature(serviceName, featureName string) (bool, error) {
-	var name string
-	if err := s.stmts[CheckFeatureExist].QueryRow(featureName, serviceName).Scan(&name); err != nil {
-		if err == sql.ErrNoRows {
-			return false, nil
+func (s *store) UnlinkFeatureFromRole(roleID string, features ...*service.Feature) (bool, error) {
+	// start transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return false, fmt.Errorf("start unlink features from role transaction error, %s", err)
+	}
+
+	// prepare insert feature
+	mappingPre, err := tx.Prepare(s.sql[UnlinkFeatureFromRole])
+	if err != nil {
+		return false, exception.NewInternalServerError("prepare insert feature role mapping stmt error, name: %s, %s", roleID, err)
+	}
+	defer mappingPre.Close()
+
+	for _, f := range features {
+		_, err := mappingPre.Exec(f.ID, roleID)
+		if err != nil {
+			if err := tx.Rollback(); err != nil {
+				s.Errorf("unlik feature role mapping transaction rollback error, %s", err)
+			}
+			return false, exception.NewInternalServerError("unlik feature role mapping exec sql err, %s", err)
 		}
 
-		return false, exception.NewInternalServerError("check service feature exist error, %s", err)
+	}
+
+	// commit transaction
+	if err := tx.Commit(); err != nil {
+		s.Errorf("unlik feature transaction rollback error, %s", err)
+		return false, exception.NewInternalServerError("unlik feature transaction commit error, but rollback success, %s", err)
 	}
 
 	return true, nil
-}
-
-// func (s *store) ListDomainFeatures() ([]*service.Feature, error) {
-// 	df := []*service.Feature{}
-// 	features, err := s.listFeatures()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	for _, f := range features {
-// 		isok := true
-// 		for _, skip := range domainSkip {
-// 			if f.Name == skip {
-// 				isok = false
-// 				break
-// 			}
-// 		}
-
-// 		if isok {
-// 			df = append(df, f)
-// 		}
-// 	}
-
-// 	return df, nil
-
-// }
-
-// func (s *store) ListMemberFeatures() ([]*service.Feature, error) {
-// 	df := []*service.Feature{}
-// 	features, err := s.listFeatures()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	for _, f := range features {
-// 		isok := true
-// 		for _, skip := range memberSkip {
-// 			if f.Name == skip {
-// 				isok = false
-// 				break
-// 			}
-// 		}
-
-// 		if f.Name == "SetUserPassword" {
-// 			df = append(df, f)
-// 		}
-
-// 		if isok && f.Tag == "GET" {
-// 			df = append(df, f)
-// 		}
-// 	}
-
-// 	return df, nil
-// }
-
-func (s *store) CheckFeatureIsExist(featureID int64) (bool, error) {
-	var id string
-	if err := s.stmts[CheckFeatureIDExist].QueryRow(featureID).Scan(&id); err != nil {
-		if err == sql.ErrNoRows {
-			return false, nil
-		}
-
-		return false, exception.NewInternalServerError("query feature exist error, %s", err)
-	}
-
-	return true, nil
-}
-
-func (s *store) ListRoleFeatures(name string) ([]*service.Feature, error) {
-	rows, err := s.stmts[FindRoleFeatures].Query(name)
-	if err != nil {
-		return nil, exception.NewInternalServerError("query all feature list error, %s", err)
-	}
-	defer rows.Close()
-
-	features := []*service.Feature{}
-	for rows.Next() {
-		f := service.Feature{}
-		if err := rows.Scan(&f.ID, &f.Name, &f.Tag, &f.HTTPEndpoint, &f.Description, &f.IsDeleted, &f.WhenDeletedVersion, &f.IsAdded, &f.WhenAddedVersion, &f.ServiceID); err != nil {
-			return nil, exception.NewInternalServerError("scan service feature record error, %s", err)
-		}
-		features = append(features, &f)
-	}
-
-	return features, nil
-
-}
-
-func (s *store) listFeatures() ([]*service.Feature, error) {
-	rows, err := s.stmts[FindFullAllFeatures].Query()
-	if err != nil {
-		return nil, exception.NewInternalServerError("query all feature list error, %s", err)
-	}
-	defer rows.Close()
-
-	features := []*service.Feature{}
-	for rows.Next() {
-		f := service.Feature{}
-		if err := rows.Scan(&f.ID, &f.Name, &f.Tag, &f.HTTPEndpoint, &f.Description, &f.IsDeleted, &f.WhenDeletedVersion, &f.IsAdded, &f.WhenAddedVersion, &f.ServiceID); err != nil {
-			return nil, exception.NewInternalServerError("scan service feature record error, %s", err)
-		}
-		features = append(features, &f)
-	}
-
-	return features, nil
 }

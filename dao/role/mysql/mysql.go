@@ -10,12 +10,11 @@ import (
 )
 
 const (
-	SaveRole        = "save-role"
-	FindAllRole     = "find-role"
-	FindOneRole     = "find-role-by-name"
-	DeleteRole      = "delete-role"
-	CheckRole       = "check-role-exist"
-	GetRoleFeatures = "get-role-features"
+	SaveRole    = "save-role"
+	FindAllRole = "find-role"
+	FindOneRole = "find-role-by-name"
+	DeleteRole  = "delete-role"
+	CheckRole   = "check-role-exist"
 )
 
 // NewRoleStore use to create domain storage service
@@ -42,13 +41,6 @@ func NewRoleStore(db *sql.DB, log log.IOTAuthLogger) (role.Store, error) {
 		    SELECT name 
 		    FROM roles
 		    WHERE name = ?;
-		`,
-		GetRoleFeatures: `
-			SELECT f.id, f.name, f.method, f.endpoint, f.description, f.is_deleted, f.when_deleted_version, f.is_added, f.when_added_version, f.service_id
-			FROM features f 
-			LEFT JOIN role_feature_mappings m
-			ON m.feature_id = f.id 
-			WHERE m.role_id = ?; 
 		`,
 	}
 

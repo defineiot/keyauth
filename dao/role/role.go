@@ -5,18 +5,16 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/defineiot/keyauth/dao/service"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
 // Role is rbac's role
 type Role struct {
-	ID          string             `json:"id"`
-	Name        string             `json:"name"`        // 角色名称
-	Description string             `json:"description"` // 角色描述
-	CreateAt    int64              `json:"create_at"`   // 创建时间
-	UpdateAt    int64              `json:"update_at"`   // 更新时间
-	Featrues    []*service.Feature `json:"features"`    // 角色功能列表
+	ID          string `json:"id"`
+	Name        string `json:"name"`        // 角色名称
+	Description string `json:"description"` // 角色描述
+	CreateAt    int64  `json:"create_at"`   // 创建时间
+	UpdateAt    int64  `json:"update_at"`   // 更新时间
 }
 
 func (r *Role) String() string {
@@ -56,8 +54,6 @@ type Reader interface {
 // Writer for write data to store
 type Writer interface {
 	CreateRole(role *Role) error
-	// AssociateFeaturesToRole(name string, features ...int64) error
-	// UnlinkFeatureFromRole(name string, features ...int64) (bool, error)
 	UpdateRole(name, description string) (*Role, error)
 	DeleteRole(name string) error
 }

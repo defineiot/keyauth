@@ -15,6 +15,11 @@ func TestProjectSuit(t *testing.T) {
 	t.Run("GetServiceByIDOK", testGetServiceByIDOK(suit))
 	t.Run("GetServiceByClientOK", testGetServiceByClientOK(suit))
 	t.Run("ListServiceOK", testListServiceOK(suit))
+	t.Run("RegisteServiceFeaturesOK", testRegisteServiceFeaturesOK(suit))
+	t.Run("AssociateFeaturesToRole", testAssociateFeaturesToRole(suit))
+	t.Run("ListServiceFeaturesOK", testListServiceFeaturesOK(suit))
+	t.Run("ListRoleFeatruresOK", testListRoleFeatruresOK(suit))
+	t.Run("UnlinkFeatureFromRole", testUnlinkFeatureFromRoleOK(suit))
 	t.Run("DeleteServiceOK", testDeleteServiceOK(suit))
 }
 
@@ -59,6 +64,56 @@ func testListServiceOK(s *serviceSuit) func(t *testing.T) {
 }
 
 func testDeleteServiceOK(s *serviceSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		err := s.store.DeleteService(s.svr.ID)
+		should.NoError(err)
+
+		t.Logf("delete service(%s) success: %s", s.svr.Name, s.svr)
+	}
+}
+
+func testRegisteServiceFeaturesOK(s *serviceSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		err := s.store.RegistryServiceFeatures(s.svr.ID)
+		should.NoError(err)
+
+		t.Logf("delete service(%s) success: %s", s.svr.Name, s.svr)
+	}
+}
+
+func testListServiceFeaturesOK(s *serviceSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		err := s.store.DeleteService(s.svr.ID)
+		should.NoError(err)
+
+		t.Logf("delete service(%s) success: %s", s.svr.Name, s.svr)
+	}
+}
+
+func testListRoleFeatruresOK(s *serviceSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		err := s.store.DeleteService(s.svr.ID)
+		should.NoError(err)
+
+		t.Logf("delete service(%s) success: %s", s.svr.Name, s.svr)
+	}
+}
+
+func testAssociateFeaturesToRole(s *serviceSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		err := s.store.DeleteService(s.svr.ID)
+		should.NoError(err)
+
+		t.Logf("delete service(%s) success: %s", s.svr.Name, s.svr)
+	}
+}
+
+func testUnlinkFeatureFromRoleOK(s *serviceSuit) func(t *testing.T) {
 	return func(t *testing.T) {
 		should := require.New(t)
 		err := s.store.DeleteService(s.svr.ID)

@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	Internal      = "internal_rpc"     // 内部调用的控制面类型的服务, 提供了RPC能力,需要注册到API 网关对内提供服务
-	Public   Type = "controlle_pannel" // 需要对外发布的控制面类型的服务, 提供了RPC能力, 需要注册到API 网关对外提供服务
+	Internal Type = "internal_rpc"     // 内部调用的控制面类型的服务, 提供了RPC能力,需要注册到API 网关对内提供服务
+	Public        = "controlle_pannel" // 需要对外发布的控制面类型的服务, 提供了RPC能力, 需要注册到API 网关对外提供服务
 	Agent         = "data_pannel"      // 数据面类型的服务, 不提供RPC能力
 
 	Unknown     Status = "unknown"     // 刚创建好服务, 并没有服务实例启动
@@ -96,19 +96,16 @@ type Reader interface {
 	GetServiceByID(name string) (*Service, error)
 	GetServiceByClientID(clientID string) (*Service, error)
 
-	ListRoleFeatures(name string) ([]*Feature, error)
-	ListServiceFeatures(name string) ([]*Feature, error)
-
-	CheckServiceIsExist(name string) (bool, error)
-	// ListDomainFeatures() ([]*Feature, error)
-	// ListMemberFeatures() ([]*Feature, error)
-
-	CheckFeatureIsExist(featureID int64) (bool, error)
-	CheckServiceHasFeature(serviceName, featureName string) (bool, error)
+	ListServiceFeatures(serviceID string) ([]*Feature, error)
+	ListRoleFeatures(roleID string) ([]*Feature, error)
 }
 
 // Writer write service information to store
 type Writer interface {
 	CreateService(service *Service) error
 	DeleteService(id string) error
+
+	RegistryServiceFeatures(serviceID string, features ...*Feature) error
+	AssociateFeaturesToRole(roleID string, features ...*Feature) error
+	UnlinkFeatureFromRole(roleID string, features ...*Feature) (bool, error)
 }
