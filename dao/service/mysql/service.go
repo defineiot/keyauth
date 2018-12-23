@@ -269,17 +269,17 @@ func (s *store) AssociateFeaturesToRole(roleID string, features ...*service.Feat
 	return nil
 }
 
-func (s *store) UnlinkFeatureFromRole(roleID string, features ...*service.Feature) (bool, error) {
+func (s *store) UnlinkFeatureFromRole(roleID string, features ...*service.Feature) error {
 	// start transaction
 	tx, err := s.db.Begin()
 	if err != nil {
-		return false, fmt.Errorf("start unlink features from role transaction error, %s", err)
+		return fmt.Errorf("start unlink features from role transaction error, %s", err)
 	}
 
 	// prepare insert feature
 	mappingPre, err := tx.Prepare(s.sql[UnlinkFeatureFromRole])
 	if err != nil {
-		return false, exception.NewInternalServerError("prepare insert feature role mapping stmt error, name: %s, %s", roleID, err)
+		return exception.NewInternalServerError("prepare insert feature role mapping stmt error, name: %s, %s", roleID, err)
 	}
 	defer mappingPre.Close()
 
@@ -289,7 +289,7 @@ func (s *store) UnlinkFeatureFromRole(roleID string, features ...*service.Featur
 			if err := tx.Rollback(); err != nil {
 				s.Errorf("unlik feature role mapping transaction rollback error, %s", err)
 			}
-			return false, exception.NewInternalServerError("unlik feature role mapping exec sql err, %s", err)
+			return exception.NewInternalServerError("unlik feature role mapping exec sql err, %s", err)
 		}
 
 	}
@@ -297,8 +297,8 @@ func (s *store) UnlinkFeatureFromRole(roleID string, features ...*service.Featur
 	// commit transaction
 	if err := tx.Commit(); err != nil {
 		s.Errorf("unlik feature transaction rollback error, %s", err)
-		return false, exception.NewInternalServerError("unlik feature transaction commit error, but rollback success, %s", err)
+		return exception.NewInternalServerError("unlik feature transaction commit error, but rollback success, %s", err)
 	}
 
-	return true, nil
+	return nil
 }

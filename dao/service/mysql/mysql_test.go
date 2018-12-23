@@ -27,8 +27,11 @@ func newTestStore() service.Store {
 }
 
 type serviceSuit struct {
-	store service.Store
-	svr   *service.Service
+	roleID string
+
+	store    service.Store
+	svr      *service.Service
+	features []*service.Feature
 }
 
 func (s *serviceSuit) TearDown() {
@@ -36,11 +39,27 @@ func (s *serviceSuit) TearDown() {
 }
 
 func (s *serviceSuit) SetUp() {
+	s.roleID = "unit-test-role-id"
+
 	s.svr = &service.Service{
 		Name:        "unit-test-service-name01",
 		Description: "just for unit test",
 		Type:        service.Public,
 	}
+
+	f1 := &service.Feature{
+		Name:         "feature01",
+		Tag:          "POST",
+		HTTPEndpoint: "/features/01",
+		Description:  "only for unit test",
+	}
+	f2 := &service.Feature{
+		Name:         "feature02",
+		Tag:          "POST",
+		HTTPEndpoint: "/features/02",
+		Description:  "only for unit test",
+	}
+	s.features = []*service.Feature{f1, f2}
 
 	s.store = newTestStore()
 

@@ -107,5 +107,5 @@ type Writer interface {
 
 	RegistryServiceFeatures(serviceID string, features ...*Feature) error
 	AssociateFeaturesToRole(roleID string, features ...*Feature) error
-	UnlinkFeatureFromRole(roleID string, features ...*Feature) (bool, error)
+	UnlinkFeatureFromRole(roleID string, features ...*Feature) error
 }
