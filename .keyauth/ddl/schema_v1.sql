@@ -94,9 +94,10 @@ CREATE TABLE `features` (
 `description` text NOT NULL COMMENT '功能描述',
 `is_deleted` int(2) UNSIGNED NOT NULL DEFAULT 0 COMMENT '该功能是否已经被删除',
 `when_deleted_version` varchar(255) NOT NULL DEFAULT '' COMMENT '在那个版本被删除',
+`when_deleted_time` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '功能删除的时间',
 `is_added` int(2) UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否是新增的功能',
 `when_added_version` varchar(255) NOT NULL DEFAULT '' COMMENT '那个版本新增的功能',
-`create_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '功能注册的时间',
+`when_added_time` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '功能注册的时间',
 `service_id` char(64) NOT NULL DEFAULT '' COMMENT '该功能属于那个服务',
 `extra` text NOT NULL,
 PRIMARY KEY (`id`) 

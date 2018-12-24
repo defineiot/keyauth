@@ -106,7 +106,7 @@ func (s *store) DeleteService(id string) error {
 }
 
 func (s *store) ListServiceFeatures(serviceID string) ([]*service.Feature, error) {
-	rows, err := s.stmts[FindAllFeatures].Query(serviceID)
+	rows, err := s.stmts[FindServiceFeatures].Query(serviceID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query service feature list error, %s", err)
 	}
@@ -116,7 +116,7 @@ func (s *store) ListServiceFeatures(serviceID string) ([]*service.Feature, error
 	for rows.Next() {
 		f := new(service.Feature)
 		if err := rows.Scan(&f.ID, &f.Name, &f.Tag, &f.HTTPEndpoint, &f.Description, &f.IsDeleted,
-			&f.WhenDeletedVersion, &f.IsAdded, &f.WhenAddedVersion, &f.ServiceID); err != nil {
+			&f.DeletedVersion, &f.DeleteAt, &f.IsAdded, &f.AddedVersion, &f.AddedAt, &f.ServiceID); err != nil {
 			return nil, exception.NewInternalServerError("scan service feature record error, %s", err)
 		}
 		features = append(features, f)
@@ -126,7 +126,7 @@ func (s *store) ListServiceFeatures(serviceID string) ([]*service.Feature, error
 }
 
 func (s *store) ListRoleFeatures(roleID string) ([]*service.Feature, error) {
-	rows, err := s.stmts[GetRoleFeatures].Query(roleID)
+	rows, err := s.stmts[FindRoleFeatures].Query(roleID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query role features error, %s", err)
 	}
@@ -136,7 +136,7 @@ func (s *store) ListRoleFeatures(roleID string) ([]*service.Feature, error) {
 	for rows.Next() {
 		f := new(service.Feature)
 		if err := rows.Scan(&f.ID, &f.Name, &f.Tag, &f.HTTPEndpoint, &f.Description, &f.IsDeleted,
-			&f.WhenDeletedVersion, &f.IsAdded, &f.WhenAddedVersion, &f.ServiceID); err != nil {
+			&f.DeletedVersion, &f.DeleteAt, &f.IsAdded, &f.AddedVersion, &f.AddedAt, &f.ServiceID); err != nil {
 			return nil, exception.NewInternalServerError("scan role feature mapping record error, %s", err)
 		}
 		features = append(features, f)
@@ -145,7 +145,7 @@ func (s *store) ListRoleFeatures(roleID string) ([]*service.Feature, error) {
 	return features, nil
 }
 
-func (s *store) RegistryServiceFeatures(serviceID string, features ...*service.Feature) error {
+func (s *store) RegistryServiceFeatures(serviceID, version string, features ...*service.Feature) error {
 	s.Debugf("registry service :%s features: %v", serviceID, features)
 
 	hasF, err := s.ListServiceFeatures(serviceID)
@@ -153,33 +153,45 @@ func (s *store) RegistryServiceFeatures(serviceID string, features ...*service.F
 		return err
 	}
 
-	// 找出需要新增的功能
+	// 找出需要新增的功能(同一个服务下, 名称相同的功能)
 	added := []*service.Feature{}
-	for i, in := range features {
+	for i := range features {
 		exist := false
 		for _, has := range hasF {
-			if in.Name == has.Name {
+			if features[i].Name == has.Name && features[i].ServiceID == has.ServiceID {
 				exist = true
 				break
 			}
 		}
 		if !exist {
-			added = append(added, features[i])
+			// 处理新增加的功能
+			newF := features[i]
+			if newF.ID == "" {
+				newF.ID = uuid.NewV4().String()
+			}
+			newF.IsAdded = true
+			newF.AddedVersion = version
+			newF.AddedAt = time.Now().Unix()
+			added = append(added, newF)
 		}
 	}
 
-	// 找出需要删除的功能
+	// 找出需要删除的功能(之前存在, 而新注册的功能列表里面没有功能)
 	deleted := []*service.Feature{}
 	for _, has := range hasF {
-		var exist bool
-		for _, in := range features {
-			if has.Name == in.Name {
+		exist := false
+		for i := range features {
+			if features[i].Name == has.Name && features[i].ServiceID == has.ServiceID {
 				exist = true
 				break
 			}
 		}
 
 		if !exist {
+			// 处理需要删除的功能
+			has.IsDeleted = true
+			has.DeletedVersion = version
+			has.DeleteAt = time.Now().Unix()
 			deleted = append(deleted, has)
 		}
 	}
@@ -204,9 +216,9 @@ func (s *store) RegistryServiceFeatures(serviceID string, features ...*service.F
 	defer addFeaturePre.Close()
 
 	for _, f := range added {
-		s.Infof("service: %s add feature: %s", serviceID, f.Name)
+		s.Infof("service: %s add feature: %s", serviceID, f)
 		if _, err := addFeaturePre.Exec(f.ID, f.Name, f.Tag, f.HTTPEndpoint, f.Description, f.IsDeleted,
-			f.WhenDeletedVersion, f.IsAdded, f.WhenAddedVersion, serviceID); err != nil {
+			f.DeletedVersion, f.DeleteAt, f.IsAdded, f.AddedVersion, f.AddedAt, serviceID); err != nil {
 			if err := tx.Rollback(); err != nil {
 				s.Errorf("insert feature transaction rollback error, %s", err)
 			}
@@ -223,7 +235,7 @@ func (s *store) RegistryServiceFeatures(serviceID string, features ...*service.F
 
 	for _, f := range deleted {
 		s.Infof("service: %s del feature: %s", serviceID, f.Name)
-		_, err := delFeaturePre.Exec(1, f.Name, serviceID)
+		_, err := delFeaturePre.Exec(f.IsAdded, f.DeletedVersion, f.DeleteAt, f.Name, f.ServiceID)
 		if err != nil {
 			if err := tx.Rollback(); err != nil {
 				s.Errorf("update delete mark feature feature transaction rollback error, %s", err)

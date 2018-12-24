@@ -27,7 +27,8 @@ func newTestStore() service.Store {
 }
 
 type serviceSuit struct {
-	roleID string
+	roleID          string
+	registryVersion string
 
 	store    service.Store
 	svr      *service.Service
@@ -40,6 +41,7 @@ func (s *serviceSuit) TearDown() {
 
 func (s *serviceSuit) SetUp() {
 	s.roleID = "unit-test-role-id"
+	s.registryVersion = "unit-test-for-instance-registry"
 
 	s.svr = &service.Service{
 		Name:        "unit-test-service-name01",

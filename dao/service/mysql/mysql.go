@@ -22,10 +22,9 @@ const (
 	AssociateFeaturesToRole = "add-feature-to-role"
 	UnlinkFeatureFromRole   = "delete-feature-to-role"
 	UpdateService           = "update-service"
-	GetRoleFeatures         = "get-role-features"
 
-	FindAllFeatures  = "find-one-service-features"
-	FindRoleFeatures = "find-role-features"
+	FindServiceFeatures = "find-service-features"
+	FindRoleFeatures    = "find-role-features"
 )
 
 // NewServiceStore use to create domain storage service
@@ -54,50 +53,43 @@ func NewServiceStore(db *sql.DB, log log.IOTAuthLogger) (service.Store, error) {
 	    	WHERE id =?;
 		`,
 		SaveFeature: `
-			INSERT INTO features (id, name, tag, endpoint, description, is_deleted, when_deleted_version, is_added, when_added_version, create_at, service_id) 
-			VALUES (?,?,?,?,?,?,?,?,?,?,?)
+			INSERT INTO features (id, name, tag, endpoint, description, is_deleted, when_deleted_version, when_deleted_time, is_added, when_added_version, when_added_time, service_id) 
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
 		`,
 		MarkDeleteFeature: `
-			UPDATE features 
-			SET is_deleted=? 
+			UPDATE features  
+			SET is_deleted=?, when_deleted_version=?, when_deleted_time=?   
 			WHERE name=? 
-			AND service_id=?
+			AND service_id=?;
 		`,
 		DeleteServiceFeatures: `
 			DELETE FROM features 
 			WHERE service_id = ?;
 		`,
 		AssociateFeaturesToRole: `
-			INSERT INTO roles_features_mapping (feature_id, role_id) 
+			INSERT INTO role_feature_mappings (feature_id, role_id) 
 			VALUES (?,?);
 		`,
 		UnlinkFeatureFromRole: `
-			DELETE FROM roles_features_mapping 
+			DELETE FROM role_feature_mappings 
 			WHERE feature_id = ? 
 			AND role_id = ?;
 		`,
-		FindAllFeatures: `
-			SELECT id, name, tag, endpoint, description, is_deleted, when_deleted_version, is_added, when_added_version, service_id
+		FindServiceFeatures: `
+			SELECT id, name, tag, endpoint, description, is_deleted, when_deleted_version, when_deleted_time, is_added, when_added_version, when_added_time, service_id
 			FROM features
 			WHERE service_id = ? 
 			ORDER BY tag
 			DESC;
 		`,
 		FindRoleFeatures: `
-		    SELECT f.id, f.name, f.tag, f.endpoint, f.description, f.is_deleted, f.when_deleted_version, f.is_added, f.when_added_version, service_id
-			FROM features f
-			LEFT JOIN role_feature_mappings m
-			ON f.id = m.feature_id
-		    WHERE m.role_id = ? 
-		    ORDER BY f.tag
-		    DESC;
-	    `,
-		GetRoleFeatures: `
-			SELECT f.id, f.name, f.tag, f.endpoint, f.description, f.is_deleted, f.when_deleted_version, f.is_added, f.when_added_version, f.service_id
+			SELECT f.id, f.name, f.tag, f.endpoint, f.description, f.is_deleted, f.when_deleted_version, f.when_deleted_time, f.is_added, f.when_added_version, f.when_added_time, service_id 
 			FROM features f 
 			LEFT JOIN role_feature_mappings m
 			ON m.feature_id = f.id 
-			WHERE m.role_id = ?; 
+			WHERE m.role_id = ? 
+			ORDER BY f.tag 
+			DESC; 
 		`,
 	}
 

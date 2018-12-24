@@ -28,16 +28,18 @@ type Status string
 
 // Feature Service's features
 type Feature struct {
-	ID                 string `json:"id"`                             // 功能唯一标识符
-	Name               string `json:"name"`                           // 功能的名称
-	Tag                string `json:"tag,omitempty"`                  // 功能的标签, 如果该功能对应的HTTP类型RPC, 标签可以为 POST/GET/DELETE
-	HTTPEndpoint       string `json:"endpoint,omitempty"`             // 该功能对应的HTTP类型RPC, 比如 /<service_name>/<resource_name>/<action>
-	Description        string `json:"description,omitempty"`          // 该功能的描述信息
-	IsDeleted          bool   `json:"is_deleted,omitempty"`           // 该功能是否已经废弃
-	WhenDeletedVersion string `json:"when_deleted_version,omitempty"` // 该功能废弃的时间
-	IsAdded            bool   `json:"is_added,omitempty"`             // 该功能是否是新增功能
-	WhenAddedVersion   string `json:"when_added_version,omitempty"`   // 新增该功能的时间
-	ServiceID          string `json:"service_id,omitempty"`           // 该功能属于那个服务
+	ID             string `json:"id"`                             // 功能唯一标识符
+	Name           string `json:"name"`                           // 功能的名称
+	Tag            string `json:"tag,omitempty"`                  // 功能的标签, 如果该功能对应的HTTP类型RPC, 标签可以为 POST/GET/DELETE
+	HTTPEndpoint   string `json:"endpoint,omitempty"`             // 该功能对应的HTTP类型RPC, 比如 /<service_name>/<resource_name>/<action>
+	Description    string `json:"description,omitempty"`          // 该功能的描述信息
+	IsDeleted      bool   `json:"is_deleted,omitempty"`           // 该功能是否已经废弃
+	DeletedVersion string `json:"when_deleted_version,omitempty"` // 该功能在那个版本废弃的
+	DeleteAt       int64  `json:"when_deleted_time"`              // 功能废弃的时间
+	IsAdded        bool   `json:"is_added,omitempty"`             // 该功能是否是新增功能
+	AddedVersion   string `json:"when_added_version,omitempty"`   // 该功能在那个版本新增的
+	AddedAt        int64  `json:"when_added_time"`                // 功能注册的时间
+	ServiceID      string `json:"service_id,omitempty"`           // 该功能属于那个服务
 }
 
 // Service is service provider
@@ -105,7 +107,7 @@ type Writer interface {
 	CreateService(service *Service) error
 	DeleteService(id string) error
 
-	RegistryServiceFeatures(serviceID string, features ...*Feature) error
+	RegistryServiceFeatures(serviceID, version string, features ...*Feature) error
 	AssociateFeaturesToRole(roleID string, features ...*Feature) error
 	UnlinkFeatureFromRole(roleID string, features ...*Feature) error
 }

@@ -16,8 +16,8 @@ func TestProjectSuit(t *testing.T) {
 	t.Run("GetServiceByClientOK", testGetServiceByClientOK(suit))
 	t.Run("ListServiceOK", testListServiceOK(suit))
 	t.Run("RegisteServiceFeaturesOK", testRegisteServiceFeaturesOK(suit))
-	t.Run("AssociateFeaturesToRole", testAssociateFeaturesToRole(suit))
 	t.Run("ListServiceFeaturesOK", testListServiceFeaturesOK(suit))
+	t.Run("AssociateFeaturesToRole", testAssociateFeaturesToRole(suit))
 	t.Run("ListRoleFeatruresOK", testListRoleFeatruresOK(suit))
 	t.Run("UnlinkFeatureFromRole", testUnlinkFeatureFromRoleOK(suit))
 	t.Run("DeleteServiceOK", testDeleteServiceOK(suit))
@@ -66,20 +66,12 @@ func testListServiceOK(s *serviceSuit) func(t *testing.T) {
 func testRegisteServiceFeaturesOK(s *serviceSuit) func(t *testing.T) {
 	return func(t *testing.T) {
 		should := require.New(t)
-		err := s.store.RegistryServiceFeatures(s.svr.ID, s.features...)
+		err := s.store.RegistryServiceFeatures(s.svr.ID, s.registryVersion, s.features...)
 		should.NoError(err)
+		should.Equal(true, s.features[0].IsAdded)
+		should.Equal(true, s.features[1].IsAdded)
 
 		t.Logf("registe service(%s) features: %v", s.svr.Name, s.features)
-	}
-}
-
-func testAssociateFeaturesToRole(s *serviceSuit) func(t *testing.T) {
-	return func(t *testing.T) {
-		should := require.New(t)
-		err := s.store.AssociateFeaturesToRole(s.roleID)
-		should.NoError(err)
-
-		t.Logf("delete service(%s) success: %s", s.svr.Name, s.svr)
 	}
 }
 
@@ -90,6 +82,16 @@ func testListServiceFeaturesOK(s *serviceSuit) func(t *testing.T) {
 		should.NoError(err)
 
 		t.Logf("list service(%s) features: %v", s.svr.Name, features)
+	}
+}
+
+func testAssociateFeaturesToRole(s *serviceSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		err := s.store.AssociateFeaturesToRole(s.roleID, s.features...)
+		should.NoError(err)
+
+		t.Logf("associate features(%v) to service(%s) success", s.features, s.svr.Name)
 	}
 }
 
