@@ -2,22 +2,31 @@ package mysql
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/defineiot/keyauth/dao/token"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
-func (s *store) SaveToken(t *token.Token) (*token.Token, error) {
-	if t.Scope == nil {
-		t.Scope = new(token.Scope)
+func (s *store) SaveToken(t *token.Token) error {
+	if err := t.ValidateSave(); err != nil {
+		return err
 	}
 
-	_, err := s.stmts[SaveToken].Exec(string(t.GrantType), t.AccessToken, t.RefreshToken, t.TokenType, t.CreatedAt, t.ExpiresIn, t.ClientID, t.UserID, t.DomainID, t.Scope.WorkProject, t.ServiceName)
-	if err != nil {
-		return nil, exception.NewInternalServerError("insert token exec sql err, %s", err)
+	if t.CreatedAt == 0 {
+		t.CreatedAt = time.Now().Unix()
+	}
+	if t.ExpiresIn == 0 {
+		t.ExpiresIn = 3600
 	}
 
-	return t, nil
+	if _, err := s.stmts[SaveToken].Exec(t.AccessToken, t.RefreshToken, string(t.GrantType), string(t.TokenType),
+		t.UserID, t.DomainID, t.CurrentProject, t.ServiceID, t.ApplicationID,
+		t.Name, t.Scope, t.CreatedAt, t.ExpiresIn, t.Description); err != nil {
+		return exception.NewInternalServerError("insert token exec sql err, %s", err)
+	}
+
+	return nil
 }
 
 func (s *store) DeleteTokenByRefresh(refreshToken string) error {
@@ -38,11 +47,11 @@ func (s *store) DeleteTokenByRefresh(refreshToken string) error {
 
 func (s *store) GetTokenByRefresh(refreshToken string) (*token.Token, error) {
 	t := new(token.Token)
-	t.Scope = new(token.Scope)
 
-	err := s.stmts[FindTokenByRefresh].QueryRow(refreshToken).Scan(
-		&t.GrantType, &t.AccessToken, &t.RefreshToken, &t.TokenType, &t.CreatedAt, &t.ExpiresIn, &t.ClientID, &t.UserID, &t.DomainID, &t.Scope.WorkProject, &t.ServiceName)
-	if err != nil {
+	if err := s.stmts[FindTokenByRefresh].QueryRow(refreshToken).Scan(
+		&t.AccessToken, &t.RefreshToken, &t.GrantType, &t.TokenType,
+		&t.UserID, &t.DomainID, &t.CurrentProject, &t.ServiceID, &t.ApplicationID,
+		&t.Name, &t.Scope, &t.CreatedAt, &t.ExpiresIn, &t.Description); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewUnauthorized("refresh token %s not find", refreshToken)
 		}
@@ -71,16 +80,16 @@ func (s *store) SetTokenProject(accessToken, projectID string) error {
 
 func (s *store) GetToken(accessToken string) (*token.Token, error) {
 	t := new(token.Token)
-	t.Scope = new(token.Scope)
 
-	err := s.stmts[FindToken].QueryRow(accessToken).Scan(
-		&t.GrantType, &t.AccessToken, &t.RefreshToken, &t.TokenType, &t.CreatedAt, &t.ExpiresIn, &t.ClientID, &t.UserID, &t.DomainID, &t.Scope.WorkProject, &t.ServiceName)
-	if err != nil {
+	if err := s.stmts[FindToken].QueryRow(accessToken).Scan(
+		&t.AccessToken, &t.RefreshToken, &t.GrantType, &t.TokenType,
+		&t.UserID, &t.DomainID, &t.CurrentProject, &t.ServiceID, &t.ApplicationID,
+		&t.Name, &t.Scope, &t.CreatedAt, &t.ExpiresIn, &t.Description); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, exception.NewUnauthorized("token %s not find", accessToken)
+			return nil, exception.NewUnauthorized("access token %s not find", accessToken)
 		}
 
-		return nil, exception.NewInternalServerError("query token error, %s", err)
+		return nil, exception.NewInternalServerError("query access token error, %s", err)
 	}
 
 	return t, nil

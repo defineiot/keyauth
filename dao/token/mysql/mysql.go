@@ -21,12 +21,12 @@ const (
 func NewTokenStore(db *sql.DB) (token.Store, error) {
 	unprepared := map[string]string{
 		SaveToken: `
-			INSERT INTO tokens (grant_type, access_token, refresh_token, type, create_at, expire_at, client_id, user_id, domain_id, project_id, service_name) 
-			VALUES (?,?,?,?,?,?,?,?,?,?,?);
+			INSERT INTO tokens (access_token, refresh_token, grant_type, token_type, user_id, domain_id, project_id, service_id, application_id, name, scope, create_at, expire_at, description) 
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);
 		`,
 		FindToken: `
-			SELECT t.grant_type, t.access_token, t.refresh_token, t.type, t.create_at, t.expire_at, t.client_id, t.user_id, t.domain_id, t.project_id, t.service_name 
-			FROM tokens t
+			SELECT access_token, refresh_token, grant_type, token_type, user_id, domain_id, project_id, service_id, application_id, name, scope, create_at, expire_at, description 
+			FROM tokens 
 			WHERE access_token = ?;
 		`,
 		DeleteToken: `
@@ -38,8 +38,8 @@ func NewTokenStore(db *sql.DB) (token.Store, error) {
 		    WHERE refresh_token = ?;
 		`,
 		FindTokenByRefresh: `
-		    SELECT t.grant_type, t.access_token, t.refresh_token, t.type, t.create_at, t.expire_at, t.client_id, t.user_id, t.domain_id, t.project_id, t.service_name 
-		    FROM tokens t
+		    SELECT access_token, refresh_token, grant_type, token_type, user_id, domain_id, project_id, service_id, application_id, name, scope, create_at, expire_at, description 
+		    FROM tokens 
 		    WHERE refresh_token = ?;
 		`,
 		SetTokenProject: `
