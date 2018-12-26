@@ -17,6 +17,7 @@ type Application struct {
 	LogoImage   string `json:"logo_image,omitempty"` // 应用的LOGO
 	Description string `json:"description"`          // 应用简单的描述
 	CreateAt    int64  `json:"create_at"`            // 应用创建的时间
+	UpdateAt    int64  `json:"update_at"`            // 应用更新的时间
 
 	RedirectURI       string `json:"redirect_uri"`        // 应用重定向URI, Oauht2时需要改参数
 	ClientID          string `json:"client_id"`           // 应用客户端ID

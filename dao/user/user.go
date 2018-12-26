@@ -1,8 +1,10 @@
 package user
 
 import (
+	"github.com/defineiot/keyauth/dao/department"
 	"github.com/defineiot/keyauth/dao/domain"
 	"github.com/defineiot/keyauth/dao/project"
+	"github.com/defineiot/keyauth/dao/token"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
@@ -19,19 +21,14 @@ type User struct {
 	Gender            string    `json:"gender"`              // 性别
 	Avatar            string    `json:"avatar"`              // 头像
 	Locked            string    `json:"locked"`              // 是否冻结次用户
-	LastLogoutTime    string    `json:"last_logout_time"`    // 用户最近一次退出系统的时间, 用于评估用户使用系统的时长
-	LastLoginTime     string    `json:"last_login_time"`     // 用户最近一次登录系统的时间
-	LastLoginIP       string    `json:"last_login_ip"`       // 用户最近一次登录系统的客户端IP地址
-	LoginFailedTimes  string    `json:"login_failed_times"`  // 用户连续登录失败的次数, 如果登录成功则清零
-	LoginSuccessTimes string    `json:"login_success_times"` // 用户登录成功的次数, 及用户访问系统的次数
 	CreateAt          string    `json:"create_at"`           // 用户创建的时间
 	ExpiresActiveDays string    `json:"expires_active_days"` // 用户多久未登录时(天), 冻结改用户, 防止僵尸用户的账号被利用
 	Password          *Password `json:"password"`            // 密码相关信息
 
-	Domain         *domain.Domain   `json:"domain"`     // 如果需要对象由上层进行查找
-	DefaultProject *project.Project `json:"project"`    //  如果需要对象由上层进行查找
-	Department     *Department      `json:"department"` // 所属部门信息
-	RoleNames      []string         `json:"roles"`      // 角色列表
+	Domain         *domain.Domain         `json:"domain"`     // 如果需要对象由上层进行查找
+	DefaultProject *project.Project       `json:"project"`    //  如果需要对象由上层进行查找
+	Department     *department.Department `json:"department"` // 所属部门信息
+	RoleNames      []string               `json:"roles"`      // 角色列表
 }
 
 // Password user's password
@@ -42,6 +39,32 @@ type Password struct {
 	ExpireAt int64  `json:"expire_at"`           // 密码过期时间
 	CreateAt int64  `json:"create_at"`           // 密码创建时间
 	UpdateAt int64  `json:"update_at,omitempty"` // 密码更新时间
+}
+
+// LoginStats 用户登录信息统计, 记录标准: hash({user_id}.{applaction_id}.{grant_type}) 为一条记录
+type LoginStats struct {
+	IP            string          `json:"ip"`         // 用户登录时的IP地址
+	Login         int64           `json:"login"`      // 用户最近一次退出系统的时间, 用于评估用户使用系统的时长
+	Logout        int64           `json:"logout"`     // 用户最近一次登录系统的时间
+	GrantType     token.GrantType `json:"grant_type"` // 用户通过哪种授权方式登录的
+	Success       int64           `json:"success"`    // 用户登录成功的次数, 及用户访问系统的次数
+	Failed        int             `json:"-"`          // 用户连续登录失败的次数, 如果登录成功则清零, 用户实现用户多少
+	UserID        string          `json:"-"`          // 用户ID
+	ApplicationID string          `json:"-"`          // 用户应用ID
+}
+
+// Invitation code
+type Invitation struct {
+	Code                 string   `json:"code"`
+	InviterID            string   `json:"inviter_id"`
+	InvitedUserID        string   `json:"invited_user_id,omitempty"`
+	InvitedUserDomainID  string   `json:"invited_user_domain_id,omitempty"`
+	InvitedTime          int64    `json:"invited_time"`
+	AcceptTime           int64    `json:"accept_time,omitempty"`
+	ExpireTime           int64    `json:"expire_time,omitempty"`
+	InvitationURL        string   `json:"invitation_url"`
+	InvitedUserRoleNames []string `json:"invited_user_role_names"`
+	AccessProjects       []string `json:"access_project_ids"`
 }
 
 // Validate 校验创建时的参数
@@ -99,10 +122,6 @@ type Reader interface {
 // Writer use to write user information to store
 type Writer interface {
 	CreateUser(u *User) (*User, error)
-
-	SaveVerifyCode(toEmail, phoneNumber string, code int) (*VerifyCode, error)
-	GetVerifyCodeByMail(toEmail string, code int) (*VerifyCode, error)
-	GetVerifyCodeByPhone(phoneNumber string, code int) (*VerifyCode, error)
 	RevolkVerifyCode(id int64) error
 
 	SaveUserOtherDomain(userID, otherDomainID string) error
@@ -117,9 +136,9 @@ type Writer interface {
 	BindRole(domainID, userID, roleName string) error
 	UnBindRole(domainID, userID, roleName string) error
 
-	SaveInvitationsRecord(inviterID string, invitedRoles, accessProjects []string) (*InvitationCode, error)
-	ListInvitationRecord(inviterID string) ([]*InvitationCode, error)
-	GetInvitationRecord(inviterID, code string) (*InvitationCode, error)
+	SaveInvitationsRecord(inviterID string, invitedRoles, accessProjects []string) (*Invitation, error)
+	ListInvitationRecord(inviterID string) ([]*Invitation, error)
+	GetInvitationRecord(inviterID, code string) (*Invitation, error)
 	DeleteInvitationRecord(id int64) error
-	UpdateInvitationsRecord(ir *InvitationCode) error
+	UpdateInvitationsRecord(ir *Invitation) error
 }

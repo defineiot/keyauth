@@ -6,6 +6,7 @@ CREATE TABLE `applications` (
 `logo_image` varchar(255) NOT NULL DEFAULT '' COMMENT '应用的LOG',
 `description` text NOT NULL COMMENT '应用的描述信息',
 `create_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '应用的创建时间',
+`update_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '应用更新时间',
 `redirect_uri` varchar(128) NOT NULL DEFAULT '' COMMENT '当使用AuthCode时, 重定向的地址',
 `client_id` char(64) NOT NULL DEFAULT '' COMMENT '该应用的客户端ID',
 `client_secret` char(255) NOT NULL DEFAULT '' COMMENT '客户端凭证',
@@ -325,6 +326,28 @@ DEFAULT CHARACTER SET = utf8
 COLLATE = utf8_general_ci
 COMMENT = '用户'
 ROW_FORMAT = dynamic;
+
+
+CREATE TABLE `login_records` (
+`id` char(64) NOT NULL COMMENT '通过hash({user_id}.{application_id})获得',
+`ip` char(64) NOT NULL DEFAULT '' COMMENT '最近一次登录的IP(user password认证用户)',
+`login` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '最近一次登录时间(user password认证用户)',
+`logout` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '用户最近一次退出系统的时间',
+`failed` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '用户连续登录失败的次数',
+`success` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '成功登陆的次数',
+`user_id` char(64) NOT NULL DEFAULT '' COMMENT '令牌的持有者ID',
+`application_id` char(64) NOT NULL DEFAULT '' COMMENT '用户通过那个应用登录的',
+`grant_type` char(64) NOT NULL DEFAULT '' COMMENT '授权类型(password, client, authcode, implement, upgrade, sdk)',
+`extra` text NOT NULL,
+PRIMARY KEY (`id`) 
+)
+ENGINE = InnoDB
+AUTO_INCREMENT = 0
+DEFAULT CHARACTER SET = utf8
+COLLATE = utf8_general_ci
+COMMENT = '用户登录记录'
+ROW_FORMAT = dynamic;
+
 
 CREATE TABLE `user_project_mappings` (
 `user_id` char(64) NULL DEFAULT '',
