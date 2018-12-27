@@ -25,10 +25,11 @@ type User struct {
 	ExpiresActiveDays string    `json:"expires_active_days"` // 用户多久未登录时(天), 冻结改用户, 防止僵尸用户的账号被利用
 	Password          *Password `json:"password"`            // 密码相关信息
 
-	Domain         *domain.Domain         `json:"domain"`     // 如果需要对象由上层进行查找
-	DefaultProject *project.Project       `json:"project"`    //  如果需要对象由上层进行查找
-	Department     *department.Department `json:"department"` // 所属部门信息
-	RoleNames      []string               `json:"roles"`      // 角色列表
+	Domain         *domain.Domain         `json:"domain"`       // 如果需要对象由上层进行查找
+	DefaultProject *project.Project       `json:"project"`      //  如果需要对象由上层进行查找
+	Department     *department.Department `json:"department"`   // 所属部门信息
+	RoleNames      []string               `json:"roles"`        // 角色列表
+	LoginStatus    *LoginStatus           `json:"login_status"` // 用户登录状态
 }
 
 // Password user's password
@@ -41,30 +42,30 @@ type Password struct {
 	UpdateAt int64  `json:"update_at,omitempty"` // 密码更新时间
 }
 
-// LoginStats 用户登录信息统计, 记录标准: hash({user_id}.{applaction_id}.{grant_type}) 为一条记录
-type LoginStats struct {
+// LoginStatus 用户登录信息统计, 记录标准: hash({user_id}.{applaction_id}.{grant_type}) 为一条记录
+type LoginStatus struct {
 	IP            string          `json:"ip"`         // 用户登录时的IP地址
 	Login         int64           `json:"login"`      // 用户最近一次退出系统的时间, 用于评估用户使用系统的时长
 	Logout        int64           `json:"logout"`     // 用户最近一次登录系统的时间
 	GrantType     token.GrantType `json:"grant_type"` // 用户通过哪种授权方式登录的
 	Success       int64           `json:"success"`    // 用户登录成功的次数, 及用户访问系统的次数
-	Failed        int             `json:"-"`          // 用户连续登录失败的次数, 如果登录成功则清零, 用户实现用户多少
+	Failed        int             `json:"failed"`     // 用户连续登录失败的次数, 如果登录成功则清零, 用户实现用户多少
 	UserID        string          `json:"-"`          // 用户ID
 	ApplicationID string          `json:"-"`          // 用户应用ID
 }
 
 // Invitation code
 type Invitation struct {
-	Code                 string   `json:"code"`
-	InviterID            string   `json:"inviter_id"`
-	InvitedUserID        string   `json:"invited_user_id,omitempty"`
-	InvitedUserDomainID  string   `json:"invited_user_domain_id,omitempty"`
-	InvitedTime          int64    `json:"invited_time"`
-	AcceptTime           int64    `json:"accept_time,omitempty"`
-	ExpireTime           int64    `json:"expire_time,omitempty"`
-	InvitationURL        string   `json:"invitation_url"`
-	InvitedUserRoleNames []string `json:"invited_user_role_names"`
-	AccessProjects       []string `json:"access_project_ids"`
+	Code           string   `json:"code"`                     // 邀请码
+	Inviter        string   `json:"inviter"`                  // 邀请人
+	Invitee        string   `json:"invitee,omitempty"`        // 被邀人
+	InviteeDomain  string   `json:"invitee_domain,omitempty"` // 别邀人域ID
+	InvitedTime    int64    `json:"invited_time"`             // 邀请时间
+	AcceptTime     int64    `json:"accept_time,omitempty"`    // 被邀人接收邀请的时间
+	ExpireTime     int64    `json:"expire_time,omitempty"`    // 邀请码过期时间
+	InvitationURI  string   `json:"invitation_uri"`           // 邀请URI
+	InviteeRoles   []string `json:"invitee_roles"`            // 赋予被邀人的那些角色
+	AccessProjects []string `json:"access_project_ids"`       // 赋予被邀人项目访问范围
 }
 
 // Validate 校验创建时的参数
@@ -77,11 +78,7 @@ func (u *User) Validate() error {
 		return exception.NewBadRequest("user's account is too long,  max length is 128")
 	}
 
-	if u.Password == nil {
-		return exception.NewBadRequest("the user's password required!")
-	}
-
-	if len(u.Password.Password) < 6 {
+	if u.Password != nil && len(u.Password.Password) < 6 {
 		return exception.NewBadRequest("user password length must not be less than 6")
 	}
 

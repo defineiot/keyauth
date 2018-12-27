@@ -692,28 +692,6 @@ func (s *store) ValidateGlobalUser(userName, password string) (string, error) {
 	return "", nil
 }
 
-func (s *store) CheckUserNameIsExist(domainID, userName string) (bool, error) {
-	rows, err := s.stmts[CheckUserExistByName].Query(userName, domainID)
-	if err != nil {
-		return false, exception.NewInternalServerError("query user name exist error, %s", err)
-	}
-	defer rows.Close()
-
-	userNames := []string{}
-	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err != nil {
-			return false, exception.NewInternalServerError("scan user name exist record error, %s", err)
-		}
-		userNames = append(userNames, name)
-	}
-	if len(userNames) == 0 {
-		return false, nil
-	}
-
-	return true, nil
-}
-
 func (s *store) CheckUserIsExistByID(userID string) (bool, error) {
 	var uid string
 	err := s.stmts[CheckUserExistByID].QueryRow(userID).Scan(&uid)

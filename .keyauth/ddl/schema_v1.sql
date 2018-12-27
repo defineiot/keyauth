@@ -277,11 +277,12 @@ CREATE TABLE `invitation_records` (
 `code` char(64) NOT NULL DEFAULT '' COMMENT '邀请码',
 `inviter` char(64) NOT NULL DEFAULT '' COMMENT '邀请人ID',
 `invitee` char(64) NOT NULL DEFAULT '' COMMENT '被邀请人ID',
-`invitee_role_ids` varchar(128) NOT NULL DEFAULT '' COMMENT '授予被邀请人的角色列表',
+`invitee_domain` char(64) NOT NULL DEFAULT '' COMMENT '被邀请人域ID',
+`invitee_roles` varchar(128) NOT NULL DEFAULT '' COMMENT '授予被邀请人的角色列表',
 `invitation_time` int(64) NOT NULL DEFAULT 0 COMMENT '发放邀请码的时间',
 `accept_time` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '接收邀请的时间',
 `expire_time` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '邀请码过期时间',
-`access_project_ids` varchar(255) NOT NULL DEFAULT '' COMMENT '允许访问的项目列表',
+`access_projects` varchar(255) NOT NULL DEFAULT '' COMMENT '允许访问的项目列表',
 `extra` text NOT NULL COMMENT '预留字段',
 PRIMARY KEY (`code`) 
 )

@@ -84,3 +84,25 @@ func (s *store) CreateUser(u *user.User) (*user.User, error) {
 
 	return &userI, nil
 }
+
+func (s *store) CheckUserNameIsExist(domainID, userName string) error {
+	rows, err := s.stmts[CheckUserExistByName].Query(userName, domainID)
+	if err != nil {
+		return false, exception.NewInternalServerError("query user name exist error, %s", err)
+	}
+	defer rows.Close()
+
+	userNames := []string{}
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return false, exception.NewInternalServerError("scan user name exist record error, %s", err)
+		}
+		userNames = append(userNames, name)
+	}
+	if len(userNames) == 0 {
+		return false, nil
+	}
+
+	return true, nil
+}

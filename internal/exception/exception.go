@@ -7,8 +7,9 @@ import (
 
 // APIException is openauth error
 type apiException struct {
-	msg  string
-	code int
+	msg        string
+	statusCode int
+	errorCode  int
 }
 
 func (e *apiException) Error() string {
@@ -17,7 +18,7 @@ func (e *apiException) Error() string {
 
 // Code exception's code
 func (e *apiException) Code() int {
-	return e.code
+	return e.statusCode
 }
 
 // InternalServerError exception
@@ -25,9 +26,23 @@ type InternalServerError struct {
 	*apiException
 }
 
+// NewInternalServerError for 503
+func NewInternalServerError(format string, args ...interface{}) error {
+	excp := new(InternalServerError)
+	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), statusCode: http.StatusInternalServerError}
+	return excp
+}
+
 // NotFound exception
 type NotFound struct {
 	*apiException
+}
+
+// NewNotFound for 404
+func NewNotFound(format string, args ...interface{}) error {
+	excp := new(NotFound)
+	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), statusCode: http.StatusNotFound}
+	return excp
 }
 
 // BadRequest exception
@@ -35,9 +50,23 @@ type BadRequest struct {
 	*apiException
 }
 
+// NewBadRequest for 400
+func NewBadRequest(format string, args ...interface{}) error {
+	excp := new(BadRequest)
+	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), statusCode: http.StatusBadRequest}
+	return excp
+}
+
 // Unauthorized exception
 type Unauthorized struct {
 	*apiException
+}
+
+// NewUnauthorized for 401
+func NewUnauthorized(format string, args ...interface{}) error {
+	excp := new(Unauthorized)
+	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), statusCode: http.StatusUnauthorized}
+	return excp
 }
 
 // Forbidden exception
@@ -45,9 +74,23 @@ type Forbidden struct {
 	*apiException
 }
 
+// NewForbidden for 403
+func NewForbidden(format string, args ...interface{}) error {
+	excp := new(Forbidden)
+	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), statusCode: http.StatusForbidden}
+	return excp
+}
+
 // Expired exception
 type Expired struct {
 	*apiException
+}
+
+// NewExpired for 401
+func NewExpired(format string, args ...interface{}) error {
+	excp := new(Expired)
+	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), statusCode: http.StatusUnauthorized}
+	return excp
 }
 
 // MethodNotAllowed exception
@@ -55,51 +98,9 @@ type MethodNotAllowed struct {
 	*apiException
 }
 
-// NewInternalServerError for 503
-func NewInternalServerError(format string, args ...interface{}) error {
-	excp := new(InternalServerError)
-	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), code: http.StatusInternalServerError}
-	return excp
-}
-
-// NewNotFound for 404
-func NewNotFound(format string, args ...interface{}) error {
-	excp := new(NotFound)
-	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), code: http.StatusNotFound}
-	return excp
-}
-
-// NewBadRequest for 400
-func NewBadRequest(format string, args ...interface{}) error {
-	excp := new(BadRequest)
-	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), code: http.StatusBadRequest}
-	return excp
-}
-
-// NewUnauthorized for 401
-func NewUnauthorized(format string, args ...interface{}) error {
-	excp := new(Unauthorized)
-	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), code: http.StatusUnauthorized}
-	return excp
-}
-
-// NewExpired for 401
-func NewExpired(format string, args ...interface{}) error {
-	excp := new(Expired)
-	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), code: http.StatusUnauthorized}
-	return excp
-}
-
-// NewForbidden for 403
-func NewForbidden(format string, args ...interface{}) error {
-	excp := new(Forbidden)
-	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), code: http.StatusForbidden}
-	return excp
-}
-
 // NewMethodNotAllowed for 405
 func NewMethodNotAllowed(format string, args ...interface{}) error {
 	excp := new(MethodNotAllowed)
-	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), code: http.StatusMethodNotAllowed}
+	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), statusCode: http.StatusMethodNotAllowed}
 	return excp
 }
