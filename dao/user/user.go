@@ -21,9 +21,13 @@ type User struct {
 	Gender            string    `json:"gender"`              // 性别
 	Avatar            string    `json:"avatar"`              // 头像
 	Locked            string    `json:"locked"`              // 是否冻结次用户
-	CreateAt          string    `json:"create_at"`           // 用户创建的时间
-	ExpiresActiveDays string    `json:"expires_active_days"` // 用户多久未登录时(天), 冻结改用户, 防止僵尸用户的账号被利用
+	CreateAt          int64     `json:"create_at"`           // 用户创建的时间
+	ExpiresActiveDays int       `json:"expires_active_days"` // 用户多久未登录时(天), 冻结改用户, 防止僵尸用户的账号被利用
 	Password          *Password `json:"password"`            // 密码相关信息
+
+	DomainID         string `json:"-"`
+	DepartmentID     string `json:"-"`
+	DefaultProjectID string `json:"-"`
 
 	Domain         *domain.Domain         `json:"domain"`       // 如果需要对象由上层进行查找
 	DefaultProject *project.Project       `json:"project"`      //  如果需要对象由上层进行查找
@@ -82,11 +86,11 @@ func (u *User) Validate() error {
 		return exception.NewBadRequest("user password length must not be less than 6")
 	}
 
-	if u.Domain == nil || u.Domain.ID == "" {
+	if u.DomainID == "" {
 		return exception.NewBadRequest("the user's domain required!")
 	}
 
-	if u.Department == nil || u.Department.ID == "" {
+	if u.DepartmentID == "" {
 		return exception.NewBadRequest("the user's department required!")
 	}
 
@@ -102,40 +106,40 @@ type Store interface {
 
 // Reader use to read user information form store
 type Reader interface {
-	ListUser(domainID string) ([]*User, error)
-	ListUserRoles(domainID, userID string) ([]string, error)
-	GetUserByID(userID string) (*User, error)
-	GetUserByName(domainID, userName string) (*User, error)
-	ValidateUser(domainID, userName, password string) (string, error)
-	ValidateGlobalUser(userName, password string) (string, error)
-	CheckUserNameIsExist(domainID, userName string) (bool, error)
-	CheckUserNameIsGlobalExist(userName string) (bool, error)
-	CheckUserIsExistByID(userID string) (bool, error)
+	// ListUser(domainID string) ([]*User, error)
+	// ListUserRoles(domainID, userID string) ([]string, error)
+	// GetUserByID(userID string) (*User, error)
+	// GetUserByName(domainID, userName string) (*User, error)
+	// ValidateUser(domainID, userName, password string) (string, error)
+	// ValidateGlobalUser(userName, password string) (string, error)
+	// CheckUserNameIsExist(domainID, userName string) (bool, error)
+	// CheckUserNameIsGlobalExist(userName string) (bool, error)
+	// CheckUserIsExistByID(userID string) (bool, error)
 
-	ListUserProjects(domainID, userID string) ([]string, error)
-	ListUserOtherDomains(userID string) ([]string, error)
+	// ListUserProjects(domainID, userID string) ([]string, error)
+	// ListUserOtherDomains(userID string) ([]string, error)
 }
 
 // Writer use to write user information to store
 type Writer interface {
-	CreateUser(u *User) (*User, error)
-	RevolkVerifyCode(id int64) error
+	CreateUser(u *User) error
+	// RevolkVerifyCode(id int64) error
 
-	SaveUserOtherDomain(userID, otherDomainID string) error
-	DeleteUserOtherDomain(userID, otherDomainID string) error
+	// SaveUserOtherDomain(userID, otherDomainID string) error
+	// DeleteUserOtherDomain(userID, otherDomainID string) error
 
-	DeleteUser(domainID, userID string) error
+	// DeleteUser(domainID, userID string) error
 
-	SetUserPassword(userID, oldPass, newPass string) error
-	SetDefaultProject(domainID, userID, projectID string) error
-	AddProjectsToUser(domainID, userID string, projectIDs ...string) error
-	RemoveProjectsFromUser(domainID, userID string, projectIDs ...string) error
-	BindRole(domainID, userID, roleName string) error
-	UnBindRole(domainID, userID, roleName string) error
+	// SetUserPassword(userID, oldPass, newPass string) error
+	// SetDefaultProject(domainID, userID, projectID string) error
+	// AddProjectsToUser(domainID, userID string, projectIDs ...string) error
+	// RemoveProjectsFromUser(domainID, userID string, projectIDs ...string) error
+	// BindRole(domainID, userID, roleName string) error
+	// UnBindRole(domainID, userID, roleName string) error
 
-	SaveInvitationsRecord(inviterID string, invitedRoles, accessProjects []string) (*Invitation, error)
-	ListInvitationRecord(inviterID string) ([]*Invitation, error)
-	GetInvitationRecord(inviterID, code string) (*Invitation, error)
-	DeleteInvitationRecord(id int64) error
-	UpdateInvitationsRecord(ir *Invitation) error
+	// SaveInvitationsRecord(inviterID string, invitedRoles, accessProjects []string) (*Invitation, error)
+	// ListInvitationRecord(inviterID string) ([]*Invitation, error)
+	// GetInvitationRecord(inviterID, code string) (*Invitation, error)
+	// DeleteInvitationRecord(id int64) error
+	// UpdateInvitationsRecord(ir *Invitation) error
 }

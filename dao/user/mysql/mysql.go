@@ -10,10 +10,6 @@ import (
 )
 
 const (
-	SaveVerifyCode        = "save-verify-code"
-	FindVerifyCodeByMail  = "find-verify-code-by-mail"
-	FindVerifyCodeByPhone = "find-verify-code-by-phone"
-	DeleteVerifyCodeByID  = "delete-verify-code-by-id"
 	SaveUserOtherDomain   = "save-user-other-domain"
 	FindUserOtherDomain   = "find-user-other-domain"
 	DeleteUserOtherDomain = "delete-user-other-domain"
@@ -25,6 +21,7 @@ const (
 	FindOneInvitationRecord       = "find-one-invitation-record"
 
 	SaveUser               = "save-user"
+	SavePass               = "save-pass"
 	FindAllUsers           = "find-all-users"
 	FindUserByID           = "find-user-by-id"
 	FindUserByName         = "find-user-by-name"
@@ -53,26 +50,6 @@ const (
 // NewUserStore use to create domain storage service
 func NewUserStore(db *sql.DB, key string, log log.IOTAuthLogger) (user.Store, error) {
 	unprepared := map[string]string{
-		SaveVerifyCode: `
-			INSERT INTO verification_code (email_address, phone_number, code, create_at, expire_at) 
-			VALUES (?,?,?,?,?);
-		`,
-		FindVerifyCodeByMail: `
-			SELECT v.id, v.email_address, v.phone_number, v.code, v.create_at, v.expire_at
-			FROM verification_code v
-			WHERE code = ? 
-			AND email_address = ?;
-		`,
-		FindVerifyCodeByPhone: `
-			SELECT v.id, v.email_address, v.phone_number, v.code, v.create_at, v.expire_at
-			FROM verification_code v
-			WHERE code = ? 
-			AND phone_number = ?;
-		`,
-		DeleteVerifyCodeByID: `
-			DELETE FROM verification_code 
-			WHERE id = ?;
-		`,
 		SaveInvitationsRecord: `
 			INSERT INTO user_invitation_records (inviter_id, invited_user_role_ids, access_project_ids, invitation_time, expire_time, invitation_code) 
 			VALUES (?,?,?,?,?,?);
@@ -99,8 +76,12 @@ func NewUserStore(db *sql.DB, key string, log log.IOTAuthLogger) (user.Store, er
 			WHERE id = ?;
 		`,
 		SaveUser: `
-			INSERT INTO users (id, name, enabled, domain_id, create_at, expires_active_days) 
-			VALUES (?,?,?,?,?,?);
+			INSERT INTO users (id, department, acount, mobile, email, phone, address, real_name, nick_name, gender, avatar, locked, domain_id, create_at, expires_active_days, default_porject_id) 
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);
+		`,
+		SavePass: `
+			INSERT INTO 'passwords' (password, expires_at, create_at, user_id) 
+			VALUES (?,?,?,?);
 		`,
 		SaveUserOtherDomain: `
 			INSERT INTO third_party_users_domains_mapping (user_id, domain_id, create_at) 

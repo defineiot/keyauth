@@ -45,6 +45,18 @@ func NewNotFound(format string, args ...interface{}) error {
 	return excp
 }
 
+// HasExist exception
+type HasExist struct {
+	*apiException
+}
+
+// NewHasExist for 404
+func NewHasExist(format string, args ...interface{}) error {
+	excp := new(HasExist)
+	excp.apiException = &apiException{msg: fmt.Sprintf(format, args...), statusCode: http.StatusBadRequest}
+	return excp
+}
+
 // BadRequest exception
 type BadRequest struct {
 	*apiException

@@ -3,9 +3,9 @@ package mysql_test
 import (
 	"github.com/sirupsen/logrus"
 
+	"github.com/defineiot/keyauth/dao/user"
+	"github.com/defineiot/keyauth/dao/user/mysql"
 	"github.com/defineiot/keyauth/internal/conf/mock"
-	"github.com/defineiot/keyauth/store/user"
-	"github.com/defineiot/keyauth/store/user/mysql"
 )
 
 func newTestStore() user.Store {
