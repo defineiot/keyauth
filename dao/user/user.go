@@ -1,6 +1,10 @@
 package user
 
 import (
+	"encoding/json"
+	"fmt"
+	"log"
+
 	"github.com/defineiot/keyauth/dao/department"
 	"github.com/defineiot/keyauth/dao/domain"
 	"github.com/defineiot/keyauth/dao/project"
@@ -95,6 +99,16 @@ func (u *User) Validate() error {
 	}
 
 	return nil
+}
+
+func (u *User) String() string {
+	str, err := json.Marshal(u)
+	if err != nil {
+		log.Printf("E! marshal user to string error: %s", err)
+		return fmt.Sprintf("ID: %s, Name: %s", u.ID, u.Account)
+	}
+
+	return string(str)
 }
 
 // Store is user service

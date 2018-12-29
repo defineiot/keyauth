@@ -23,3 +23,33 @@ func newTestStore() user.Store {
 
 	return store
 }
+
+type userSuit struct {
+	u     *user.User
+	store user.Store
+}
+
+func (s *userSuit) TearDown() {
+	s.store.Close()
+}
+
+func (s *userSuit) SetUp() {
+	s.u = &user.User{
+		Account:           "unit-test-for-user01",
+		Mobile:            "18108054577",
+		Email:             "18108054577@163.com",
+		Phone:             "028-1111111",
+		Address:           "家庭住址",
+		RealName:          "单元测试",
+		NickName:          "陈独秀",
+		Gender:            "M",
+		Avatar:            "www.google.com",
+		ExpiresActiveDays: 90,
+		Password:          &user.Password{Password: "123456", ExpireAt: 365},
+		DomainID:          "unit-test-for-domain",
+		DepartmentID:      "unit-test-for-department",
+	}
+
+	s.store = newTestStore()
+
+}

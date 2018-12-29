@@ -25,8 +25,6 @@ const (
 	FindAllUsers           = "find-all-users"
 	FindUserByID           = "find-user-by-id"
 	FindUserByName         = "find-user-by-name"
-	FindUserPhones         = "find-user-phones"
-	FindUserEmails         = "find-user-emails"
 	FindUserPassword       = "find-user-password"
 	DeleteUserByID         = "delete-user-by-id"
 	FindUserIDByName       = "find-user-id-by-name"
@@ -51,71 +49,71 @@ const (
 func NewUserStore(db *sql.DB, key string, log log.IOTAuthLogger) (user.Store, error) {
 	unprepared := map[string]string{
 		SaveInvitationsRecord: `
-			INSERT INTO user_invitation_records (inviter_id, invited_user_role_ids, access_project_ids, invitation_time, expire_time, invitation_code) 
+			INSERT INTO invitation_records (inviter, invitee_roles, access_projects, invitation_time, expire_time, code) 
 			VALUES (?,?,?,?,?,?);
 		`,
 		UpdateInvitationsRecord: `
-			UPDATE user_invitation_records 
-			SET invited_user_id = ?,invited_user_domain_id = ?,accept_time = ? 
-			WHERE inviter_id = ? 
-			AND invitation_code = ?;
+			UPDATE invitation_records 
+			SET invitee = ?,invitee_domain = ?,accept_time = ? 
+			WHERE inviter = ? 
+			AND code = ?;
 		`,
 		FindUserAllInvitationsRecords: `
-			SELECT id, inviter_id, invited_user_id, invited_user_domain_id, invited_user_role_ids, invitation_time, accept_time, expire_time, invitation_code, access_project_ids
-			FROM user_invitation_records
-			WHERE inviter_id = ?;
+			SELECT code, inviter, invitee, invitee_domain, invitee_roles, invitation_time, accept_time, expire_time, access_projects 
+			FROM invitation_records
+			WHERE inviter = ?;
 		`,
 		FindOneInvitationRecord: `
-			SELECT id, inviter_id, invited_user_id, invited_user_domain_id, invited_user_role_ids, invitation_time, accept_time, expire_time, invitation_code, access_project_ids
-			FROM user_invitation_records
-			WHERE inviter_id = ? 
-			AND invitation_code = ?;
+			SELECT code, inviter, invitee, invitee_domain, invitee_roles, invitation_time, accept_time, expire_time, access_projects  
+			FROM invitation_records
+			WHERE inviter = ? 
+			AND code = ?;
 		`,
 		DeleteInvitationRecord: `
-			DELETE FROM user_invitation_records 
-			WHERE id = ?;
+			DELETE FROM invitation_records 
+			WHERE code = ?;
 		`,
 		SaveUser: `
-			INSERT INTO users (id, department, acount, mobile, email, phone, address, real_name, nick_name, gender, avatar, locked, domain_id, create_at, expires_active_days, default_porject_id) 
-			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);
+			INSERT INTO users (id, department, account, mobile, email, phone, address, real_name, nick_name, gender, avatar, locked, domain_id, create_at, expires_active_days, default_project_id) 
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);
 		`,
 		SavePass: `
-			INSERT INTO 'passwords' (password, expires_at, create_at, user_id) 
+			INSERT INTO passwords (password, expires_at, create_at, user_id) 
 			VALUES (?,?,?,?);
 		`,
 		SaveUserOtherDomain: `
-			INSERT INTO third_party_users_domains_mapping (user_id, domain_id, create_at) 
+			INSERT INTO user_domain_mappings (user_id, domain_id, join_at) 
 			VALUES (?,?,?);
 		`,
 		FindUserOtherDomain: `
 			SELECT domain_id 
-			FROM third_party_users_domains_mapping 
+			FROM user_domain_mappings 
 			WHERE user_id = ?;
 		`,
 		DeleteUserOtherDomain: `
-			DELETE FROM third_party_users_domains_mapping 
+			DELETE FROM user_domain_mappings 
 			WHERE user_id = ? 
 			AND domain_id = ?;
 		`,
 		FindAllUsers: `
-			SELECT u.id, u.name, u.enabled, u.last_active_time, u.create_at, u.expires_active_days, u.default_project_id, u.domain_id 
+			SELECT u.id, u.account, u.locked, u.create_at, u.expires_active_days, u.default_project_id, u.domain_id 
 			FROM users u
 			WHERE domain_id = ?;
 		`,
 		FindUserByID: `
-			SELECT u.id, u.name, u.enabled, u.last_active_time, u.domain_id, u.create_at, u.expires_active_days, u.default_project_id 
+			SELECT u.id, u.account, u.locked, u.domain_id, u.create_at, u.expires_active_days, u.default_project_id 
 			FROM users u
 			WHERE id = ?;
 		`,
 		FindUserByName: `
-			SELECT u.id, u.name, u.enabled, u.last_active_time, u.domain_id, u.create_at, u.expires_active_days, u.default_project_id 
+			SELECT u.id, u.account, u.locked, u.domain_id, u.create_at, u.expires_active_days, u.default_project_id 
 			FROM users u 
-			WHERE name = ? 
+			WHERE account = ? 
 			AND domain_id = ?;
 		`,
 		FindUserProjects: `
 			SELECT m.project_id 
-			FROM users_projects_mapping m 
+			FROM user_project_mappings m 
 			LEFT JOIN projects p 
 			ON m.project_id = p.id 
 			WHERE m.user_id = ? 
@@ -127,23 +125,13 @@ func NewUserStore(db *sql.DB, key string, log log.IOTAuthLogger) (user.Store, er
 			WHERE id = ?;
 		`,
 		AddProjectToUser: `
-			INSERT INTO users_projects_mapping (user_id, project_id) 
+			INSERT INTO user_project_mappings (user_id, project_id) 
 			VALUES (?,?);
 		`,
 		RemoveProjectsFromUser: `
-			DELETE FROM users_projects_mapping 
+			DELETE FROM user_project_mappings 
 			WHERE user_id = ? 
 			AND project_id = ?;
-		`,
-		FindUserPhones: `
-			SELECT p.id, p.numbers, 'p.primary', p.description 
-			FROM phones p 
-			WHERE user_id = ?;
-		`,
-		FindUserEmails: `
-			SELECT e.id, e.address, 'e.primary', e.description 
-			FROM emails e
-			WHERE user_id = ?;
 		`,
 		FindUserPassword: `
 			SELECT p.password, p.expires_at, p.create_at, p.update_at 
@@ -153,18 +141,18 @@ func NewUserStore(db *sql.DB, key string, log log.IOTAuthLogger) (user.Store, er
 		FindUserIDByName: `
 			SELECT u.id 
 			FROM users u
-			WHERE name = ? 
+			WHERE account = ? 
 			AND domain_id = ?;
 		`,
 		FindGlobalUserIDByName: `
 		    SELECT u.id 
 		    FROM users u
-		    WHERE name = ?;
+		    WHERE account = ?;
 	     `,
 		CheckUserExistByName: `
-			SELECT u.name 
+			SELECT u.account 
 			FROM users u
-			WHERE name = ? 
+			WHERE account = ? 
 			AND domain_id = ?;
 		`,
 		CheckUserExistByID: `
@@ -175,30 +163,30 @@ func NewUserStore(db *sql.DB, key string, log log.IOTAuthLogger) (user.Store, er
 		CheckUserGlobalExistByName: `
 			SELECT u.id
 			FROM users u
-			WHERE name = ?;
+			WHERE account = ?;
 	    `,
 		BindRole: `
-		    INSERT INTO roles_users_mapping (domain_id, user_id, role_name) 
+		    INSERT INTO role_user_mappings (domain_id, user_id, role_id) 
 		    VALUES (?,?,?);
 		`,
 		UnbindRole: `
-		    DELETE FROM roles_users_mapping 
+		    DELETE FROM role_user_mappings 
 			WHERE domain_id = ?
 			AND  user_id = ? 
-			AND role_name = ?;
+			AND role_id = ?;
 		`,
 		FindUserRoles: `
-			SELECT role_name 
-			FROM roles_users_mapping 
+			SELECT role_id 
+			FROM role_user_mappings 
 			WHERE domain_id = ?  
 			AND user_id = ?;
 		`,
 		CheckUserRoleIsBind: `
-		    SELECT role_name 
-		    FROM roles_users_mapping 
+		    SELECT role_id
+		    FROM role_user_mappings 
 			WHERE domain_id = ?
 			AND user_id = ?
-			AND role_name = ?;
+			AND role_id = ?;
 		`,
 		SetUserPassword: `
 			UPDATE passwords

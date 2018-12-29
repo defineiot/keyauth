@@ -8,9 +8,10 @@ import (
 	"io"
 	"time"
 
+	"github.com/satori/go.uuid"
+
 	"github.com/defineiot/keyauth/dao/user"
 	"github.com/defineiot/keyauth/internal/exception"
-	"github.com/satori/go.uuid"
 )
 
 func (s *store) CreateUser(u *user.User) error {

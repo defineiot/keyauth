@@ -519,19 +519,6 @@ package mysql
 // 	return "", nil
 // }
 
-// func (s *store) CheckUserIsExistByID(userID string) (bool, error) {
-// 	var uid string
-// 	err := s.stmts[CheckUserExistByID].QueryRow(userID).Scan(&uid)
-// 	if err != nil {
-// 		if err == sql.ErrNoRows {
-// 			return false, nil
-// 		}
-// 		return false, exception.NewInternalServerError("check user exist by id error, %s", err)
-// 	}
-
-// 	return true, nil
-// }
-
 // func (s *store) CheckUserNameIsGlobalExist(userName string) (bool, error) {
 // 	var uid string
 // 	err := s.stmts[CheckUserGlobalExistByName].QueryRow(userName).Scan(&uid)

@@ -89,7 +89,7 @@ func checkConfType(configType string) (conf *conf.Config, err error) {
 
 func init() {
 	serviceCmd.Flags().StringVarP(&confType, "config-type", "t", "file", "the keyauth service config type [file/env/etcd]")
-	serviceCmd.Flags().StringVarP(&confFile, "config-file", "f", ".keyauth/keyauth.conf", "the keyauth service config from file")
+	serviceCmd.Flags().StringVarP(&confFile, "config-file", "f", "cmd/etc/keyauth.conf", "the keyauth service config from file")
 	serviceCmd.Flags().StringVarP(&confEtcd, "config-etcd", "e", "127.0.0.1:2379", "the keyauth service config from etcd")
 	RootCmd.AddCommand(serviceCmd)
 }

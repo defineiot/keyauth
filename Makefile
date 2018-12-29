@@ -5,7 +5,7 @@ all: test build
 
 run:
 		go build -o ${BINARY_NAME} ${MAIN_FILE_PAHT}
-		./${BINARY_NAME} service bootstrap -f .keyauth/keyauth.conf
+		./${BINARY_NAME} service bootstrap -f cmd/etc/keyauth.conf
 
 clean:
 		go clean
