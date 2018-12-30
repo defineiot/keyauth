@@ -20,13 +20,14 @@ const (
 	FindUserAllInvitationsRecords = "find-user-all-invitation-record"
 	FindOneInvitationRecord       = "find-one-invitation-record"
 
-	SaveUser               = "save-user"
-	SavePass               = "save-pass"
-	FindAllUsers           = "find-all-users"
-	FindUserByID           = "find-user-by-id"
-	FindUserByName         = "find-user-by-name"
-	FindUserPassword       = "find-user-password"
-	DeleteUserByID         = "delete-user-by-id"
+	SaveUser          = "save-user"
+	SavePass          = "save-pass"
+	FindDomainUsers   = "find-domain-users"
+	FindUserByID      = "find-user-by-id"
+	FindUserByAccount = "find-user-by-account"
+	FindUserPassword  = "find-user-password"
+	DeleteUserByID    = "delete-user-by-id"
+
 	FindUserIDByName       = "find-user-id-by-name"
 	FindGlobalUserIDByName = "find-global-user-id-by-name"
 	BindRole               = "bind-role-to-user"
@@ -74,8 +75,8 @@ func NewUserStore(db *sql.DB, key string, log log.IOTAuthLogger) (user.Store, er
 			WHERE code = ?;
 		`,
 		SaveUser: `
-			INSERT INTO users (id, department, account, mobile, email, phone, address, real_name, nick_name, gender, avatar, locked, domain_id, create_at, expires_active_days, default_project_id) 
-			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);
+			INSERT INTO users (id, department, account, mobile, email, phone, address, real_name, nick_name, gender, avatar, language, city, province, locked, domain_id, create_at, expires_active_days, default_project_id) 
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);
 		`,
 		SavePass: `
 			INSERT INTO passwords (password, expires_at, create_at, user_id) 
@@ -95,21 +96,23 @@ func NewUserStore(db *sql.DB, key string, log log.IOTAuthLogger) (user.Store, er
 			WHERE user_id = ? 
 			AND domain_id = ?;
 		`,
-		FindAllUsers: `
-			SELECT u.id, u.account, u.locked, u.create_at, u.expires_active_days, u.default_project_id, u.domain_id 
+		FindDomainUsers: `
+			SELECT u.id, u.department, u.account, u.mobile, u.email, u.phone, u.address, u.real_name, u.nick_name, u.gender, u.avatar, u.language, u.city, u.province, u.locked, u.domain_id, u.create_at, u.expires_active_days, u.default_project_id, p.password, p.expires_at, p.create_at, p.update_at  
 			FROM users u
-			WHERE domain_id = ?;
+			LEFT JOIN passwords p ON p.user_id = u.id 
+			WHERE u.domain_id = ?;
 		`,
 		FindUserByID: `
-			SELECT u.id, u.account, u.locked, u.domain_id, u.create_at, u.expires_active_days, u.default_project_id 
+			SELECT u.id, u.department, u.account, u.mobile, u.email, u.phone, u.address, u.real_name, u.nick_name, u.gender, u.avatar, u.language, u.city, u.province, u.locked, u.domain_id, u.create_at, u.expires_active_days, u.default_project_id, p.password, p.expires_at, p.create_at, p.update_at  
 			FROM users u
-			WHERE id = ?;
+			LEFT JOIN passwords p ON p.user_id = u.id 
+			WHERE u.id = ?;
 		`,
-		FindUserByName: `
-			SELECT u.id, u.account, u.locked, u.domain_id, u.create_at, u.expires_active_days, u.default_project_id 
-			FROM users u 
-			WHERE account = ? 
-			AND domain_id = ?;
+		FindUserByAccount: `
+			SELECT u.id, u.department, u.account, u.mobile, u.email, u.phone, u.address, u.real_name, u.nick_name, u.gender, u.avatar, u.language, u.city, u.province, u.locked, u.domain_id, u.create_at, u.expires_active_days, u.default_project_id, p.password, p.expires_at, p.create_at, p.update_at  
+			FROM users u
+			LEFT JOIN passwords p ON p.user_id = u.id 
+			WHERE u.account = ?;
 		`,
 		FindUserProjects: `
 			SELECT m.project_id 

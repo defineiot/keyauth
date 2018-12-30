@@ -40,7 +40,8 @@ func (s *store) CreateUser(u *user.User) error {
 	u.CreateAt = time.Now().Unix()
 	// 存入
 	if _, err = userPre.Exec(u.ID, u.DepartmentID, u.Account, u.Mobile, u.Email, u.Phone, u.Address, u.RealName, u.NickName,
-		u.Gender, u.Avatar, u.Locked, u.DomainID, u.CreateAt, u.ExpiresActiveDays, u.DefaultProjectID); err != nil {
+		u.Gender, u.Avatar, u.Language, u.City, u.Province, u.Locked, u.DomainID, u.CreateAt,
+		u.ExpiresActiveDays, u.DefaultProjectID); err != nil {
 		return exception.NewInternalServerError("insert user exec sql err, %s", err)
 	}
 
@@ -112,4 +113,110 @@ func (s *store) hmacHash(msg string) string {
 	io.WriteString(mac, msg)
 
 	return fmt.Sprintf("%x", mac.Sum(nil))
+}
+
+func (s *store) ListDomainUsers(domainID string) ([]*user.User, error) {
+	rows, err := s.stmts[FindDomainUsers].Query(domainID)
+	if err != nil {
+		return nil, exception.NewInternalServerError("query user list error, %s", err)
+	}
+	defer rows.Close()
+
+	users := []*user.User{}
+	for rows.Next() {
+		u := new(user.User)
+		pass := new(user.Password)
+		u.Password = pass
+		if err := rows.Scan(&u.ID, &u.DepartmentID, &u.Account, &u.Mobile, &u.Email, &u.Phone, &u.Address,
+			&u.RealName, &u.NickName, &u.Gender, &u.Avatar, &u.Language, &u.City, &u.Province,
+			&u.Locked, &u.DomainID, &u.CreateAt, &u.ExpiresActiveDays, &u.DefaultProjectID,
+			&pass.Password, &pass.ExpireAt, &pass.CreateAt, &pass.UpdateAt); err != nil {
+			return nil, exception.NewInternalServerError("scan project's user id error, %s", err)
+		}
+
+		users = append(users, u)
+	}
+
+	return users, nil
+}
+
+func (s *store) GetUserByID(userID string) (*user.User, error) {
+	u := new(user.User)
+	pass := new(user.Password)
+	u.Password = pass
+	if err := s.stmts[FindUserByID].QueryRow(userID).Scan(&u.ID, &u.DepartmentID, &u.Account, &u.Mobile,
+		&u.Email, &u.Phone, &u.Address, &u.RealName, &u.NickName, &u.Gender, &u.Avatar, &u.Language,
+		&u.City, &u.Province, &u.Locked, &u.DomainID, &u.CreateAt, &u.ExpiresActiveDays, &u.DefaultProjectID,
+		&pass.Password, &pass.ExpireAt, &pass.CreateAt, &pass.UpdateAt); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, exception.NewNotFound("user %s not find", userID)
+		}
+		return nil, exception.NewInternalServerError("query single user error, %s", err)
+	}
+
+	return u, nil
+}
+
+func (s *store) GetUserByAccount(account string) (*user.User, error) {
+	u := new(user.User)
+	pass := new(user.Password)
+	u.Password = pass
+	if err := s.stmts[FindUserByAccount].QueryRow(account).Scan(&u.ID, &u.DepartmentID, &u.Account, &u.Mobile,
+		&u.Email, &u.Phone, &u.Address, &u.RealName, &u.NickName, &u.Gender, &u.Avatar, &u.Language,
+		&u.City, &u.Province, &u.Locked, &u.DomainID, &u.CreateAt, &u.ExpiresActiveDays, &u.DefaultProjectID,
+		&pass.Password, &pass.ExpireAt, &pass.CreateAt, &pass.UpdateAt); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, exception.NewNotFound("user %s not find", account)
+		}
+		return nil, exception.NewInternalServerError("query single user error, %s", err)
+	}
+
+	return u, nil
+}
+
+func (s *store) DeleteUser(domainID, userID string) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return exception.NewInternalServerError("start delete user transaction error, %s", err)
+	}
+
+	// 删除用户
+	deleteUserPre, err := tx.Prepare("DELETE FROM users WHERE id = ?")
+	defer deleteUserPre.Close()
+	if err != nil {
+		return exception.NewInternalServerError("prepare delete user stmt error, %s", err)
+	}
+
+	ret, err := deleteUserPre.Exec(userID)
+	if err != nil {
+		return exception.NewInternalServerError("delete user exec sql error, %s", err)
+	}
+	count, err := ret.RowsAffected()
+	if err != nil {
+		return exception.NewInternalServerError("get delete row affected error, %s", err)
+	}
+	if count == 0 {
+		return exception.NewBadRequest("user %s not exist", userID)
+	}
+
+	// 删除用户的密码
+	deletePassPre, err := tx.Prepare("DELETE FROM passwords WHERE user_id = ?")
+	defer deletePassPre.Close()
+	if err != nil {
+		return exception.NewInternalServerError("prepare delete user pass stmt error, %s", err)
+	}
+	ret, err = deletePassPre.Exec(userID)
+	if err != nil {
+		return exception.NewInternalServerError("delete user pass exec sql error, %s", err)
+	}
+
+	// commit transaction
+	if err := tx.Commit(); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return exception.NewInternalServerError("delete user transaction rollback error, %s", err)
+		}
+		return exception.NewInternalServerError("delete user transaction commit error, but rollback success, %s", err)
+	}
+
+	return nil
 }

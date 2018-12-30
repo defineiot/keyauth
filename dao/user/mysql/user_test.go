@@ -12,6 +12,10 @@ func TestProjectSuit(t *testing.T) {
 	defer suit.TearDown()
 
 	t.Run("CreateUserOK", testCreateUserOK(suit))
+	t.Run("ListDomainUsersOK", testListDomainUsersOK(suit))
+	t.Run("GetUserByIDOK", testGetUserByIDOK(suit))
+	t.Run("GetUserByAccountOK", testGetUserByAccountOK(suit))
+	t.Run("DeleteUserByID", testDeleteUserByIDOK(suit))
 }
 
 func testCreateUserOK(s *userSuit) func(t *testing.T) {
@@ -21,5 +25,45 @@ func testCreateUserOK(s *userSuit) func(t *testing.T) {
 		should.NoError(err)
 
 		t.Logf("create user(%s) success: %s", s.u.Account, s.u)
+	}
+}
+
+func testListDomainUsersOK(s *userSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		users, err := s.store.ListDomainUsers(s.u.DomainID)
+		should.NoError(err)
+
+		t.Logf("list domain(%s) users: %s", s.u.DomainID, users)
+	}
+}
+
+func testGetUserByIDOK(s *userSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		u, err := s.store.GetUserByID(s.u.ID)
+		should.NoError(err)
+
+		t.Logf("get user(%s) by id success: %s", s.u.ID, u)
+	}
+}
+
+func testGetUserByAccountOK(s *userSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		u, err := s.store.GetUserByAccount(s.u.Account)
+		should.NoError(err)
+
+		t.Logf("get user(%s) by account success: %s", s.u.Account, u)
+	}
+}
+
+func testDeleteUserByIDOK(s *userSuit) func(t *testing.T) {
+	return func(t *testing.T) {
+		should := require.New(t)
+		err := s.store.DeleteUser(s.u.DomainID, s.u.ID)
+		should.NoError(err)
+
+		t.Logf("delete user(%s) by id success: %s", s.u.Account, s.u)
 	}
 }

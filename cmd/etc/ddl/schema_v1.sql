@@ -135,14 +135,13 @@ COMMENT = '服务实例, 属于服务发现部分'
 ROW_FORMAT = dynamic;
 
 CREATE TABLE `passwords` (
-`id` int(11) NOT NULL AUTO_INCREMENT,
 `user_id` char(64) NOT NULL DEFAULT '' COMMENT '用户ID',
 `password` varchar(255) NOT NULL DEFAULT '' COMMENT 'hash过后的密码',
 `expires_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '密码过期时间',
 `create_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '密码创建时间',
 `update_at` int(64) UNSIGNED NOT NULL DEFAULT 0,
 `extra` text NOT NULL COMMENT '预留字段',
-PRIMARY KEY (`id`) 
+PRIMARY KEY (`user_id`) 
 )
 ENGINE = InnoDB
 AUTO_INCREMENT = 0
@@ -305,14 +304,10 @@ CREATE TABLE `users` (
 `nick_name` varchar(128) NOT NULL DEFAULT '' COMMENT '用户昵称',
 `gender` char(1) NOT NULL DEFAULT '' COMMENT '用户的性别(m: 男性 male,  f:  女性 female)',
 `avatar` varchar(128) NOT NULL DEFAULT '' COMMENT '用户头像',
-`quota` varchar(255) NOT NULL DEFAULT '',
+`language` char(64) NOT NULL DEFAULT '' COMMENT '用户使用的语言',
+`city` varchar(64) NOT NULL DEFAULT '' COMMENT '用户所在的城市',
+`province` varchar(64) NOT NULL DEFAULT '用户所在的省',
 `locked` int(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '是否启用/冻结该用户(0: 冻结, 1: 启用)',
-`last_logout_time` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '用户最近一次退出系统的时间',
-`login_type` tinyint(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '登录方式(userpassword, authcode, mobile)',
-`last_login_time` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '最近一次登录时间(user password认证用户)',
-`last_login_ip` char(64) NOT NULL DEFAULT '' COMMENT '最近一次登录的IP(user password认证用户)',
-`login_failed_times` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '用户连续登录失败的次数',
-`login_success_times` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '成功登陆的次数',
 `domain_id` char(64) NOT NULL DEFAULT '' COMMENT '用户所以域ID',
 `create_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '用户创建时间',
 `expires_active_days` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '用户多少天后未登录,  则用户过期',
