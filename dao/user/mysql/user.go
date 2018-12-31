@@ -140,33 +140,30 @@ func (s *store) ListDomainUsers(domainID string) ([]*user.User, error) {
 	return users, nil
 }
 
-func (s *store) GetUserByID(userID string) (*user.User, error) {
+func (s *store) GetUser(index user.FoundIndex, value string) (*user.User, error) {
+	var row *sql.Row
+
 	u := new(user.User)
 	pass := new(user.Password)
 	u.Password = pass
-	if err := s.stmts[FindUserByID].QueryRow(userID).Scan(&u.ID, &u.DepartmentID, &u.Account, &u.Mobile,
-		&u.Email, &u.Phone, &u.Address, &u.RealName, &u.NickName, &u.Gender, &u.Avatar, &u.Language,
-		&u.City, &u.Province, &u.Locked, &u.DomainID, &u.CreateAt, &u.ExpiresActiveDays, &u.DefaultProjectID,
-		&pass.Password, &pass.ExpireAt, &pass.CreateAt, &pass.UpdateAt); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, exception.NewNotFound("user %s not find", userID)
-		}
-		return nil, exception.NewInternalServerError("query single user error, %s", err)
+	switch index {
+	case user.UserID:
+		row = s.stmts[FindUserByID].QueryRow(value)
+	case user.Account:
+		row = s.stmts[FindUserByAccount].QueryRow(value)
+	case user.Mobile:
+		row = s.stmts[FindUserByMobile].QueryRow(value)
+	case user.Email:
+		row = s.stmts[FindUserByEmail].QueryRow(value)
+	default:
+		return nil, exception.NewBadRequest("the user's %s index not found", index)
 	}
-
-	return u, nil
-}
-
-func (s *store) GetUserByAccount(account string) (*user.User, error) {
-	u := new(user.User)
-	pass := new(user.Password)
-	u.Password = pass
-	if err := s.stmts[FindUserByAccount].QueryRow(account).Scan(&u.ID, &u.DepartmentID, &u.Account, &u.Mobile,
+	if err := row.Scan(&u.ID, &u.DepartmentID, &u.Account, &u.Mobile,
 		&u.Email, &u.Phone, &u.Address, &u.RealName, &u.NickName, &u.Gender, &u.Avatar, &u.Language,
 		&u.City, &u.Province, &u.Locked, &u.DomainID, &u.CreateAt, &u.ExpiresActiveDays, &u.DefaultProjectID,
 		&pass.Password, &pass.ExpireAt, &pass.CreateAt, &pass.UpdateAt); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, exception.NewNotFound("user %s not find", account)
+			return nil, exception.NewNotFound("user %s not find", value)
 		}
 		return nil, exception.NewInternalServerError("query single user error, %s", err)
 	}

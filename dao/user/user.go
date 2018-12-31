@@ -12,6 +12,16 @@ import (
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
+const (
+	UserID  FoundIndex = "uid"
+	Account FoundIndex = "account"
+	Mobile  FoundIndex = "mobile"
+	Email   FoundIndex = "email"
+)
+
+// FoundIndex 获取用户的索引类型
+type FoundIndex string
+
 // User info
 type User struct {
 	ID                string    `json:"id"`                  // 用户UUID
@@ -123,8 +133,7 @@ type Store interface {
 // Reader use to read user information form store
 type Reader interface {
 	ListDomainUsers(domainID string) ([]*User, error)
-	GetUserByID(userID string) (*User, error)
-	GetUserByAccount(account string) (*User, error)
+	GetUser(index FoundIndex, value string) (*User, error)
 
 	// ListUserRoles(domainID, userID string) ([]string, error)
 	// ValidateUser(domainID, userName, password string) (string, error)
@@ -132,7 +141,6 @@ type Reader interface {
 	// CheckUserNameIsExist(domainID, userName string) (bool, error)
 	// CheckUserNameIsGlobalExist(userName string) (bool, error)
 	// CheckUserIsExistByID(userID string) (bool, error)
-
 	// ListUserProjects(domainID, userID string) ([]string, error)
 	// ListUserOtherDomains(userID string) ([]string, error)
 }
@@ -154,7 +162,6 @@ type Writer interface {
 	// RemoveProjectsFromUser(domainID, userID string, projectIDs ...string) error
 	// BindRole(domainID, userID, roleName string) error
 	// UnBindRole(domainID, userID, roleName string) error
-
 	// SaveInvitationsRecord(inviterID string, invitedRoles, accessProjects []string) (*Invitation, error)
 	// ListInvitationRecord(inviterID string) ([]*Invitation, error)
 	// GetInvitationRecord(inviterID, code string) (*Invitation, error)

@@ -25,6 +25,8 @@ const (
 	FindDomainUsers   = "find-domain-users"
 	FindUserByID      = "find-user-by-id"
 	FindUserByAccount = "find-user-by-account"
+	FindUserByMobile  = "find-user-by-mobile"
+	FindUserByEmail   = "find-user-by-email"
 	FindUserPassword  = "find-user-password"
 	DeleteUserByID    = "delete-user-by-id"
 
@@ -113,6 +115,18 @@ func NewUserStore(db *sql.DB, key string, log log.IOTAuthLogger) (user.Store, er
 			FROM users u
 			LEFT JOIN passwords p ON p.user_id = u.id 
 			WHERE u.account = ?;
+		`,
+		FindUserByMobile: `
+			SELECT u.id, u.department, u.account, u.mobile, u.email, u.phone, u.address, u.real_name, u.nick_name, u.gender, u.avatar, u.language, u.city, u.province, u.locked, u.domain_id, u.create_at, u.expires_active_days, u.default_project_id, p.password, p.expires_at, p.create_at, p.update_at  
+			FROM users u
+			LEFT JOIN passwords p ON p.user_id = u.id 
+			WHERE u.mobile = ?;
+		`,
+		FindUserByEmail: `
+			SELECT u.id, u.department, u.account, u.mobile, u.email, u.phone, u.address, u.real_name, u.nick_name, u.gender, u.avatar, u.language, u.city, u.province, u.locked, u.domain_id, u.create_at, u.expires_active_days, u.default_project_id, p.password, p.expires_at, p.create_at, p.update_at  
+			FROM users u
+			LEFT JOIN passwords p ON p.user_id = u.id 
+			WHERE u.email = ?;
 		`,
 		FindUserProjects: `
 			SELECT m.project_id 
