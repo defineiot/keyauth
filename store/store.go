@@ -14,6 +14,9 @@ import (
 	"github.com/defineiot/keyauth/internal/cache"
 	"github.com/defineiot/keyauth/internal/conf"
 	"github.com/defineiot/keyauth/internal/log"
+
+	mysqlDom "github.com/defineiot/keyauth/dao/domain/mysql"
+	mysqlPro "github.com/defineiot/keyauth/dao/project/mysql"
 )
 
 // Store is DAO
@@ -26,6 +29,7 @@ type Store struct {
 	token   token.Store
 	service service.Store
 	role    role.Store
+
 	log     log.IOTAuthLogger
 	cache   cache.Cache
 	ttl     time.Duration
@@ -33,25 +37,24 @@ type Store struct {
 	isCache bool
 }
 
-// Options new store options
-type Options struct {
-	Domain  domain.Store
-	Project project.Store
-	User    user.Store
-	App     application.Store
-	Client  client.Store
-	Token   token.Store
-	Role    role.Store
-	Service service.Store
-	Log     log.IOTAuthLogger
-	Conf    *conf.Config
-}
-
 // NewStore store engine
-func NewStore(opts *Options) *Store {
-	store := Store{domain: opts.Domain, log: opts.Log, project: opts.Project, user: opts.User, app: opts.App, client: opts.Client, token: opts.Token, conf: opts.Conf, service: opts.Service, role: opts.Role}
+func NewStore(conf *conf.Config) (*Store, error) {
+	db, err := conf.GetDBConn()
+	if err != nil {
+		return nil, err
+	}
 
-	return &store
+	store := new(Store)
+	dom, err := mysqlDom.NewDomainStore(db)
+	if err != nil {
+		return nil, err
+	}
+	pro, err := mysqlPro.NewProjectStore(db)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, &store
 }
 
 // SetCache set cache instance

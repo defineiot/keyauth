@@ -150,11 +150,8 @@ type Writer interface {
 	CreateUser(u *User) error
 	DeleteUser(domainID, userID string) error
 
-	// RevolkVerifyCode(id int64) error
 	// SaveUserOtherDomain(userID, otherDomainID string) error
 	// DeleteUserOtherDomain(userID, otherDomainID string) error
-
-	// DeleteUser(domainID, userID string) error
 
 	// SetUserPassword(userID, oldPass, newPass string) error
 	// SetDefaultProject(domainID, userID, projectID string) error
