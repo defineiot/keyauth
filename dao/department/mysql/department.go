@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/defineiot/keyauth/dao/department"
 	"github.com/defineiot/keyauth/internal/exception"
@@ -22,7 +22,7 @@ func (s *store) CreateDepartment(d *department.Department) (*department.Departme
 	}
 
 	if len(strings.Split(d.ParentID, "/")) > MaxDepartmentDeep {
-		return nil, exception.NewBadRequest("max department deep is %s, but overflow", MaxDepartmentDeep)
+		return nil, exception.NewBadRequest("max department deep is %d, but overflow", MaxDepartmentDeep)
 	}
 
 	// 默认为顶层部门(根部门)
@@ -57,7 +57,7 @@ func (s *store) GetDepartment(depID string) (*department.Department, error) {
 		&d.ID, &d.Name, &d.ParentID, &d.Grade, &d.Path, &d.ManagerID, &d.DomainID, &d.CreateAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, exception.NewNotFound("department %d not find", depID)
+			return nil, exception.NewNotFound("department %s not find", depID)
 		}
 
 		return nil, exception.NewInternalServerError("query single verify code error, %s", err)

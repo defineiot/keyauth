@@ -5,7 +5,7 @@ import (
 
 	"github.com/defineiot/keyauth/dao/service"
 	"github.com/defineiot/keyauth/internal/exception"
-	"github.com/defineiot/keyauth/internal/log"
+	"github.com/defineiot/keyauth/internal/logger"
 	"github.com/defineiot/keyauth/internal/tools"
 )
 
@@ -28,7 +28,7 @@ const (
 )
 
 // NewServiceStore use to create domain storage service
-func NewServiceStore(db *sql.DB, log log.IOTAuthLogger) (service.Store, error) {
+func NewServiceStore(db *sql.DB, log logger.Logger) (service.Store, error) {
 	unprepared := map[string]string{
 		SaveService: `
 			INSERT INTO services (id, type, name, description, enabled, create_at, client_id, client_secret, token_expire_time) 
@@ -104,14 +104,14 @@ func NewServiceStore(db *sql.DB, log log.IOTAuthLogger) (service.Store, error) {
 		stmts: stmts,
 		sql:   unprepared,
 	}
-	s.IOTAuthLogger = log
+	s.Logger = log
 
 	return &s, nil
 }
 
 // DomainManager is use mongodb as storage
 type store struct {
-	log.IOTAuthLogger
+	logger.Logger
 
 	db    *sql.DB
 	stmts map[string]*sql.Stmt

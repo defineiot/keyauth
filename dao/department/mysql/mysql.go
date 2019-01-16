@@ -5,7 +5,7 @@ import (
 
 	"github.com/defineiot/keyauth/dao/department"
 	"github.com/defineiot/keyauth/internal/exception"
-	"github.com/defineiot/keyauth/internal/log"
+	"github.com/defineiot/keyauth/internal/logger"
 	"github.com/defineiot/keyauth/internal/tools"
 )
 
@@ -18,7 +18,7 @@ const (
 )
 
 // NewDepartmentStore use to create domain storage service
-func NewDepartmentStore(db *sql.DB, log log.IOTAuthLogger) (department.Store, error) {
+func NewDepartmentStore(db *sql.DB, log logger.Logger) (department.Store, error) {
 	unprepared := map[string]string{
 		SaveDepartment: `
 			INSERT INTO departments (id, name, parent, grade, path, manager, domain_id, create_at) 
@@ -67,7 +67,7 @@ type store struct {
 	stmts      map[string]*sql.Stmt
 	unprepared map[string]string
 	key        string
-	log        log.IOTAuthLogger
+	log        logger.Logger
 }
 
 // Close closes the database, releasing any open resources.

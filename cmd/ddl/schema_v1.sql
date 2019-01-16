@@ -212,13 +212,17 @@ ROW_FORMAT = dynamic;
 
 CREATE TABLE `services` (
 `id` char(64) NOT NULL COMMENT '服务的ID',
+`type` char(64) NOT NULL COMMENT '服务类型',
 `name` varchar(255) NOT NULL DEFAULT '' COMMENT '服务名称',
 `description` text NOT NULL COMMENT '服务的功能简介',
 `enabled` int(2) UNSIGNED NOT NULL DEFAULT 0 COMMENT '服务状态',
 `status` varchar(255) NOT NULL DEFAULT '' COMMENT '服务状态',
 `status_update_at` int(64) UNSIGNED NOT NULL DEFAULT 0,
-`version` varchar(255) NOT NULL DEFAULT '',
+`current_version` varchar(128) NOT NULL DEFAULT '',
+`upgrade_version` varchar(128) NOT NULL DEFAULT '',
+`downgrade_version` varchar(128) NOT NULL DEFAULT '',
 `create_at` int(64) UNSIGNED NOT NULL DEFAULT 0,
+`update_at` int(64) UNSIGNED NOT NULL DEFAULT 0,
 `client_id` char(128) NOT NULL DEFAULT '' COMMENT '客户端id',
 `client_secret` char(255) NOT NULL DEFAULT '' COMMENT '客户端凭证',
 `token_expire_time` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'token过期时间',
@@ -254,7 +258,7 @@ CREATE TABLE `tokens` (
 `grant_type` char(64) NOT NULL DEFAULT '' COMMENT '授权类型(password, client, authcode, implement, upgrade, sdk)',
 `token_type` char(64) NOT NULL DEFAULT '' COMMENT '令牌的类型(bearer,  jwt...)',
 `create_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '令牌发放时间(时间戳)',
-`expire_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '令牌过期时间(时间戳)',,
+`expire_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '令牌过期时间(时间戳)',
 `user_id` char(64) NOT NULL DEFAULT '' COMMENT '令牌的持有者ID',
 `domain_id` char(64) NOT NULL DEFAULT '' COMMENT '令牌的作用域 - 域内可用',
 `project_id` char(64) NOT NULL DEFAULT '' COMMENT '令牌的作用域 - 仅能作用在某一个项目内使用',
@@ -383,8 +387,7 @@ CREATE TABLE `departments` (
 `domain_id` char(64) NOT NULL DEFAULT '' COMMENT '所属的域ID',
 `create_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建时间',
 `extra` text NOT NULL COMMENT '预留字段',
-PRIMARY KEY (`id`) ,
-INDEX `number` (`number` ASC)
+PRIMARY KEY (`id`) 
 )
 ENGINE = InnoDB
 AUTO_INCREMENT = 0

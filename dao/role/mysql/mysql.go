@@ -5,7 +5,7 @@ import (
 
 	"github.com/defineiot/keyauth/dao/role"
 	"github.com/defineiot/keyauth/internal/exception"
-	"github.com/defineiot/keyauth/internal/log"
+	"github.com/defineiot/keyauth/internal/logger"
 	"github.com/defineiot/keyauth/internal/tools"
 )
 
@@ -18,7 +18,7 @@ const (
 )
 
 // NewRoleStore use to create domain storage service
-func NewRoleStore(db *sql.DB, log log.IOTAuthLogger) (role.Store, error) {
+func NewRoleStore(db *sql.DB, log logger.Logger) (role.Store, error) {
 	unprepared := map[string]string{
 		SaveRole: `
 			INSERT INTO roles (id, name, description, create_at) 
@@ -63,7 +63,7 @@ func NewRoleStore(db *sql.DB, log log.IOTAuthLogger) (role.Store, error) {
 type store struct {
 	db    *sql.DB
 	stmts map[string]*sql.Stmt
-	log   log.IOTAuthLogger
+	log   logger.Logger
 }
 
 // Close closes the database, releasing any open resources.

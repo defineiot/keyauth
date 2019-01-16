@@ -5,7 +5,7 @@ import (
 
 	"github.com/defineiot/keyauth/dao/user"
 	"github.com/defineiot/keyauth/internal/exception"
-	"github.com/defineiot/keyauth/internal/log"
+	"github.com/defineiot/keyauth/internal/logger"
 	"github.com/defineiot/keyauth/internal/tools"
 )
 
@@ -49,7 +49,7 @@ const (
 )
 
 // NewUserStore use to create domain storage service
-func NewUserStore(db *sql.DB, key string, log log.IOTAuthLogger) (user.Store, error) {
+func NewUserStore(db *sql.DB, key string, log logger.Logger) (user.Store, error) {
 	unprepared := map[string]string{
 		SaveInvitationsRecord: `
 			INSERT INTO invitation_records (inviter, invitee_roles, access_projects, invitation_time, expire_time, code) 
@@ -235,7 +235,7 @@ type store struct {
 	stmts      map[string]*sql.Stmt
 	unprepared map[string]string
 	key        string
-	log        log.IOTAuthLogger
+	log        logger.Logger
 }
 
 // Close closes the database, releasing any open resources.
