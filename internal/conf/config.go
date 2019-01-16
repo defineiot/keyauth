@@ -10,8 +10,8 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
-	"github.com/defineiot/keyauth/internal/log"
-	"github.com/defineiot/keyauth/internal/log/logrus"
+	"github.com/defineiot/keyauth/internal/logger"
+	"github.com/defineiot/keyauth/internal/logger/logrus"
 )
 
 // Configer use to get conf
@@ -29,7 +29,7 @@ type Config struct {
 	Admin      *AdminCount    `toml:"admin"`
 	Mail       *MailConf      `toml:"mail"`
 	SMS        *AliYunSMSConf `toml:"sms"`
-	logger     log.IOTAuthLogger
+	logger     logger.Logger
 	loggerOnce sync.Once
 
 	mailOnce sync.Once
@@ -161,10 +161,10 @@ func (c *Config) Validate() error {
 }
 
 // GetLogger use to get logger instanc
-func (c *Config) GetLogger() (log.IOTAuthLogger, error) {
+func (c *Config) GetLogger() (logger.Logger, error) {
 	var err error
 
-	opts := log.Opts{Name: c.APP.Name, Level: c.Log.Level, FilePath: c.Log.FilePath}
+	opts := logger.Opts{Name: c.APP.Name, Level: c.Log.Level, FilePath: c.Log.FilePath}
 	c.loggerOnce.Do(func() {
 		c.logger, err = logrus.NewLogrusLogger(&opts)
 	})
