@@ -252,5 +252,5 @@ func (s *store) Close() error {
 }
 
 func init() {
-	dao.RegistryUser(NewUserStore)
+	dao.Registe(NewUserStore)
 }

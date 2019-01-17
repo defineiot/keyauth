@@ -76,5 +76,5 @@ func (s *store) Close() error {
 }
 
 func init() {
-	dao.RegistryToken(NewTokenStore)
+	dao.Registe(NewTokenStore)
 }

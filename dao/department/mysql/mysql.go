@@ -84,5 +84,5 @@ func (s *store) Close() error {
 }
 
 func init() {
-	dao.RegistryDEP(NewDepartmentStore)
+	dao.Registe(NewDepartmentStore)
 }

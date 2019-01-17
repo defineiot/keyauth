@@ -107,5 +107,5 @@ func (s *store) Close() error {
 }
 
 func init() {
-	dao.RegistryDomain(NewDomainStore)
+	dao.Registe(NewDomainStore)
 }

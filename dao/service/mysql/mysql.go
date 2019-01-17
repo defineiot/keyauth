@@ -125,5 +125,5 @@ func (s *store) Close() error {
 }
 
 func init() {
-	dao.RegistryService(NewServiceStore)
+	dao.Registe(NewServiceStore)
 }

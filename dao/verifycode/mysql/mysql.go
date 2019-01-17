@@ -62,5 +62,5 @@ func (s *store) Close() error {
 }
 
 func init() {
-	dao.RegistryVerifyCode(NewVerifyCodeStore)
+	dao.Registe(NewVerifyCodeStore)
 }

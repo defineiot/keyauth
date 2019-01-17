@@ -73,5 +73,5 @@ func (s *store) Close() error {
 }
 
 func init() {
-	dao.RegistryRole(NewRoleStore)
+	dao.Registe(NewRoleStore)
 }

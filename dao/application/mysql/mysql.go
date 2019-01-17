@@ -85,5 +85,5 @@ func (s *store) Close() error {
 }
 
 func init() {
-	dao.RegistryAPP(NewAppStore)
+	dao.Registe(NewAppStore)
 }

@@ -1,6 +1,8 @@
 package dao
 
 import (
+	"fmt"
+
 	"github.com/defineiot/keyauth/dao/application"
 	"github.com/defineiot/keyauth/dao/department"
 	"github.com/defineiot/keyauth/dao/domain"
@@ -26,30 +28,31 @@ type Dao struct {
 }
 
 // Registe 注册一个对象的DAO层
-// func Registe(registryFunc interface{}) {
-// 	fmt.Println(reflect.TypeOf(registryFunc).String())
-// 	switch v := registryFunc.(type) {
-// 	case registryAPP:
-// 		Factory.app = v
-// 	case registryDEP:
-// 		Factory.dep = v
-// 	case registryDomain:
-// 		Factory.dom = v
-// 	case registryProject:
-// 		Factory.pro = v
-// 	case registryRole:
-// 		Factory.role = v
-// 	case registryService:
-// 		Factory.svr = v
-// 	case registryToken:
-// 		Factory.tk = v
-// 	case registryUser:
-// 		Factory.usr = v
-// 	default:
-// 		fmt.Printf("unknow registry func: %v\n", v)
-// 		panic("unknow registry func")
-// 	}
-// }
+func Registe(registryFunc interface{}) {
+	switch v := registryFunc.(type) {
+	case func(*Options) (application.Store, error):
+		Factory.app = v
+	case func(*Options) (department.Store, error):
+		Factory.dep = v
+	case func(*Options) (domain.Store, error):
+		Factory.dom = v
+	case func(*Options) (project.Store, error):
+		Factory.pro = v
+	case func(*Options) (role.Store, error):
+		Factory.role = v
+	case func(*Options) (service.Store, error):
+		Factory.svr = v
+	case func(*Options) (token.Store, error):
+		Factory.tk = v
+	case func(*Options) (user.Store, error):
+		Factory.usr = v
+	case func(*Options) (verifycode.Store, error):
+		Factory.vf = v
+	default:
+		fmt.Printf("unknow registry func: %v\n", v)
+		panic("unknow registry func")
+	}
+}
 
 // RegistryAPP 创建对象DAO层的方法
 type registryAPP func(*Options) (application.Store, error)
@@ -61,48 +64,3 @@ type registryService func(*Options) (service.Store, error)
 type registryToken func(*Options) (token.Store, error)
 type registryUser func(*Options) (user.Store, error)
 type registryVerifyCode func(*Options) (verifycode.Store, error)
-
-// RegistryAPP 创建对象DAO层的方法
-func RegistryAPP(rfunc registryAPP) {
-	Factory.app = rfunc
-}
-
-// RegistryDEP 创建对象DAO层的方法
-func RegistryDEP(rfunc registryDEP) {
-	Factory.dep = rfunc
-}
-
-// RegistryDomain 创建对象DAO层的方法
-func RegistryDomain(rfunc registryDomain) {
-	Factory.dom = rfunc
-}
-
-// RegistryProject 创建对象DAO层的方法
-func RegistryProject(rfunc registryProject) {
-	Factory.pro = rfunc
-}
-
-// RegistryRole 创建对象DAO层的方法
-func RegistryRole(rfunc registryRole) {
-	Factory.role = rfunc
-}
-
-// RegistryService 创建对象DAO层的方法
-func RegistryService(rfunc registryService) {
-	Factory.svr = rfunc
-}
-
-// RegistryToken 创建对象DAO层的方法
-func RegistryToken(rfunc registryToken) {
-	Factory.tk = rfunc
-}
-
-// RegistryUser 创建对象DAO层的方法
-func RegistryUser(rfunc registryUser) {
-	Factory.usr = rfunc
-}
-
-// RegistryVerifyCode 创建对象DAO层的方法
-func RegistryVerifyCode(rfunc registryVerifyCode) {
-	Factory.vf = rfunc
-}

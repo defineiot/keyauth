@@ -2,7 +2,6 @@ package dao
 
 import (
 	"database/sql"
-	"fmt"
 	"sync"
 
 	"github.com/defineiot/keyauth/internal/logger"
@@ -92,5 +91,4 @@ func init() {
 	once.Do(func() {
 		Factory = new(factory)
 	})
-	fmt.Println("init dao")
 }
