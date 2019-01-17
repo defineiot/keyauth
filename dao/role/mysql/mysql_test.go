@@ -1,6 +1,7 @@
 package mysql_test
 
 import (
+	"github.com/defineiot/keyauth/dao"
 	"github.com/defineiot/keyauth/dao/role"
 	"github.com/defineiot/keyauth/dao/role/mysql"
 	"github.com/defineiot/keyauth/internal/conf/mock"
@@ -18,7 +19,8 @@ func newTestStore() role.Store {
 		panic(err)
 	}
 
-	store, err := mysql.NewRoleStore(db, log)
+	opt := &dao.Options{DB: db, LOG: log}
+	store, err := mysql.NewRoleStore(opt)
 	if err != nil {
 		panic(err)
 	}

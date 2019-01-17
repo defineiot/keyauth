@@ -1,6 +1,7 @@
 package mysql_test
 
 import (
+	"github.com/defineiot/keyauth/dao"
 	"github.com/defineiot/keyauth/dao/token"
 	"github.com/defineiot/keyauth/dao/token/mysql"
 	"github.com/defineiot/keyauth/internal/conf/mock"
@@ -13,7 +14,8 @@ func newTestStore() token.Store {
 		panic(err)
 	}
 
-	store, err := mysql.NewTokenStore(db)
+	opt := &dao.Options{DB: db}
+	store, err := mysql.NewTokenStore(opt)
 	if err != nil {
 		panic(err)
 	}

@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 
+	"github.com/defineiot/keyauth/dao"
 	"github.com/defineiot/keyauth/dao/role"
 	"github.com/defineiot/keyauth/internal/exception"
 	"github.com/defineiot/keyauth/internal/logger"
@@ -18,7 +19,7 @@ const (
 )
 
 // NewRoleStore use to create domain storage service
-func NewRoleStore(db *sql.DB, log logger.Logger) (role.Store, error) {
+func NewRoleStore(opt *dao.Options) (role.Store, error) {
 	unprepared := map[string]string{
 		SaveRole: `
 			INSERT INTO roles (id, name, description, create_at) 
@@ -45,15 +46,15 @@ func NewRoleStore(db *sql.DB, log logger.Logger) (role.Store, error) {
 	}
 
 	// prepare all statements to verify syntax
-	stmts, err := tools.PrepareStmts(db, unprepared)
+	stmts, err := tools.PrepareStmts(opt.DB, unprepared)
 	if err != nil {
 		return nil, exception.NewInternalServerError("prepare token store query statment error, %s", err)
 	}
 
 	s := store{
-		db:    db,
+		db:    opt.DB,
 		stmts: stmts,
-		log:   log,
+		log:   opt.LOG,
 	}
 
 	return &s, nil
@@ -69,4 +70,8 @@ type store struct {
 // Close closes the database, releasing any open resources.
 func (s *store) Close() error {
 	return s.db.Close()
+}
+
+func init() {
+	dao.Registe(NewRoleStore)
 }

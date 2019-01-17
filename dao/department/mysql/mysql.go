@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 
+	"github.com/defineiot/keyauth/dao"
 	"github.com/defineiot/keyauth/dao/department"
 	"github.com/defineiot/keyauth/internal/exception"
 	"github.com/defineiot/keyauth/internal/logger"
@@ -18,7 +19,14 @@ const (
 )
 
 // NewDepartmentStore use to create domain storage service
-func NewDepartmentStore(db *sql.DB, log logger.Logger) (department.Store, error) {
+func NewDepartmentStore(opt *dao.Options) (department.Store, error) {
+	if opt.DB == nil {
+		return nil, exception.NewInternalServerError("the db connection required")
+	}
+	if opt.LOG == nil {
+		return nil, exception.NewInternalServerError("the logger not config")
+	}
+
 	unprepared := map[string]string{
 		SaveDepartment: `
 			INSERT INTO departments (id, name, parent, grade, path, manager, domain_id, create_at) 
@@ -46,16 +54,16 @@ func NewDepartmentStore(db *sql.DB, log logger.Logger) (department.Store, error)
 	}
 
 	// prepare all statements to verify syntax
-	stmts, err := tools.PrepareStmts(db, unprepared)
+	stmts, err := tools.PrepareStmts(opt.DB, unprepared)
 	if err != nil {
 		return nil, exception.NewInternalServerError("prepare department store query statment error, %s", err)
 	}
 
 	s := store{
-		db:         db,
+		db:         opt.DB,
 		stmts:      stmts,
 		unprepared: unprepared,
-		log:        log,
+		log:        opt.LOG,
 	}
 
 	return &s, nil
@@ -73,4 +81,8 @@ type store struct {
 // Close closes the database, releasing any open resources.
 func (s *store) Close() error {
 	return s.db.Close()
+}
+
+func init() {
+	dao.Registe(NewDepartmentStore)
 }

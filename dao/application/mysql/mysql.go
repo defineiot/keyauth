@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 
+	"github.com/defineiot/keyauth/dao"
 	"github.com/defineiot/keyauth/dao/application"
 	"github.com/defineiot/keyauth/internal/exception"
 	"github.com/defineiot/keyauth/internal/tools"
@@ -19,7 +20,11 @@ const (
 )
 
 // NewAppStore use to create domain storage service
-func NewAppStore(db *sql.DB) (application.Store, error) {
+func NewAppStore(opt *dao.Options) (application.Store, error) {
+	if opt.DB == nil {
+		return nil, exception.NewInternalServerError("mysql connection is null")
+	}
+
 	unprepared := map[string]string{
 		CreateAPP: `
 			INSERT INTO applications (id, name, user_id, website, logo_image, description, create_at, redirect_uri, client_id, client_secret, locked, token_expire_time) 
@@ -55,13 +60,13 @@ func NewAppStore(db *sql.DB) (application.Store, error) {
 	}
 
 	// prepare all statements to verify syntax
-	stmts, err := tools.PrepareStmts(db, unprepared)
+	stmts, err := tools.PrepareStmts(opt.DB, unprepared)
 	if err != nil {
 		return nil, exception.NewInternalServerError("prepare application store query statment error, %s", err)
 	}
 
 	s := store{
-		db:    db,
+		db:    opt.DB,
 		stmts: stmts,
 	}
 
@@ -77,4 +82,8 @@ type store struct {
 // Close closes the database, releasing any open resources.
 func (s *store) Close() error {
 	return s.db.Close()
+}
+
+func init() {
+	dao.Registe(NewAppStore)
 }

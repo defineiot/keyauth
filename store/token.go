@@ -36,7 +36,7 @@ type AuthRequest struct {
 
 // TokenRequest use to request access token
 type TokenRequest struct {
-	Scope               *token.Scope
+	Scope               string
 	GrantType           token.GrantType
 	ClientID            string
 	ClientSecret        string
@@ -260,7 +260,7 @@ func (s *Store) issueTokenByImplicit(clientID, redirectURI string) (*token.Token
 
 // issueTokenByPassword implement Resource Owner Password Credentials Grant
 // https://tools.ietf.org/html/rfc6749#section-4.3
-func (s *Store) issueTokenByPassword(scope *token.Scope, clientID, username, password string) (*token.Token, error) {
+func (s *Store) issueTokenByPassword(scope, clientID, username, password string) (*token.Token, error) {
 	// 1. vilidate user pass
 	uid, err := s.user.ValidateGlobalUser(username, password)
 	if err != nil {

@@ -1,6 +1,7 @@
 package mysql_test
 
 import (
+	"github.com/defineiot/keyauth/dao"
 	"github.com/defineiot/keyauth/dao/verifycode"
 	"github.com/defineiot/keyauth/dao/verifycode/mysql"
 	"github.com/defineiot/keyauth/internal/conf/mock"
@@ -13,7 +14,8 @@ func newTestStore() verifycode.Store {
 		panic(err)
 	}
 
-	store, err := mysql.NewVerifyCodeStore(db)
+	opt := &dao.Options{DB: db}
+	store, err := mysql.NewVerifyCodeStore(opt)
 	if err != nil {
 		panic(err)
 	}

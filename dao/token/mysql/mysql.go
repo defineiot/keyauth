@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 
+	"github.com/defineiot/keyauth/dao"
 	"github.com/defineiot/keyauth/dao/token"
 	"github.com/defineiot/keyauth/internal/exception"
 	"github.com/defineiot/keyauth/internal/tools"
@@ -18,7 +19,7 @@ const (
 )
 
 // NewTokenStore use to create domain storage service
-func NewTokenStore(db *sql.DB) (token.Store, error) {
+func NewTokenStore(opt *dao.Options) (token.Store, error) {
 	unprepared := map[string]string{
 		SaveToken: `
 			INSERT INTO tokens (access_token, refresh_token, grant_type, token_type, user_id, domain_id, project_id, service_id, application_id, name, scope, create_at, expire_at, description) 
@@ -50,13 +51,13 @@ func NewTokenStore(db *sql.DB) (token.Store, error) {
 	}
 
 	// prepare all statements to verify syntax
-	stmts, err := tools.PrepareStmts(db, unprepared)
+	stmts, err := tools.PrepareStmts(opt.DB, unprepared)
 	if err != nil {
 		return nil, exception.NewInternalServerError("prepare token store query statment error, %s", err)
 	}
 
 	s := store{
-		db:    db,
+		db:    opt.DB,
 		stmts: stmts,
 	}
 
@@ -72,4 +73,8 @@ type store struct {
 // Close closes the database, releasing any open resources.
 func (s *store) Close() error {
 	return s.db.Close()
+}
+
+func init() {
+	dao.Registe(NewTokenStore)
 }

@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 
+	"github.com/defineiot/keyauth/dao"
 	"github.com/defineiot/keyauth/dao/domain"
 	"github.com/defineiot/keyauth/internal/exception"
 	"github.com/defineiot/keyauth/internal/tools"
@@ -24,7 +25,11 @@ const (
 )
 
 // NewDomainStore use to create domain storage service
-func NewDomainStore(db *sql.DB) (domain.Store, error) {
+func NewDomainStore(opt *dao.Options) (domain.Store, error) {
+	if opt.DB == nil {
+		return nil, exception.NewInternalServerError("miss db connection")
+	}
+
 	unprepared := map[string]string{
 		CreateDomain: `
 			INSERT INTO domains (id, name, display_name, logo_path, description, enabled, type, create_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email, owner_id)
@@ -77,13 +82,13 @@ func NewDomainStore(db *sql.DB) (domain.Store, error) {
 	}
 
 	// prepare all statements to verify syntax
-	stmts, err := tools.PrepareStmts(db, unprepared)
+	stmts, err := tools.PrepareStmts(opt.DB, unprepared)
 	if err != nil {
 		return nil, exception.NewInternalServerError("prepare domain query statment error, %s", err)
 	}
 
 	s := store{
-		db:    db,
+		db:    opt.DB,
 		stmts: stmts,
 	}
 
@@ -99,4 +104,8 @@ type store struct {
 // Close closes the database, releasing any open resources.
 func (s *store) Close() error {
 	return s.db.Close()
+}
+
+func init() {
+	dao.Registe(NewDomainStore)
 }
