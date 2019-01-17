@@ -33,32 +33,6 @@ type Options struct {
 	ConfigMap map[string]string
 }
 
-// Registe 注册一个对象的DAO层
-// func Registe(registryFunc interface{}) {
-// 	fmt.Println(reflect.TypeOf(registryFunc).String())
-// 	switch v := registryFunc.(type) {
-// 	case registryAPP:
-// 		Factory.app = v
-// 	case registryDEP:
-// 		Factory.dep = v
-// 	case registryDomain:
-// 		Factory.dom = v
-// 	case registryProject:
-// 		Factory.pro = v
-// 	case registryRole:
-// 		Factory.role = v
-// 	case registryService:
-// 		Factory.svr = v
-// 	case registryToken:
-// 		Factory.tk = v
-// 	case registryUser:
-// 		Factory.usr = v
-// 	default:
-// 		fmt.Printf("unknow registry func: %v\n", v)
-// 		panic("unknow registry func")
-// 	}
-// }
-
 // Init 初始化dao层
 func Init(opt *Options) (*Dao, error) {
 	f := Factory
