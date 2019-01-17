@@ -2,21 +2,16 @@ package dao
 
 import (
 	"database/sql"
+	"fmt"
+	"sync"
 
-	"github.com/defineiot/keyauth/dao/application"
-	"github.com/defineiot/keyauth/dao/department"
-	"github.com/defineiot/keyauth/dao/domain"
-	"github.com/defineiot/keyauth/dao/project"
-	"github.com/defineiot/keyauth/dao/role"
-	"github.com/defineiot/keyauth/dao/service"
-	"github.com/defineiot/keyauth/dao/token"
-	"github.com/defineiot/keyauth/dao/user"
-	"github.com/defineiot/keyauth/dao/verifycode"
 	"github.com/defineiot/keyauth/internal/logger"
 )
 
-// DaoFactory 默认的DAO层
-var DaoFactory *factory
+// Factory 默认的DAO层
+var Factory *factory
+
+var once sync.Once
 
 // factory 所有对象的DAO层
 type factory struct {
@@ -38,54 +33,35 @@ type Options struct {
 	ConfigMap map[string]string
 }
 
-// RegistryAPP 创建对象DAO层的方法
-type registryAPP func(opt *Options) (application.Store, error)
-type registryDEP func(opt *Options) (department.Store, error)
-type registryDomain func(opt *Options) (domain.Store, error)
-type registryProject func(opt *Options) (project.Store, error)
-type registryRole func(opt *Options) (role.Store, error)
-type registryService func(opt *Options) (service.Store, error)
-type registryToken func(opt *Options) (token.Store, error)
-type registryUser func(opt *Options) (user.Store, error)
-type registryVerifyCode func(opt *Options) (verifycode.Store, error)
-
 // Registe 注册一个对象的DAO层
-func Registe(registryFunc interface{}) {
-	switch v := registryFunc.(type) {
-	case registryAPP:
-		DaoFactory.app = v
-	case registryDEP:
-		DaoFactory.dep = v
-	case registryDomain:
-		DaoFactory.dom = v
-	case registryProject:
-		DaoFactory.pro = v
-	case registryRole:
-		DaoFactory.role = v
-	case registryService:
-		DaoFactory.svr = v
-	case registryToken:
-		DaoFactory.tk = v
-	case registryUser:
-		DaoFactory.usr = v
-	}
-}
-
-// Dao 所有对象的DAO层
-type Dao struct {
-	Application application.Store
-	Department  department.Store
-	Domain      domain.Store
-	Project     project.Store
-	Role        role.Store
-	Service     service.Store
-	Token       token.Store
-	User        user.Store
-	VerifyCode  verifycode.Store
-}
+// func Registe(registryFunc interface{}) {
+// 	fmt.Println(reflect.TypeOf(registryFunc).String())
+// 	switch v := registryFunc.(type) {
+// 	case registryAPP:
+// 		Factory.app = v
+// 	case registryDEP:
+// 		Factory.dep = v
+// 	case registryDomain:
+// 		Factory.dom = v
+// 	case registryProject:
+// 		Factory.pro = v
+// 	case registryRole:
+// 		Factory.role = v
+// 	case registryService:
+// 		Factory.svr = v
+// 	case registryToken:
+// 		Factory.tk = v
+// 	case registryUser:
+// 		Factory.usr = v
+// 	default:
+// 		fmt.Printf("unknow registry func: %v\n", v)
+// 		panic("unknow registry func")
+// 	}
+// }
 
 // Init 初始化dao层
-func (f *factory) Init(opt *Options) (*Dao, error) {
+func Init(opt *Options) (*Dao, error) {
+	f := Factory
 	dao := new(Dao)
 
 	app, err := f.app(opt)
@@ -135,5 +111,12 @@ func (f *factory) Init(opt *Options) (*Dao, error) {
 	dao.User = usr
 	dao.VerifyCode = vf
 
-	return nil, nil
+	return dao, nil
+}
+
+func init() {
+	once.Do(func() {
+		Factory = new(factory)
+	})
+	fmt.Println("init dao")
 }
