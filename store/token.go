@@ -274,7 +274,7 @@ func (s *Store) issueTokenByPassword(scope, clientID, account, password string) 
 		return nil, exception.NewForbidden("username or password invalidate")
 	}
 
-	projectIDs, err := s.dao.Project.ListUserProjects(user.DomainID, user.ID)
+	projectIDs, err := s.dao.Project.ListUserProjects(user.Domain.ID, user.ID)
 	if err != nil {
 		return nil, exception.NewInternalServerError(err.Error())
 	}
@@ -293,7 +293,7 @@ func (s *Store) issueTokenByPassword(scope, clientID, account, password string) 
 	// }
 
 	// 4. generate tokend
-	tk, err := s.generateToken(scope, user.DomainID, user.ID, clientID)
+	tk, err := s.generateToken(scope, user.Domain.ID, user.ID, clientID)
 	if err != nil {
 		return nil, err
 	}

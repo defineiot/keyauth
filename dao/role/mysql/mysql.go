@@ -13,7 +13,8 @@ import (
 const (
 	SaveRole       = "save-role"
 	FindAllRole    = "find-role"
-	FindOneRole    = "find-role-by-name"
+	FindRoleByName = "find-role-by-name"
+	FindRoleByID   = "find-role-by-id"
 	DeleteRole     = "delete-role"
 	CheckRole      = "check-role-exist"
 	FindRoleByUser = "find-role-by-user"
@@ -38,7 +39,12 @@ func NewRoleStore(opt *dao.Options) (role.Store, error) {
 			WHERE domain_id = ?  
 			AND user_id = ?;
 		`,
-		FindOneRole: `
+		FindRoleByName: `
+		    SELECT id, name, description, create_at, update_at 
+			FROM roles
+			WHERE name = ?;
+		`,
+		FindRoleByID: `
 		    SELECT id, name, description, create_at, update_at 
 			FROM roles
 			WHERE id = ?;

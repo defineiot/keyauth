@@ -33,10 +33,10 @@ func testCreateUserOK(s *userSuit) func(t *testing.T) {
 func testListDomainUsersOK(s *userSuit) func(t *testing.T) {
 	return func(t *testing.T) {
 		should := require.New(t)
-		users, err := s.store.ListDomainUsers(s.u.DomainID)
+		users, err := s.store.ListDomainUsers(s.u.Domain.ID)
 		should.NoError(err)
 
-		t.Logf("list domain(%s) users: %s", s.u.DomainID, users)
+		t.Logf("list domain(%s) users: %s", s.u.Domain.ID, users)
 	}
 }
 
@@ -63,7 +63,7 @@ func testGetUserByAccountOK(s *userSuit) func(t *testing.T) {
 func testDeleteUserByIDOK(s *userSuit) func(t *testing.T) {
 	return func(t *testing.T) {
 		should := require.New(t)
-		err := s.store.DeleteUser(s.u.DomainID, s.u.ID)
+		err := s.store.DeleteUser(s.u.Domain.ID, s.u.ID)
 		should.NoError(err)
 
 		t.Logf("delete user(%s) by id success: %s", s.u.Account, s.u)

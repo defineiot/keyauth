@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/defineiot/keyauth/dao/department"
+	"github.com/defineiot/keyauth/dao/domain"
+	"github.com/defineiot/keyauth/dao/project"
 	"github.com/defineiot/keyauth/dao/user"
 	"github.com/defineiot/keyauth/internal/exception"
 	uuid "github.com/satori/go.uuid"
@@ -15,7 +18,7 @@ func (s *store) CreateUser(u *user.User) error {
 		return err
 	}
 
-	if err := s.CheckUserNameIsExist(u.DomainID, u.Account); err != nil {
+	if err := s.CheckUserNameIsExist(u.Domain.ID, u.Account); err != nil {
 		return err
 	}
 
@@ -34,10 +37,14 @@ func (s *store) CreateUser(u *user.User) error {
 
 	u.ID = uuid.NewV4().String()
 	u.CreateAt = time.Now().Unix()
+	dpid := ""
+	if u.DefaultProject != nil {
+		dpid = u.DefaultProject.ID
+	}
 	// 存入
-	if _, err = userPre.Exec(u.ID, u.DepartmentID, u.Account, u.Mobile, u.Email, u.Phone, u.Address, u.RealName, u.NickName,
-		u.Gender, u.Avatar, u.Language, u.City, u.Province, u.Locked, u.DomainID, u.CreateAt,
-		u.ExpiresActiveDays, u.DefaultProjectID); err != nil {
+	if _, err = userPre.Exec(u.ID, u.Department.ID, u.Account, u.Mobile, u.Email, u.Phone, u.Address, u.RealName, u.NickName,
+		u.Gender, u.Avatar, u.Language, u.City, u.Province, u.Locked, u.Domain.ID, u.CreateAt,
+		u.ExpiresActiveDays, dpid); err != nil {
 		return exception.NewInternalServerError("insert user exec sql err, %s", err)
 	}
 
@@ -115,9 +122,12 @@ func (s *store) ListDomainUsers(domainID string) ([]*user.User, error) {
 		u := new(user.User)
 		pass := new(user.Password)
 		u.Password = pass
-		if err := rows.Scan(&u.ID, &u.DepartmentID, &u.Account, &u.Mobile, &u.Email, &u.Phone, &u.Address,
+		u.DefaultProject = new(project.Project)
+		u.Domain = new(domain.Domain)
+		u.Department = new(department.Department)
+		if err := rows.Scan(&u.ID, &u.Department.ID, &u.Account, &u.Mobile, &u.Email, &u.Phone, &u.Address,
 			&u.RealName, &u.NickName, &u.Gender, &u.Avatar, &u.Language, &u.City, &u.Province,
-			&u.Locked, &u.DomainID, &u.CreateAt, &u.ExpiresActiveDays, &u.DefaultProjectID,
+			&u.Locked, &u.Domain.ID, &u.CreateAt, &u.ExpiresActiveDays, &u.DefaultProject.ID,
 			&pass.Password, &pass.ExpireAt, &pass.CreateAt, &pass.UpdateAt); err != nil {
 			return nil, exception.NewInternalServerError("scan project's user id error, %s", err)
 		}
@@ -134,6 +144,9 @@ func (s *store) GetUser(index user.FoundIndex, value string) (*user.User, error)
 	u := new(user.User)
 	pass := new(user.Password)
 	u.Password = pass
+	u.DefaultProject = new(project.Project)
+	u.Domain = new(domain.Domain)
+	u.Department = new(department.Department)
 	switch index {
 	case user.UserID:
 		row = s.stmts[FindUserByID].QueryRow(value)
@@ -146,9 +159,9 @@ func (s *store) GetUser(index user.FoundIndex, value string) (*user.User, error)
 	default:
 		return nil, exception.NewBadRequest("the user's %s index not found", index)
 	}
-	if err := row.Scan(&u.ID, &u.DepartmentID, &u.Account, &u.Mobile,
+	if err := row.Scan(&u.ID, &u.Department.ID, &u.Account, &u.Mobile,
 		&u.Email, &u.Phone, &u.Address, &u.RealName, &u.NickName, &u.Gender, &u.Avatar, &u.Language,
-		&u.City, &u.Province, &u.Locked, &u.DomainID, &u.CreateAt, &u.ExpiresActiveDays, &u.DefaultProjectID,
+		&u.City, &u.Province, &u.Locked, &u.Domain.ID, &u.CreateAt, &u.ExpiresActiveDays, &u.DefaultProject.ID,
 		&pass.Password, &pass.ExpireAt, &pass.CreateAt, &pass.UpdateAt); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewNotFound("user %s not find", value)
@@ -204,4 +217,66 @@ func (s *store) DeleteUser(domainID, userID string) error {
 	}
 
 	return nil
+}
+
+func (s *store) BindRole(domainID, userID, roleID string) error {
+	ok, err := s.CheckUserIsExistByID(userID)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return exception.NewBadRequest("user %s not exist", userID)
+	}
+
+	ok, err = s.checkUserRoleExist(domainID, userID, roleID)
+	if err != nil {
+		return err
+	}
+	if ok {
+		return exception.NewBadRequest("user %s has bind the role: %s", userID, roleID)
+	}
+
+	_, err = s.stmts[BindRole].Exec(domainID, userID, roleID)
+	if err != nil {
+		return exception.NewInternalServerError("insert role user mapping exec sql err, %s", err)
+	}
+
+	return nil
+}
+
+func (s *store) UnBindRole(domainID, userID, roleID string) error {
+	ok, err := s.CheckUserIsExistByID(userID)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return exception.NewBadRequest("user %s exist", userID)
+	}
+
+	ret, err := s.stmts[UnbindRole].Exec(domainID, userID, roleID)
+	if err != nil {
+		return exception.NewInternalServerError("delete role user mapping exec sql error, %s", err)
+	}
+	count, err := ret.RowsAffected()
+	if err != nil {
+		return exception.NewInternalServerError("get delete role user mapping affected error, %s", err)
+	}
+	if count == 0 {
+		return exception.NewBadRequest("the role: %s is not bind to user: %s", roleID, userID)
+	}
+
+	return nil
+}
+
+func (s *store) checkUserRoleExist(domainID, userID, roleID string) (bool, error) {
+	var name string
+	if err := s.stmts[CheckUserRoleIsBind].QueryRow(domainID, userID, roleID).Scan(&name); err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+
+		return false, exception.NewInternalServerError("query user role exist error, %s", err)
+	}
+
+	return true, nil
 }

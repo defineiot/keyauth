@@ -64,6 +64,6 @@ type Reader interface {
 
 // Writer use to write department information to store
 type Writer interface {
-	CreateDepartment(d *Department) (*Department, error)
+	CreateDepartment(d *Department) error
 	DelDepartment(depID string) error
 }

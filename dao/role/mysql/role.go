@@ -68,10 +68,24 @@ func (s *store) ListRole() ([]*role.Role, error) {
 
 func (s *store) GetRole(id string) (*role.Role, error) {
 	r := new(role.Role)
-	err := s.stmts[FindOneRole].QueryRow(id).Scan(&r.ID, &r.Name, &r.Description, &r.CreateAt, &r.UpdateAt)
+	err := s.stmts[FindRoleByID].QueryRow(id).Scan(&r.ID, &r.Name, &r.Description, &r.CreateAt, &r.UpdateAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewNotFound("role %s not find", id)
+		}
+
+		return nil, exception.NewInternalServerError("query single role error, %s", err)
+	}
+
+	return r, nil
+}
+
+func (s *store) GetRoleByName(name string) (*role.Role, error) {
+	r := new(role.Role)
+	err := s.stmts[FindRoleByName].QueryRow(name).Scan(&r.ID, &r.Name, &r.Description, &r.CreateAt, &r.UpdateAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, exception.NewNotFound("role %s not find", name)
 		}
 
 		return nil, exception.NewInternalServerError("query single role error, %s", err)

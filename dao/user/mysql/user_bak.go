@@ -328,55 +328,6 @@ package mysql
 // 	return true, nil
 // }
 
-// func (s *store) BindRole(domainID, userID, roleName string) error {
-// 	ok, err := s.CheckUserIsExistByID(userID)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if !ok {
-// 		return exception.NewBadRequest("user %s not exist", userID)
-// 	}
-
-// 	ok, err = s.checkUserRoleExist(domainID, userID, roleName)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if ok {
-// 		return exception.NewBadRequest("user %s has bind the role: %s", userID, roleName)
-// 	}
-
-// 	_, err = s.stmts[BindRole].Exec(domainID, userID, roleName)
-// 	if err != nil {
-// 		return exception.NewInternalServerError("insert role user mapping exec sql err, %s", err)
-// 	}
-
-// 	return nil
-// }
-
-// func (s *store) UnBindRole(domainID, userID, roleName string) error {
-// 	ok, err := s.CheckUserIsExistByID(userID)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if !ok {
-// 		return exception.NewBadRequest("user %s exist", userID)
-// 	}
-
-// 	ret, err := s.stmts[UnbindRole].Exec(domainID, userID, roleName)
-// 	if err != nil {
-// 		return exception.NewInternalServerError("delete role user mapping exec sql error, %s", err)
-// 	}
-// 	count, err := ret.RowsAffected()
-// 	if err != nil {
-// 		return exception.NewInternalServerError("get delete role user mapping affected error, %s", err)
-// 	}
-// 	if count == 0 {
-// 		return exception.NewBadRequest("the role: %s is not bind to user: %s", roleName, userID)
-// 	}
-
-// 	return nil
-// }
-
 // func (s *store) ListUserRoles(domainID, userID string) ([]string, error) {
 // 	s.log.Debugf("List User Roles SQL: %s Params: domain_id: %s, user_id: %s", s.unprepared[FindUserRoles], domainID, userID)
 // 	rows, err := s.stmts[FindUserRoles].Query(domainID, userID)

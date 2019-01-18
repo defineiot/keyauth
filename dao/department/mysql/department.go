@@ -16,13 +16,13 @@ const (
 	MaxDepartmentDeep = 10
 )
 
-func (s *store) CreateDepartment(d *department.Department) (*department.Department, error) {
+func (s *store) CreateDepartment(d *department.Department) error {
 	if err := d.Validate(); err != nil {
-		return nil, err
+		return err
 	}
 
 	if len(strings.Split(d.ParentID, "/")) > MaxDepartmentDeep {
-		return nil, exception.NewBadRequest("max department deep is %d, but overflow", MaxDepartmentDeep)
+		return exception.NewBadRequest("max department deep is %d, but overflow", MaxDepartmentDeep)
 	}
 
 	// 默认为顶层部门(根部门)
@@ -35,7 +35,7 @@ func (s *store) CreateDepartment(d *department.Department) (*department.Departme
 	} else {
 		parentDep, err := s.GetDepartment(d.ParentID)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		d.Path = parentDep.Path + "/" + d.ID
 	}
@@ -44,10 +44,10 @@ func (s *store) CreateDepartment(d *department.Department) (*department.Departme
 
 	_, err := s.stmts[SaveDepartment].Exec(d.ID, d.Name, d.ParentID, d.Grade, d.Path, d.ManagerID, d.DomainID, d.CreateAt)
 	if err != nil {
-		return nil, exception.NewInternalServerError("insert verify code exec sql err, %s", err)
+		return exception.NewInternalServerError("insert verify code exec sql err, %s", err)
 	}
 
-	return d, nil
+	return nil
 }
 
 func (s *store) GetDepartment(depID string) (*department.Department, error) {

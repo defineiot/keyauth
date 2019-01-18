@@ -6,24 +6,7 @@ import (
 
 // RouteToV1 use to route to ep
 func RouteToV1(r *router.MyRouter) {
-	// Domain
-	// r.HandlerFunc("POST", "/v1/domains/", "CreateDomain", handler.CreateDomain)
-	// r.HandlerFunc("GET", "/v1/domains/", "ListDomain", handler.ListDomain)
-	// r.HandlerFunc("GET", "/v1/domains/:did/", "GetDomain", handler.GetDomain)
-	// r.HandlerFunc("PUT", "/v1/domains/:did/", "UpdateDomain", handler.UpdateDomain)
-	// r.HandlerFunc("DELETE", "/v1/domains/:did/", "DeleteDomain", handler.DeleteDomain)
-
-	// // Project
-	// r.HandlerFunc("GET", "/v1/projects/", "ListProject", handler.ListProject)
-	// r.HandlerFunc("POST", "/v1/projects/", "CreateProject", handler.CreateProject)
-	// r.HandlerFunc("GET", "/v1/projects/:pid/", "GetProject", handler.GetProject)
-	// r.HandlerFunc("DELETE", "/v1/projects/:pid/", "DeleteProject", handler.DeleteProject)
-	// r.HandlerFunc("GET", "/v1/projects/:pid/users/", "ListProjectUser", handler.ListProjectUser)
-	// r.HandlerFunc("POST", "/v1/projects/:pid/users/", "AddUsersToProject", handler.AddUsersToProject)
-	// r.HandlerFunc("DELETE", "/v1/projects/:pid/users/", "RemoveUsersFromProject", handler.RemoveUsersFromProject)
-	// // r.HandlerFunc("PUT", "/v1/projects/:pid/", handler.UpdateProject)
-
-	// // User
+	// User
 	// r.HandlerFunc("POST", "/v1/domains/users/", "CreateDomainUser", handler.CreateDomainUser)
 	// r.HandlerFunc("POST", "/v1/users/", "CreateUser", handler.CreateUser)
 	// r.HandlerFunc("GET", "/v1/users/", "ListDomainUser", handler.ListDomainUser)
@@ -46,8 +29,23 @@ func RouteToV1(r *router.MyRouter) {
 	// r.HandlerFunc("POST", "/v1/registry/", "RegistryUser", handler.RegistryUser)
 	// r.HandlerFunc("POST", "/v1/verifycode/", "IssueVerifyCode", handler.IssueVerifyCode)
 	// r.HandlerFunc("POST", "/v1/invitations/users/:uid/code/:code/", "AcceptInvitation", handler.AcceptInvitation)
-	// // r.HandlerFunc("PUT", "/v1/users/:uid/", handler.UpdateUser)
-	// // r.HandlerFunc("POST", "/v1/default/projects/:pid/", "SetUserDefaultProject", handler.SetUserDefaultProject)
+	//  r.HandlerFunc("PUT", "/v1/users/:uid/", handler.UpdateUser)
+	// r.HandlerFunc("POST", "/v1/default/projects/:pid/", "SetUserDefaultProject", handler.SetUserDefaultProject)
+
+	// Token
+	// r.HandlerFunc("POST", "/v1/oauth2/tokens/", "IssueToken", handler.IssueToken)
+	// r.HandlerFunc("GET", "/v1/oauth2/tokens/", "ValidateToken", handler.ValidateToken)
+	// r.HandlerFunc("DELETE", "/v1/oauth2/tokens/", "RevolkToken", handler.RevolkToken)
+
+	// // Project
+	// r.HandlerFunc("GET", "/v1/projects/", "ListProject", handler.ListProject)
+	// r.HandlerFunc("POST", "/v1/projects/", "CreateProject", handler.CreateProject)
+	// r.HandlerFunc("GET", "/v1/projects/:pid/", "GetProject", handler.GetProject)
+	// r.HandlerFunc("DELETE", "/v1/projects/:pid/", "DeleteProject", handler.DeleteProject)
+	// r.HandlerFunc("GET", "/v1/projects/:pid/users/", "ListProjectUser", handler.ListProjectUser)
+	// r.HandlerFunc("POST", "/v1/projects/:pid/users/", "AddUsersToProject", handler.AddUsersToProject)
+	// r.HandlerFunc("DELETE", "/v1/projects/:pid/users/", "RemoveUsersFromProject", handler.RemoveUsersFromProject)
+	// // r.HandlerFunc("PUT", "/v1/projects/:pid/", handler.UpdateProject)
 
 	// // Application
 	// r.HandlerFunc("POST", "/v1/applications/", "CreateApplication", handler.CreateApplication)
@@ -55,11 +53,6 @@ func RouteToV1(r *router.MyRouter) {
 	// r.HandlerFunc("GET", "/v1/applications/:aid/", "GetApplication", handler.GetApplication)
 	// r.HandlerFunc("DELETE", "/v1/applications/:aid/", "DeleteApplication", handler.DeleteApplication)
 	// // r.HandlerFunc("PUT", "/v1/users/:uid/applications/:aid/", handler.UpdateApplication)
-
-	// // Token
-	// r.HandlerFunc("POST", "/v1/oauth2/tokens/", "IssueToken", handler.IssueToken)
-	// r.HandlerFunc("GET", "/v1/oauth2/tokens/", "ValidateToken", handler.ValidateToken)
-	// r.HandlerFunc("DELETE", "/v1/oauth2/tokens/", "RevolkToken", handler.RevolkToken)
 
 	// // Service
 	// r.HandlerFunc("POST", "/v1/services/", "CreateService", handler.CreateService)

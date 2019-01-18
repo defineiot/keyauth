@@ -48,7 +48,8 @@ type Store interface {
 
 // Reader for read data from store
 type Reader interface {
-	GetRole(name string) (*Role, error)
+	GetRole(id string) (*Role, error)
+	GetRoleByName(name string) (*Role, error)
 	CheckRoleExist(name string) (bool, error)
 	ListRole() ([]*Role, error)
 	ListUserRole(domainID, userID string) ([]*Role, error)
