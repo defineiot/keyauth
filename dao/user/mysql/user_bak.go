@@ -347,16 +347,3 @@ package mysql
 
 // 	return roles, nil
 // }
-
-// func (s *store) checkUserRoleExist(domainID, userID, roleName string) (bool, error) {
-// 	var name string
-// 	if err := s.stmts[CheckUserRoleIsBind].QueryRow(domainID, userID, roleName).Scan(&name); err != nil {
-// 		if err == sql.ErrNoRows {
-// 			return false, nil
-// 		}
-
-// 		return false, exception.NewInternalServerError("query user role exist error, %s", err)
-// 	}
-
-// 	return true, nil
-// }

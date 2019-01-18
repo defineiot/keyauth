@@ -61,10 +61,6 @@ func (d *Domain) Validate() error {
 		return exception.NewBadRequest("domain's name is too long,  max length is 128")
 	}
 
-	if d.Owner == "" {
-		return exception.NewBadRequest("domain's owner_id is required!")
-	}
-
 	return nil
 }
 
