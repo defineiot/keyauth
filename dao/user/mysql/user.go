@@ -1,17 +1,13 @@
 package mysql
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
 	"database/sql"
 	"fmt"
-	"io"
 	"time"
-
-	"github.com/satori/go.uuid"
 
 	"github.com/defineiot/keyauth/dao/user"
 	"github.com/defineiot/keyauth/internal/exception"
+	uuid "github.com/satori/go.uuid"
 )
 
 func (s *store) CreateUser(u *user.User) error {
@@ -54,8 +50,7 @@ func (s *store) CreateUser(u *user.User) error {
 			return exception.NewInternalServerError("prepare insert user password error, user: %s, %s", u.Account, err)
 		}
 
-		hashPW := s.hmacHash(u.Password.Password)
-		pass := user.Password{CreateAt: time.Now().Unix(), ExpireAt: u.Password.ExpireAt, Password: hashPW, UserID: u.ID}
+		pass := user.Password{CreateAt: time.Now().Unix(), ExpireAt: u.Password.ExpireAt, Password: u.Password.Password, UserID: u.ID}
 		// 存入
 		if _, err = passPre.Exec(pass.Password, pass.ExpireAt, pass.CreateAt, pass.UserID); err != nil {
 			return exception.NewInternalServerError("insert password exec sql err, %s", err)
@@ -106,13 +101,6 @@ func (s *store) CheckUserIsExistByID(userID string) (bool, error) {
 	}
 
 	return true, nil
-}
-
-func (s *store) hmacHash(msg string) string {
-	mac := hmac.New(sha256.New, []byte(s.key))
-	io.WriteString(mac, msg)
-
-	return fmt.Sprintf("%x", mac.Sum(nil))
 }
 
 func (s *store) ListDomainUsers(domainID string) ([]*user.User, error) {

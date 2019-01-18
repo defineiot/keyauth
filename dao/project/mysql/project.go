@@ -5,23 +5,23 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/defineiot/keyauth/dao/project"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
-func (s *store) CreateProject(p *project.Project) (*project.Project, error) {
+func (s *store) CreateProject(p *project.Project) error {
 	if err := p.Validate(); err != nil {
-		return nil, err
+		return err
 	}
 
 	ok, err := s.projectNameExist(p.DomainID, p.Name)
 	if err != nil {
-		return nil, exception.NewInternalServerError("check project name exist error, %s", err)
+		return exception.NewInternalServerError("check project name exist error, %s", err)
 	}
 	if ok {
-		return nil, exception.NewBadRequest("project name %s in this domain is exists", p.Name)
+		return exception.NewBadRequest("project name %s in this domain is exists", p.Name)
 	}
 	p.ID = uuid.NewV4().String()
 	p.CreateAt = time.Now().Unix()
@@ -30,10 +30,10 @@ func (s *store) CreateProject(p *project.Project) (*project.Project, error) {
 		&p.ID, &p.Name, &p.Picture, &p.Latitude, &p.Longitude, &p.Enabled,
 		&p.Owner, &p.Description, &p.DomainID, &p.CreateAt)
 	if err != nil {
-		return nil, exception.NewInternalServerError("insert project exec sql err, %s", err)
+		return exception.NewInternalServerError("insert project exec sql err, %s", err)
 	}
 
-	return p, nil
+	return nil
 }
 
 // Notice: if project not exits return nil

@@ -1,6 +1,10 @@
 package store
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"fmt"
+	"io"
 	"time"
 
 	"github.com/defineiot/keyauth/dao"
@@ -8,14 +12,11 @@ import (
 	"github.com/defineiot/keyauth/internal/cache"
 	"github.com/defineiot/keyauth/internal/conf"
 	"github.com/defineiot/keyauth/internal/logger"
-
-	mysqlDom "github.com/defineiot/keyauth/dao/domain/mysql"
-	mysqlPro "github.com/defineiot/keyauth/dao/project/mysql"
 )
 
 // Store is DAO
 type Store struct {
-	*dao.Dao
+	dao     *dao.Dao
 	log     logger.Logger
 	cache   cache.Cache
 	ttl     time.Duration
@@ -27,20 +28,26 @@ type Store struct {
 func NewStore(conf *conf.Config) (*Store, error) {
 	db, err := conf.GetDBConn()
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	store := new(Store)
-	dom, err := mysqlDom.NewDomainStore(db)
+	log, err := conf.GetLogger()
+	if err != nil {
+		panic(err)
+	}
+
+	opt := &dao.Options{DB: db, LOG: log}
+	defaultDao, err := dao.Init(opt)
 	if err != nil {
 		return nil, err
 	}
-	pro, err := mysqlPro.NewProjectStore(db)
-	if err != nil {
-		return nil, err
-	}
 
-	return nil, &store
+	s := new(Store)
+	s.conf = conf
+	s.log = log
+	s.dao = defaultDao
+
+	return s, nil
 }
 
 // SetCache set cache instance
@@ -53,4 +60,11 @@ func (s *Store) SetCache(cache cache.Cache, ttl time.Duration) {
 // DisableCache cancel cache
 func (s *Store) DisableCache() {
 	s.isCache = false
+}
+
+func (s *Store) hmacHash(msg string) string {
+	mac := hmac.New(sha256.New, []byte(s.conf.APP.Key))
+	io.WriteString(mac, msg)
+
+	return fmt.Sprintf("%x", mac.Sum(nil))
 }

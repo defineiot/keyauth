@@ -24,11 +24,10 @@ func TestProjectSuit(t *testing.T) {
 func testCreateProjectOK(s *projectSuit) func(t *testing.T) {
 	return func(t *testing.T) {
 		should := require.New(t)
-		p, err := s.store.CreateProject(s.p)
+		err := s.store.CreateProject(s.p)
 		should.NoError(err)
 
-		t.Logf("create project(%s) success: %s", p.Name, p)
-		s.p = p
+		t.Logf("create project(%s) success: %s", s.p.Name, s.p)
 	}
 }
 

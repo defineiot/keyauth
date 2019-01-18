@@ -86,7 +86,7 @@ type Reader interface {
 
 // Writer for write data to store
 type Writer interface {
-	CreateDomain(d *Domain) (*Domain, error)
+	CreateDomain(d *Domain) error
 	UpdateDomain(id, name, description string) (*Domain, error)
 	DeleteDomainByID(id string) error
 	DeleteDomainByName(name string) error

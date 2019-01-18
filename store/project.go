@@ -9,54 +9,32 @@ import (
 )
 
 // CreateProject use to create an project
-func (s *Store) CreateProject(domainID, name, description string, enabled bool) (*project.Project, error) {
-	if domainID == "" {
-		return nil, exception.NewBadRequest("domainID or domainName required one")
+func (s *Store) CreateProject(p *project.Project) error {
+	if p.DomainID == "" {
+		return exception.NewBadRequest("domainID or domainName required one")
 	}
 
 	// check domain exist
-	ok, err := s.domain.CheckDomainIsExistByID(domainID)
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return nil, exception.NewBadRequest("domain %s not exist", domainID)
+	if _, err := s.dao.Domain.GetDomainByID(p.DomainID); err != nil {
+		return err
 	}
 
-	return s.project.CreateProject(domainID, name, description, enabled)
+	return s.dao.Project.CreateProject(p)
 }
 
 // ListDomainProjects list domain projects
 func (s *Store) ListDomainProjects(domainID string) ([]*project.Project, error) {
 	// check domain exist
-	ok, err := s.domain.CheckDomainIsExistByID(domainID)
-	if err != nil {
+	if _, err := s.dao.Domain.GetDomainByID(domainID); err != nil {
 		return nil, err
 	}
-	if !ok {
-		return nil, exception.NewBadRequest("domain %s not exist", domainID)
-	}
 
-	return s.project.ListDomainProjects(domainID)
+	return s.dao.Project.ListDomainProjects(domainID)
 }
 
 // ListUserProjects todo
 func (s *Store) ListUserProjects(domainID, userID string) ([]*project.Project, error) {
-	pids, err := s.user.ListUserProjects(domainID, userID)
-	if err != nil {
-		return nil, err
-	}
-
-	projects := []*project.Project{}
-	for _, pid := range pids {
-		p, err := s.project.GetProject(pid)
-		if err != nil {
-			return nil, err
-		}
-		projects = append(projects, p)
-	}
-
-	return projects, nil
+	return s.dao.Project.ListUserProjects(domainID, userID)
 }
 
 // GetProject get one project
@@ -68,13 +46,13 @@ func (s *Store) GetProject(id string) (*project.Project, error) {
 
 	if s.isCache {
 		if s.cache.Get(cacheKey, pro) {
-			s.log.Debugf("get project from cache key: %s", cacheKey)
+			s.log.Debug("get project from cache key: %s", cacheKey)
 			return pro, nil
 		}
-		s.log.Debugf("get project from cache failed, key: %s", cacheKey)
+		s.log.Debug("get project from cache failed, key: %s", cacheKey)
 	}
 
-	pro, err = s.project.GetProject(id)
+	pro, err = s.dao.Project.GetProjectByID(id)
 	if err != nil {
 		return nil, err
 	}
@@ -84,9 +62,9 @@ func (s *Store) GetProject(id string) (*project.Project, error) {
 
 	if s.isCache {
 		if !s.cache.Set(cacheKey, pro, s.ttl) {
-			s.log.Debugf("set project cache failed, key: %s", cacheKey)
+			s.log.Debug("set project cache failed, key: %s", cacheKey)
 		}
-		s.log.Debugf("set project cache ok, key: %s", cacheKey)
+		s.log.Debug("set project cache ok, key: %s", cacheKey)
 	}
 
 	return pro, nil
@@ -98,16 +76,16 @@ func (s *Store) DeleteProjectByID(id string) error {
 
 	cacheKey := "project_" + id
 
-	err = s.project.DeleteProjectByID(id)
+	err = s.dao.Project.DeleteProjectByID(id)
 	if err != nil {
 		return err
 	}
 
 	if s.isCache {
 		if !s.cache.Delete(cacheKey) {
-			s.log.Debugf("delete project from cache failed, key: %s", cacheKey)
+			s.log.Debug("delete project from cache failed, key: %s", cacheKey)
 		}
-		s.log.Debugf("delete project from cache success, key: %s", cacheKey)
+		s.log.Debug("delete project from cache success, key: %s", cacheKey)
 	}
 
 	return nil
@@ -119,16 +97,16 @@ func (s *Store) DeleteProjectByName(projectName, domainID string) error {
 
 	cacheKey := "project_" + domainID + projectName
 
-	err = s.project.DeleteProjectByName(projectName, domainID)
+	err = s.dao.Project.DeleteProjectByName(projectName, domainID)
 	if err != nil {
 		return err
 	}
 
 	if s.isCache {
 		if !s.cache.Delete(cacheKey) {
-			s.log.Debugf("delete project from cache failed, key: %s", cacheKey)
+			s.log.Debug("delete project from cache failed, key: %s", cacheKey)
 		}
-		s.log.Debugf("delete project from cache success, key: %s", cacheKey)
+		s.log.Debug("delete project from cache success, key: %s", cacheKey)
 	}
 
 	return nil
@@ -140,14 +118,14 @@ func (s *Store) AddUsersToProject(accessToken, projectID string, userIDs ...stri
 		return err
 	}
 
-	err := s.project.AddUsersToProject(projectID, userIDs...)
+	err := s.dao.Project.AddUsersToProject(projectID, userIDs...)
 
 	cacheKey := "token_" + accessToken
 	if s.isCache {
 		if !s.cache.Delete(cacheKey) {
-			s.log.Debugf("delete token from cache failed, key: %s", cacheKey)
+			s.log.Debug("delete token from cache failed, key: %s", cacheKey)
 		}
-		s.log.Debugf("delete token from cache success, key: %s", cacheKey)
+		s.log.Debug("delete token from cache success, key: %s", cacheKey)
 	}
 
 	return err
@@ -159,14 +137,14 @@ func (s *Store) RemoveUsersFromProject(accessToken, projectID string, userIDs ..
 		return err
 	}
 
-	err := s.project.RemoveUsersFromProject(projectID, userIDs...)
+	err := s.dao.Project.RemoveUsersFromProject(projectID, userIDs...)
 
 	cacheKey := "token_" + accessToken
 	if s.isCache {
 		if !s.cache.Delete(cacheKey) {
-			s.log.Debugf("delete token from cache failed, key: %s", cacheKey)
+			s.log.Debug("delete token from cache failed, key: %s", cacheKey)
 		}
-		s.log.Debugf("delete token from cache success, key: %s", cacheKey)
+		s.log.Debug("delete token from cache success, key: %s", cacheKey)
 	}
 
 	return err
@@ -177,7 +155,8 @@ func (s *Store) checkUserExist(userIDs ...string) error {
 	noexist := make([]string, 0)
 
 	for _, uid := range userIDs {
-		ok, err := s.user.CheckUserIsExistByID(uid)
+
+		ok, err := s.dao.User.CheckUserIsExistByID(uid)
 		if err != nil {
 			errs = append(errs, err.Error())
 		}

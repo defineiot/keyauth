@@ -64,6 +64,7 @@ type Store interface {
 type Reader interface {
 	ListUserApplications(userID string) ([]*Application, error)
 	GetApplication(appID string) (*Application, error)
+	GetApplicationByClientID(clientID string) (*Application, error)
 
 	CheckAPPIsExistByID(appID string) (bool, error)
 	CheckAPPIsExistByName(userID, name string) (bool, error)

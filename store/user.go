@@ -160,7 +160,7 @@ func (s *Store) AcceptInvitation(inviterID, invitationCode, userID, userDomainID
 // CreateUser use to create user
 func (s *Store) CreateUser(domainID, name, password string, enabled bool, userExpires, passExpires int) (*user.User, error) {
 	// 1. create user
-	u, err := s.user.CreateUser(domainID, name, password, true, userExpires, passExpires)
+	u, err := s.dao.User.CreateUser(domainID, name, password, true, userExpires, passExpires)
 	if err != nil {
 		return nil, err
 	}

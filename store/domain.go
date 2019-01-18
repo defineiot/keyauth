@@ -9,8 +9,8 @@ import (
 )
 
 // CreateDomain use to create an domain
-func (s *Store) CreateDomain(name, description, displayName string, enabled bool) (*domain.Domain, error) {
-	return s.domain.CreateDomain(name, description, displayName, enabled)
+func (s *Store) CreateDomain(d *domain.Domain) error {
+	return s.dao.Domain.CreateDomain(d)
 }
 
 // GetDomain use to get domain by id or name
@@ -22,17 +22,17 @@ func (s *Store) GetDomain(bywhat string, valule string) (*domain.Domain, error) 
 
 	if s.isCache {
 		if s.cache.Get(cacheKey, dom) {
-			s.log.Debugf("get domain from cache key: %s", cacheKey)
+			s.log.Debug("get domain from cache key: %s", cacheKey)
 			return dom, nil
 		}
-		s.log.Debugf("get domain from cache failed, key: %s", cacheKey)
+		s.log.Debug("get domain from cache failed, key: %s", cacheKey)
 	}
 
 	switch strings.ToLower(bywhat) {
 	case "id":
-		dom, err = s.domain.GetDomainByID(valule)
+		dom, err = s.dao.Domain.GetDomainByID(valule)
 	case "name":
-		dom, err = s.domain.GetDomainByName(valule)
+		dom, err = s.dao.Domain.GetDomainByName(valule)
 	default:
 		return nil, errors.New("only support ID and Name to get Domain")
 	}
@@ -46,9 +46,9 @@ func (s *Store) GetDomain(bywhat string, valule string) (*domain.Domain, error) 
 
 	if s.isCache {
 		if !s.cache.Set(cacheKey, dom, s.ttl) {
-			s.log.Debugf("set domain cache failed, key: %s", cacheKey)
+			s.log.Debug("set domain cache failed, key: %s", cacheKey)
 		}
-		s.log.Debugf("set domain cache ok, key: %s", cacheKey)
+		s.log.Debug("set domain cache ok, key: %s", cacheKey)
 	}
 
 	return dom, nil
@@ -56,7 +56,7 @@ func (s *Store) GetDomain(bywhat string, valule string) (*domain.Domain, error) 
 
 // ListDomain all domain
 func (s *Store) ListDomain(pageNumber, pageSize int64) (domains []*domain.Domain, totalPage int64, err error) {
-	return s.domain.ListDomain(pageNumber, pageSize)
+	return s.dao.Domain.ListDomain(pageNumber, pageSize)
 }
 
 // DeleteDomain an exist domain
@@ -67,9 +67,9 @@ func (s *Store) DeleteDomain(bywhat string, value string) error {
 
 	switch strings.ToLower(bywhat) {
 	case "id":
-		err = s.domain.DeleteDomainByID(value)
+		err = s.dao.Domain.DeleteDomainByID(value)
 	case "name":
-		err = s.domain.DeleteDomainByName(value)
+		err = s.dao.Domain.DeleteDomainByName(value)
 	default:
 		return errors.New("only support ID and Name to get Domain")
 	}
@@ -80,9 +80,9 @@ func (s *Store) DeleteDomain(bywhat string, value string) error {
 
 	if s.isCache {
 		if !s.cache.Delete(cacheKey) {
-			s.log.Debugf("delete domain from cache failed, key: %s", cacheKey)
+			s.log.Debug("delete domain from cache failed, key: %s", cacheKey)
 		}
-		s.log.Debugf("delete domain from cache suucess, key: %s", cacheKey)
+		s.log.Debug("delete domain from cache suucess, key: %s", cacheKey)
 	}
 
 	return nil
@@ -90,5 +90,5 @@ func (s *Store) DeleteDomain(bywhat string, value string) error {
 
 // CheckDomainExistByName check domain exist
 func (s *Store) CheckDomainExistByName(name string) (bool, error) {
-	return s.domain.CheckDomainIsExistByName(name)
+	return s.dao.Domain.CheckDomainIsExistByName(name)
 }
