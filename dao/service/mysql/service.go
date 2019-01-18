@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/defineiot/keyauth/dao/service"
 	"github.com/defineiot/keyauth/internal/exception"
@@ -146,7 +146,7 @@ func (s *store) ListRoleFeatures(roleID string) ([]*service.Feature, error) {
 }
 
 func (s *store) RegistryServiceFeatures(serviceID, version string, features ...*service.Feature) error {
-	s.Debugf("registry service :%s features: %v", serviceID, features)
+	s.Debug("registry service :%s features: %v", serviceID, features)
 
 	hasF, err := s.ListServiceFeatures(serviceID)
 	if err != nil {
@@ -204,7 +204,7 @@ func (s *store) RegistryServiceFeatures(serviceID, version string, features ...*
 	// commit transaction
 	defer func() {
 		if err := tx.Commit(); err != nil {
-			s.Errorf("feature transaction commit error, %s", err)
+			s.Error("feature transaction commit error, %s", err)
 		}
 	}()
 
@@ -216,11 +216,11 @@ func (s *store) RegistryServiceFeatures(serviceID, version string, features ...*
 	defer addFeaturePre.Close()
 
 	for _, f := range added {
-		s.Infof("service: %s add feature: %s", serviceID, f)
+		s.Info("service: %s add feature: %s", serviceID, f)
 		if _, err := addFeaturePre.Exec(f.ID, f.Name, f.Tag, f.HTTPEndpoint, f.Description, f.IsDeleted,
 			f.DeletedVersion, f.DeleteAt, f.IsAdded, f.AddedVersion, f.AddedAt, serviceID); err != nil {
 			if err := tx.Rollback(); err != nil {
-				s.Errorf("insert feature transaction rollback error, %s", err)
+				s.Error("insert feature transaction rollback error, %s", err)
 			}
 			return exception.NewInternalServerError("insert feature exec sql err, %s", err)
 		}
@@ -234,11 +234,11 @@ func (s *store) RegistryServiceFeatures(serviceID, version string, features ...*
 	defer delFeaturePre.Close()
 
 	for _, f := range deleted {
-		s.Infof("service: %s del feature: %s", serviceID, f.Name)
+		s.Info("service: %s del feature: %s", serviceID, f.Name)
 		_, err := delFeaturePre.Exec(f.IsAdded, f.DeletedVersion, f.DeleteAt, f.Name, f.ServiceID)
 		if err != nil {
 			if err := tx.Rollback(); err != nil {
-				s.Errorf("update delete mark feature feature transaction rollback error, %s", err)
+				s.Error("update delete mark feature feature transaction rollback error, %s", err)
 			}
 			return exception.NewInternalServerError("update delete mark feature feature exec sql err, %s", err)
 		}
@@ -265,7 +265,7 @@ func (s *store) AssociateFeaturesToRole(roleID string, features ...*service.Feat
 		_, err := mappingPre.Exec(f.ID, roleID)
 		if err != nil {
 			if err := tx.Rollback(); err != nil {
-				s.Errorf("insert feature role mapping transaction rollback error, %s", err)
+				s.Error("insert feature role mapping transaction rollback error, %s", err)
 			}
 			return exception.NewInternalServerError("insert feature role mapping exec sql err, %s", err)
 		}
@@ -274,7 +274,7 @@ func (s *store) AssociateFeaturesToRole(roleID string, features ...*service.Feat
 
 	// commit transaction
 	if err := tx.Commit(); err != nil {
-		s.Errorf("insert feature transaction rollback error, %s", err)
+		s.Error("insert feature transaction rollback error, %s", err)
 		return exception.NewInternalServerError("insert feature transaction commit error, but rollback success, %s", err)
 	}
 
@@ -299,7 +299,7 @@ func (s *store) UnlinkFeatureFromRole(roleID string, features ...*service.Featur
 		_, err := mappingPre.Exec(f.ID, roleID)
 		if err != nil {
 			if err := tx.Rollback(); err != nil {
-				s.Errorf("unlik feature role mapping transaction rollback error, %s", err)
+				s.Error("unlik feature role mapping transaction rollback error, %s", err)
 			}
 			return exception.NewInternalServerError("unlik feature role mapping exec sql err, %s", err)
 		}
@@ -308,7 +308,7 @@ func (s *store) UnlinkFeatureFromRole(roleID string, features ...*service.Featur
 
 	// commit transaction
 	if err := tx.Commit(); err != nil {
-		s.Errorf("unlik feature transaction rollback error, %s", err)
+		s.Error("unlik feature transaction rollback error, %s", err)
 		return exception.NewInternalServerError("unlik feature transaction commit error, but rollback success, %s", err)
 	}
 

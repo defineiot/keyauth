@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 
+	"github.com/defineiot/keyauth/dao"
 	"github.com/defineiot/keyauth/dao/project"
 	"github.com/defineiot/keyauth/internal/exception"
 	"github.com/defineiot/keyauth/internal/tools"
@@ -25,7 +26,7 @@ const (
 )
 
 // NewProjectStore use to create domain storage service
-func NewProjectStore(db *sql.DB) (project.Store, error) {
+func NewProjectStore(opt *dao.Options) (project.Store, error) {
 	unprepared := map[string]string{
 		CreateProject: `
 			INSERT INTO projects (id, name, picture, latitude, longitude, enabled, owner_id,  description, domain_id, create_at) 
@@ -89,13 +90,13 @@ func NewProjectStore(db *sql.DB) (project.Store, error) {
 	}
 
 	// prepare all statements to verify syntax
-	stmts, err := tools.PrepareStmts(db, unprepared)
+	stmts, err := tools.PrepareStmts(opt.DB, unprepared)
 	if err != nil {
 		return nil, exception.NewInternalServerError("prepare  project store query statment error, %s", err)
 	}
 
 	s := store{
-		db:    db,
+		db:    opt.DB,
 		stmts: stmts,
 	}
 
@@ -111,4 +112,8 @@ type store struct {
 // Close closes the database, releasing any open resources.
 func (s *store) Close() error {
 	return s.db.Close()
+}
+
+func init() {
+	dao.Registe(NewProjectStore)
 }

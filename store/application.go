@@ -2,7 +2,6 @@ package store
 
 import (
 	"github.com/defineiot/keyauth/dao/application"
-	"github.com/defineiot/keyauth/dao/client"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 

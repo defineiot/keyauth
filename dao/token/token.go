@@ -27,6 +27,7 @@ const (
 	CLIENT   GrantType = "client_credentials" // CLIENT oauth2 Client Credentials Grant
 	REFRESH  GrantType = "refresh_token"      // REFRESH oauth2 Refreshing an Access Token
 	UPSCOPE  GrantType = "upgrade_scope"      // UPSCOPE is an custom grant for use unscope token acquire scope token
+	WeChat   GrantType = "wechat"             // WeChat is an custom grant for use unscope token acquire scope token
 
 	// oauth2 Token Type: https://tools.ietf.org/html/rfc6749#section-7.1
 

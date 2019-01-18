@@ -3,9 +3,10 @@ package mysql
 import (
 	"database/sql"
 
+	"github.com/defineiot/keyauth/dao"
 	"github.com/defineiot/keyauth/dao/service"
 	"github.com/defineiot/keyauth/internal/exception"
-	"github.com/defineiot/keyauth/internal/log"
+	"github.com/defineiot/keyauth/internal/logger"
 	"github.com/defineiot/keyauth/internal/tools"
 )
 
@@ -28,7 +29,7 @@ const (
 )
 
 // NewServiceStore use to create domain storage service
-func NewServiceStore(db *sql.DB, log log.IOTAuthLogger) (service.Store, error) {
+func NewServiceStore(opt *dao.Options) (service.Store, error) {
 	unprepared := map[string]string{
 		SaveService: `
 			INSERT INTO services (id, type, name, description, enabled, create_at, client_id, client_secret, token_expire_time) 
@@ -94,24 +95,24 @@ func NewServiceStore(db *sql.DB, log log.IOTAuthLogger) (service.Store, error) {
 	}
 
 	// prepare all statements to verify syntax
-	stmts, err := tools.PrepareStmts(db, unprepared)
+	stmts, err := tools.PrepareStmts(opt.DB, unprepared)
 	if err != nil {
 		return nil, exception.NewInternalServerError("prepare service store query statment error, %s", err)
 	}
 
 	s := store{
-		db:    db,
+		db:    opt.DB,
 		stmts: stmts,
 		sql:   unprepared,
 	}
-	s.IOTAuthLogger = log
+	s.Logger = opt.LOG
 
 	return &s, nil
 }
 
 // DomainManager is use mongodb as storage
 type store struct {
-	log.IOTAuthLogger
+	logger.Logger
 
 	db    *sql.DB
 	stmts map[string]*sql.Stmt
@@ -121,4 +122,8 @@ type store struct {
 // Close closes the database, releasing any open resources.
 func (s *store) Close() error {
 	return s.db.Close()
+}
+
+func init() {
+	dao.Registe(NewServiceStore)
 }

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/defineiot/keyauth/dao/user"
 	"github.com/defineiot/keyauth/internal/exception"
@@ -57,7 +57,7 @@ func (s *store) ListInvitationRecord(inviterID string) ([]*user.Invitation, erro
 }
 
 func (s *store) GetInvitationRecord(inviterID, code string) (*user.Invitation, error) {
-	s.log.Debugf("Get Invitation Record SQL: %s Params: inviter: %s, code: %s", s.unprepared[FindOneInvitationRecord], inviterID, code)
+	s.log.Debug("Get Invitation Record SQL: %s Params: inviter: %s, code: %s", s.unprepared[FindOneInvitationRecord], inviterID, code)
 	ir := new(user.Invitation)
 	roles := ""
 	projects := ""
