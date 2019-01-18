@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/defineiot/keyauth/dao"
+	_ "github.com/defineiot/keyauth/dao/all"
 
 	"github.com/defineiot/keyauth/internal/cache"
 	"github.com/defineiot/keyauth/internal/conf"

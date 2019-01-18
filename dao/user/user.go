@@ -144,6 +144,7 @@ type Reader interface {
 	// ListUserProjects(domainID, userID string) ([]string, error)
 	// ListUserOtherDomains(userID string) ([]string, error)
 	CheckUserIsExistByID(userID string) (bool, error)
+	// ValidateUser(domainID, userName, password string) (string, error)
 }
 
 // Writer use to write user information to store

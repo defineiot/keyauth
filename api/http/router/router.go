@@ -27,9 +27,6 @@ func NewRouter() *MyRouter {
 		HandleMethodNotAllowed: true,
 	}
 
-	hrouter.NotFound = notFoundHandler
-	hrouter.MethodNotAllowed = methodNotAllowedHandler
-
 	ep := make(map[string]map[string]string)
 
 	r := &MyRouter{Router: hrouter, v1endpoints: ep}
@@ -71,8 +68,8 @@ func (r *MyRouter) Handler(method, path, featureName string, handler http.Handle
 					return
 				}
 
-				if t.ServiceName != ps.ByName("sn") {
-					response.Failed(w, exception.NewForbidden("the token: %s is not belong this service: %s", t.AccessToken, t.ServiceName))
+				if t.ServiceID != ps.ByName("sn") {
+					response.Failed(w, exception.NewForbidden("the token: %s is not belong this service: %s", t.AccessToken, t.ServiceID))
 					return
 				}
 
@@ -131,7 +128,7 @@ func (r *MyRouter) Handler(method, path, featureName string, handler http.Handle
 						return
 					}
 
-					for _, f := range role.Featrues {
+					for _, f := range role.Features {
 						if f.Name == featureName {
 							hasPerm = true
 						}

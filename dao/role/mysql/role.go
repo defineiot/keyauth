@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/defineiot/keyauth/dao/role"
 	"github.com/defineiot/keyauth/internal/exception"
@@ -100,3 +100,22 @@ func (s *store) DeleteRole(id string) error {
 	return nil
 }
 
+func (s *store) ListUserRole(domainID, userID string) ([]*role.Role, error) {
+	rows, err := s.stmts[FindRoleByUser].Query()
+	if err != nil {
+		return nil, exception.NewInternalServerError("query role list error, %s", err)
+	}
+	defer rows.Close()
+
+	roles := []*role.Role{}
+	for rows.Next() {
+		r := new(role.Role)
+		if err := rows.Scan(&r.ID, &r.Name, &r.Description, &r.CreateAt, &r.UpdateAt); err != nil {
+			return nil, exception.NewInternalServerError("scan project record error, %s", err)
+		}
+
+		roles = append(roles, r)
+	}
+
+	return roles, nil
+}

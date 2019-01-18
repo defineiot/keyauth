@@ -51,6 +51,7 @@ type Reader interface {
 	GetRole(name string) (*Role, error)
 	CheckRoleExist(name string) (bool, error)
 	ListRole() ([]*Role, error)
+	ListUserRole(domainID, userID string) ([]*Role, error)
 	// VerifyRole(name string, feature string) (bool, error)
 }
 

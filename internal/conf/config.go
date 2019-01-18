@@ -63,9 +63,9 @@ type MySQLConf struct {
 
 // ETCDConf todo
 type ETCDConf struct {
-	EnableRegisteInstance  string   `toml:"enable_registe_instance"`
+	EnableRegisteInstance  bool     `toml:"enable_registe_instance"`
 	InstanceTTL            int      `toml:"instance_ttl"`
-	EnableRegisteFeatures  string   `toml:"enable_registe_features"`
+	EnableRegisteFeatures  bool     `toml:"enable_registe_features"`
 	InstanceRegistryPrefix string   `toml:"instance_registry_prefix"`
 	Endpoints              []string `toml:"endpoints"`
 	UserName               string   `toml:"username"`
