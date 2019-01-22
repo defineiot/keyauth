@@ -33,7 +33,7 @@ func RouteToV1(r *router.MyRouter) {
 	// r.HandlerFunc("POST", "/v1/default/projects/:pid/", "SetUserDefaultProject", handler.SetUserDefaultProject)
 
 	// Token
-	// r.HandlerFunc("POST", "/v1/oauth2/tokens/", "IssueToken", handler.IssueToken)
+	r.HandlerFunc("POST", "/v1/oauth2/tokens/", "IssueToken", handler.IssueToken)
 	// r.HandlerFunc("GET", "/v1/oauth2/tokens/", "ValidateToken", handler.ValidateToken)
 	// r.HandlerFunc("DELETE", "/v1/oauth2/tokens/", "RevolkToken", handler.RevolkToken)
 
