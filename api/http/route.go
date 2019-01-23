@@ -1,6 +1,7 @@
 package http
 
 import (
+	"github.com/defineiot/keyauth/api/http/handler"
 	"github.com/defineiot/keyauth/api/http/router"
 )
 
@@ -33,9 +34,9 @@ func RouteToV1(r *router.MyRouter) {
 	// r.HandlerFunc("POST", "/v1/default/projects/:pid/", "SetUserDefaultProject", handler.SetUserDefaultProject)
 
 	// Token
-	r.HandlerFunc("POST", "/v1/oauth2/tokens/", "IssueToken", handler.IssueToken)
-	// r.HandlerFunc("GET", "/v1/oauth2/tokens/", "ValidateToken", handler.ValidateToken)
-	// r.HandlerFunc("DELETE", "/v1/oauth2/tokens/", "RevolkToken", handler.RevolkToken)
+	r.HandlerFunc("POST", "/oauth2/tokens/", "IssueToken", handler.IssueToken)
+	r.HandlerFunc("GET", "/oauth2/tokens/", "ValidateToken", handler.ValidateToken)
+	r.HandlerFunc("DELETE", "/oauth2/tokens/", "RevolkToken", handler.RevolkToken)
 
 	// // Project
 	// r.HandlerFunc("GET", "/v1/projects/", "ListProject", handler.ListProject)

@@ -40,6 +40,19 @@ func (s *Store) ListServiceFeatures(name string) ([]*service.Feature, error) {
 }
 
 // CheckServiceHasFeature todo
-// func (s *Store) CheckServiceHasFeature(sn, fn string) (bool, error) {
-// 	return s.dao.Service. service.CheckServiceHasFeature(sn, fn)
-// }
+func (s *Store) CheckServiceHasFeature(sn, fn string) (bool, error) {
+	svr, err := s.dao.Service.GetServiceByName(sn)
+	if err != nil {
+		return false, err
+	}
+
+	var exist bool
+	for i := range svr.Features {
+		if svr.Features[i].Name == fn {
+			exist = true
+			break
+		}
+	}
+
+	return exist, nil
+}

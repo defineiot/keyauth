@@ -293,7 +293,7 @@ func (s *Store) issueTokenByPassword(scope, clientID, account, password string) 
 	// }
 
 	// 4. generate tokend
-	tk, err := s.generateToken(scope, user.Domain.ID, user.ID, clientID)
+	tk, err := s.generateToken(scope, user.Domain.ID, user.ID, clientID, token.Bearer)
 	if err != nil {
 		return nil, err
 	}
@@ -382,7 +382,7 @@ func (s *Store) issueTokenByRefresh(refreshToken string) (*token.Token, error) {
 	}
 
 	// 4. generate new token
-	tk, err := s.generateToken(old.Scope, old.DomainID, old.UserID, old.ApplicationID)
+	tk, err := s.generateToken(old.Scope, old.DomainID, old.UserID, old.ApplicationID, token.Bearer)
 	if err != nil {
 		return nil, err
 	}
@@ -467,7 +467,7 @@ func (s *Store) issueTokenByUpScope(accessToken, workProject, workDomain string)
 
 	// 4. generate an new token
 	// scope := token.Scope{WorkProject: workProject}
-	newTK, err := s.generateToken("", t.DomainID, t.UserID, t.ApplicationID)
+	newTK, err := s.generateToken("", t.DomainID, t.UserID, t.ApplicationID, token.Bearer)
 	if err != nil {
 		return nil, err
 	}
@@ -523,23 +523,24 @@ func (s *Store) checkInProject(targetProject string, projectIDs []string) (bool,
 	return validated, nil
 }
 
-func (s *Store) generateToken(scope, domainID, userID, clientID string) (*token.Token, error) {
+func (s *Store) generateToken(scope, domainID, userID, clientID string, tp token.Type) (*token.Token, error) {
 	t := new(token.Token)
 	t.Scope = scope
 	t.DomainID = domainID
 	t.CreatedAt = time.Now().Unix()
 	t.ExpiresIn = s.conf.Token.ExpiresIn
 	t.GrantType = token.PASSWORD
+	t.TokenType = tp
 	t.UserID = userID
 	t.ApplicationID = clientID
 
-	switch t.TokenType {
-	case "bearer":
+	switch tp {
+	case token.Bearer:
 		t.AccessToken = makeBearerToken(24)
 		t.RefreshToken = makeBearerToken(32)
-	case "jwt":
+	case token.JWT:
 	default:
-		return nil, exception.NewInternalServerError("unknown token type, %s", t.TokenType)
+		return nil, exception.NewInternalServerError("unknown token type, %s, only support bearer", tp)
 	}
 
 	if err := s.dao.Token.SaveToken(t); err != nil {

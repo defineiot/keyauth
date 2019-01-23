@@ -15,7 +15,9 @@ import (
 
 // MyRouter is an hack for httprouter
 type MyRouter struct {
-	Router      *httprouter.Router
+	Router *httprouter.Router
+
+	urlPrefix   string
 	v1endpoints map[string]map[string]string
 }
 
@@ -30,8 +32,12 @@ func NewRouter() *MyRouter {
 	ep := make(map[string]map[string]string)
 
 	r := &MyRouter{Router: hrouter, v1endpoints: ep}
-
 	return r
+}
+
+// SetURLPrefix 设置路由前缀
+func (r *MyRouter) SetURLPrefix(prefix string) {
+	r.urlPrefix = prefix
 }
 
 // Handler is an adapter which allows the usage of an http.Handler as a
@@ -152,18 +158,15 @@ func (r *MyRouter) Handler(method, path, featureName string, handler http.Handle
 
 // HandlerFunc yes hack
 func (r *MyRouter) HandlerFunc(method, path, featureName string, handleFunc http.HandlerFunc) {
-	// fn := runtime.FuncForPC(reflect.ValueOf(handleFunc).Pointer()).Name()
-	// feathure := strings.Split(fn, ".")[1]
+	path = r.urlPrefix + path
 
-	if strings.HasPrefix(path, "/v1/") {
-		_, ok := r.v1endpoints[method]
-		if !ok {
-			mm := make(map[string]string)
-			r.v1endpoints[method] = mm
-		}
-		if featureName != "" {
-			r.v1endpoints[method][featureName] = path
-		}
+	_, ok := r.v1endpoints[method]
+	if !ok {
+		mm := make(map[string]string)
+		r.v1endpoints[method] = mm
+	}
+	if featureName != "" {
+		r.v1endpoints[method][featureName] = path
 	}
 
 	r.Handler(method, path, featureName, http.HandlerFunc(handleFunc))

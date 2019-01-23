@@ -136,6 +136,7 @@ func (s *Service) initGlobal() error {
 func (s *Service) prepare() error {
 	n := negroni.New()
 	r := router.NewRouter()
+	r.SetURLPrefix("/keyauth/v1")
 	RouteToV1(r)
 
 	// includes some default middlewares

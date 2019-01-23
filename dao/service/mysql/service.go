@@ -66,6 +66,22 @@ func (s *store) GetServiceByID(id string) (*service.Service, error) {
 	return &svr, nil
 }
 
+func (s *store) GetServiceByName(name string) (*service.Service, error) {
+	svr := service.Service{}
+	if err := s.stmts[FindServiceByName].QueryRow(name).Scan(&svr.ID, &svr.Type, &svr.Name, &svr.Description,
+		&svr.Enabled, &svr.Status, &svr.StatusUpdateAt, &svr.CurrentVersion, &svr.UpgradeVersion,
+		&svr.DowngradeVersion, &svr.CreateAt, &svr.UpdateAt, &svr.ClientID, &svr.ClientSecret,
+		&svr.TokenExpireTime); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, exception.NewNotFound("service %s not find", name)
+		}
+
+		return nil, exception.NewInternalServerError("query single service client error, %s", err)
+	}
+
+	return &svr, nil
+}
+
 func (s *store) GetServiceByClientID(clientID string) (*service.Service, error) {
 	svr := new(service.Service)
 	if err := s.stmts[FindServiceByClient].QueryRow(clientID).Scan(&svr.ID, &svr.Type, &svr.Name, &svr.Description,

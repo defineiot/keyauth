@@ -95,7 +95,8 @@ type Store interface {
 // Reader read service information from store
 type Reader interface {
 	ListServices() ([]*Service, error)
-	GetServiceByID(name string) (*Service, error)
+	GetServiceByID(id string) (*Service, error)
+	GetServiceByName(name string) (*Service, error)
 	GetServiceByClientID(clientID string) (*Service, error)
 
 	ListServiceFeatures(serviceID string) ([]*Feature, error)

@@ -14,6 +14,7 @@ const (
 	SaveService           = "save-service"
 	FindAllServices       = "find-all-service"
 	FindServiceByID       = "find-service-by-id"
+	FindServiceByName     = "find-service_by-name"
 	FindServiceByClient   = "find-service-by-client"
 	DeleteService         = "delete-service"
 	DeleteServiceFeatures = "delete-services-features"
@@ -43,6 +44,11 @@ func NewServiceStore(opt *dao.Options) (service.Store, error) {
 			SELECT id, type, name, description, enabled, status, status_update_at, current_version, upgrade_version, downgrade_version, create_at, update_at, client_id, client_secret, token_expire_time 
 			FROM services 
 			WHERE id = ?;
+		`,
+		FindServiceByName: `
+			SELECT id, type, name, description, enabled, status, status_update_at, current_version, upgrade_version, downgrade_version, create_at, update_at, client_id, client_secret, token_expire_time 
+			FROM services 
+			WHERE name = ?;
 		`,
 		FindServiceByClient: `
 			SELECT id, type, name, description, enabled, status, status_update_at, current_version, upgrade_version, downgrade_version, create_at, update_at, client_id, client_secret, token_expire_time 
