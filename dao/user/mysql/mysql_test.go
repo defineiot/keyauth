@@ -2,6 +2,8 @@ package mysql_test
 
 import (
 	"github.com/defineiot/keyauth/dao"
+	"github.com/defineiot/keyauth/dao/department"
+	"github.com/defineiot/keyauth/dao/domain"
 	"github.com/defineiot/keyauth/dao/user"
 	"github.com/defineiot/keyauth/dao/user/mysql"
 	"github.com/defineiot/keyauth/internal/conf/mock"
@@ -53,8 +55,8 @@ func (s *userSuit) SetUp() {
 		Province:          "四川",
 		ExpiresActiveDays: 90,
 		Password:          &user.Password{Password: "123456", ExpireAt: 365},
-		DomainID:          "unit-test-for-domain",
-		DepartmentID:      "unit-test-for-department",
+		Domain:            &domain.Domain{ID: "unit-test-for-domain"},
+		Department:        &department.Department{ID: "unit-test-for-department"},
 	}
 
 	s.store = newTestStore()

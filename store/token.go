@@ -2,12 +2,14 @@ package store
 
 import (
 	"encoding/base64"
+	"fmt"
 	"math/rand"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/defineiot/keyauth/dao/token"
+	"github.com/defineiot/keyauth/dao/user"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
@@ -89,7 +91,7 @@ func (t *TokenRequest) Validate() error {
 		if t.AccessToken == "" {
 			return exception.NewBadRequest("if use %s grant type, access_token is needed", t.GrantType)
 		}
-		if t.Scope.WorkProject == "" {
+		if t.Scope == "" {
 			return exception.NewBadRequest("if use %s grant type, scope project_id is needed", t.GrantType)
 		}
 		goto CHECK_CLIENT
@@ -112,13 +114,13 @@ func (s *Store) IssueToken(req *TokenRequest) (*token.Token, error) {
 		return nil, err
 	}
 
-	cli, err := s.client.GetClient(req.ClientID)
+	app, err := s.dao.Application.GetApplicationByClientID(req.ClientID)
 	if err != nil {
 		return nil, err
 	}
 
 	if req.GrantType != token.IMPLICIT {
-		if req.ClientSecret != cli.Secret {
+		if req.ClientSecret != app.ClientSecret {
 			return nil, exception.NewUnauthorized("unauthorized_client")
 		}
 	}
@@ -132,7 +134,7 @@ func (s *Store) IssueToken(req *TokenRequest) (*token.Token, error) {
 		t, err = s.issueTokenByImplicit(req.ClientID, req.RedirectURI)
 		goto DEAL_ERROR
 	case token.PASSWORD:
-		t, err = s.issueTokenByPassword(req.Scope, cli.ID, req.Username, req.Password)
+		t, err = s.issueTokenByPassword(req.Scope, app.ClientID, req.Username, req.Password)
 		goto DEAL_ERROR
 	case token.CLIENT:
 		t, err = s.issueTokenByClient(req.ClientID, req.Scope)
@@ -141,7 +143,7 @@ func (s *Store) IssueToken(req *TokenRequest) (*token.Token, error) {
 		t, err = s.issueTokenByRefresh(req.RefreshToken)
 		goto DEAL_ERROR
 	case token.UPSCOPE:
-		t, err = s.issueTokenByUpScope(req.AccessToken, req.Scope.WorkProject, req.Scope.WorkDomain)
+		t, err = s.issueTokenByUpScope(req.AccessToken, req.Scope, req.Scope)
 	default:
 		return nil, exception.NewBadRequest("invalid_grant only support [authorization_code, implicit, password, client_credentials, refresh_token, upgrade_scope]")
 	}
@@ -164,7 +166,7 @@ func (s *Store) ValidateToken(accessToken string) (*token.Token, error) {
 	cacheKey := "token_" + accessToken
 	if s.isCache {
 		if s.cache.Get(cacheKey, tk) {
-			s.log.Debugf("get token from cache key: %s", cacheKey)
+			s.log.Debug("get token from cache key: %s", cacheKey)
 			ok, exp := tk.IsExpired()
 			if !ok {
 				return nil, exception.NewExpired("token has expired, access_token: %s", tk.AccessToken)
@@ -172,11 +174,11 @@ func (s *Store) ValidateToken(accessToken string) (*token.Token, error) {
 			tk.ExpiresIn = exp
 			return tk, nil
 		}
-		s.log.Debugf("get token from cache failed, key: %s", cacheKey)
+		s.log.Debug("get token from cache failed, key: %s", cacheKey)
 	}
 
 	// 2. get token from backend, and validate is expire
-	tk, err = s.token.GetToken(accessToken)
+	tk, err = s.dao.Token.GetToken(accessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -187,39 +189,39 @@ func (s *Store) ValidateToken(accessToken string) (*token.Token, error) {
 	tk.ExpiresIn = delta
 
 	// 3. if this token is for user, add valiable projects
-	if tk.UserID != "" {
-		if tk.Scope == nil {
-			tk.Scope = new(token.Scope)
-		}
-		projectIDs, err := s.user.ListUserProjects(tk.DomainID, tk.UserID)
-		if err != nil {
-			return nil, exception.NewInternalServerError(err.Error())
-		}
-		tk.Scope.AvaliableProjects = projectIDs
+	// if tk.UserID != "" {
+	// 	if tk.Scope == "" {
+	// 		tk.Scope = new(token.Scope)
+	// 	}
+	// 	projectIDs, err := s.user.ListUserProjects(tk.DomainID, tk.UserID)
+	// 	if err != nil {
+	// 		return nil, exception.NewInternalServerError(err.Error())
+	// 	}
+	// 	tk.Scope.AvaliableProjects = projectIDs
 
-		// 4. if user hasn't work project set his default
-		user, err := s.user.GetUserByID(tk.UserID)
-		if err != nil {
-			return nil, err
-		}
-		if tk.Scope.WorkProject == "" && user.DefaultProjectID != "" {
-			tk.Scope.WorkProject = user.DefaultProjectID
-		}
+	// 	// 4. if user hasn't work project set his default
+	// 	user, err := s.user.GetUserByID(tk.UserID)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	if tk.Scope.WorkProject == "" && user.DefaultProjectID != "" {
+	// 		tk.Scope.WorkProject = user.DefaultProjectID
+	// 	}
 
-		// 5. add user's roles
-		roles, err := s.user.ListUserRoles(tk.DomainID, tk.UserID)
-		if err != nil {
-			return nil, err
-		}
-		tk.Roles = roles
-	}
+	// 	// 5. add user's roles
+	// 	roles, err := s.user.ListUserRoles(tk.DomainID, tk.UserID)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	tk.Roles = roles
+	// }
 
 	// 4. set to cache
 	if s.isCache {
 		if !s.cache.Set(cacheKey, tk, s.ttl) {
-			s.log.Debugf("set token cache failed, key: %s", cacheKey)
+			s.log.Debug("set token cache failed, key: %s", cacheKey)
 		}
-		s.log.Debugf("set token cache ok, key: %s", cacheKey)
+		s.log.Debug("set token cache ok, key: %s", cacheKey)
 	}
 
 	return tk, nil
@@ -231,16 +233,16 @@ func (s *Store) RevokeToken(accessToken string) error {
 
 	cacheKey := "token_" + accessToken
 
-	err = s.token.DeleteToken(accessToken)
+	err = s.dao.Token.DeleteToken(accessToken)
 	if err != nil {
 		return err
 	}
 
 	if s.isCache {
 		if !s.cache.Delete(cacheKey) {
-			s.log.Debugf("delete token from cache failed, key: %s", cacheKey)
+			s.log.Debug("delete token from cache failed, key: %s", cacheKey)
 		}
-		s.log.Debugf("delete token from cache success, key: %s", cacheKey)
+		s.log.Debug("delete token from cache success, key: %s", cacheKey)
 	}
 
 	return nil
@@ -260,70 +262,68 @@ func (s *Store) issueTokenByImplicit(clientID, redirectURI string) (*token.Token
 
 // issueTokenByPassword implement Resource Owner Password Credentials Grant
 // https://tools.ietf.org/html/rfc6749#section-4.3
-func (s *Store) issueTokenByPassword(scope, clientID, username, password string) (*token.Token, error) {
+func (s *Store) issueTokenByPassword(scope, clientID, account, password string) (*token.Token, error) {
+	// 查询用户是否存在
+	user, err := s.dao.User.GetUser(user.Account, account)
+	if err != nil {
+		return nil, err
+	}
+
 	// 1. vilidate user pass
-	uid, err := s.user.ValidateGlobalUser(username, password)
-	if err != nil {
-		return nil, err
-	}
-	if uid == "" {
-		return nil, exception.NewUnauthorized("user password error")
+	if s.hmacHash(password) != user.Password.Password {
+		return nil, exception.NewForbidden("username or password invalidate")
 	}
 
-	// 2. if need issue scope token, check the scope project is belong to user
-	user, err := s.user.GetUserByID(uid)
-	if err != nil {
-		return nil, err
-	}
-
-	projectIDs, err := s.user.ListUserProjects(user.DomainID, uid)
+	projectIDs, err := s.dao.Project.ListUserProjects(user.Domain.ID, user.ID)
 	if err != nil {
 		return nil, exception.NewInternalServerError(err.Error())
 	}
-	if scope != nil && scope.WorkProject != "" {
-		if len(projectIDs) == 0 {
-			return nil, exception.NewForbidden("the scope project: %s, but here is no avaliable project for your", scope.WorkProject)
-		}
-		ok, err := s.checkInProject(scope.WorkProject, projectIDs)
-		if err != nil {
-			return nil, err
-		}
-		if !ok {
-			return nil, exception.NewBadRequest("the project: %s not belong user: %s", scope.WorkProject, uid)
-		}
-	}
+	fmt.Println(projectIDs)
+	// if scope != nil && scope.WorkProject != "" {
+	// 	if len(projectIDs) == 0 {
+	// 		return nil, exception.NewForbidden("the scope project: %s, but here is no avaliable project for your", scope.WorkProject)
+	// 	}
+	// 	ok, err := s.checkInProject(scope.WorkProject, projectIDs)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	if !ok {
+	// 		return nil, exception.NewBadRequest("the project: %s not belong user: %s", scope.WorkProject, uid)
+	// 	}
+	// }
 
 	// 4. generate tokend
-	tk, err := s.generateToken(scope, user.DomainID, uid, clientID)
+	tk, err := s.generateToken(scope, user.Domain.ID, user.ID, clientID, token.Bearer)
 	if err != nil {
 		return nil, err
 	}
 
 	// 5. add valiable projects (default project and other projects)
-	if tk.Scope == nil {
-		tk.Scope = new(token.Scope)
-	}
-	tk.Scope.AvaliableProjects = projectIDs
+	// if tk.Scope == nil {
+	// 	tk.Scope = new(token.Scope)
+	// }
+	// tk.Scope.AvaliableProjects = projectIDs
 
 	// 6. if user hasn't work project set his default
-	if tk.Scope.WorkProject == "" && user.DefaultProjectID != "" {
-		tk.Scope.WorkProject = user.DefaultProjectID
-	}
+	// if tk.Scope.WorkProject == "" && user.DefaultProjectID != "" {
+	// 	tk.Scope.WorkProject = user.DefaultProjectID
+	// }
 
 	// 7. update user roles
-	roles, err := s.user.ListUserRoles(user.DomainID, user.ID)
-	if err != nil {
-		return nil, err
-	}
-	tk.Roles = roles
+	// roles, err := s.user.ListUserRoles(user.DomainID, user.ID)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// tk.Roles = roles
 
 	return tk, nil
 }
 
 // issueTokenByClient implement Client Credentials Grant
 // https://tools.ietf.org/html/rfc6749#section-4.4.2
-func (s *Store) issueTokenByClient(clientID string, scope *token.Scope) (*token.Token, error) {
-	svr, err := s.service.GetServiceByClientID(clientID)
+func (s *Store) issueTokenByClient(clientID string, scope string) (*token.Token, error) {
+	svr, err := s.dao.Service.GetServiceByClientID(clientID)
+	fmt.Println(svr)
 	if err != nil {
 		return nil, exception.NewUnauthorized("only service client can issue by client credentials grant, but %s", err)
 	}
@@ -333,9 +333,7 @@ func (s *Store) issueTokenByClient(clientID string, scope *token.Scope) (*token.
 	t.CreatedAt = time.Now().Unix()
 	t.ExpiresIn = s.conf.Token.ExpiresIn
 	t.GrantType = token.CLIENT
-	t.TokenType = s.conf.Token.Type
-	t.ClientID = clientID
-	t.ServiceName = svr.Name
+	t.ApplicationID = clientID
 
 	switch t.TokenType {
 	case "bearer":
@@ -346,12 +344,11 @@ func (s *Store) issueTokenByClient(clientID string, scope *token.Scope) (*token.
 		return nil, exception.NewInternalServerError("unknown token type, %s", t.TokenType)
 	}
 
-	retToken, err := s.token.SaveToken(t)
-	if err != nil {
+	if err := s.dao.Token.SaveToken(t); err != nil {
 		return nil, err
 	}
 
-	return retToken, nil
+	return t, nil
 }
 
 // issueTokenByRefresh implement Refreshing an Access Token
@@ -362,7 +359,7 @@ func (s *Store) issueTokenByRefresh(refreshToken string) (*token.Token, error) {
 	}
 
 	// 1. get old token
-	old, err := s.token.GetTokenByRefresh(refreshToken)
+	old, err := s.dao.Token.GetTokenByRefresh(refreshToken)
 	if err != nil {
 		return nil, err
 	}
@@ -371,7 +368,7 @@ func (s *Store) issueTokenByRefresh(refreshToken string) (*token.Token, error) {
 	}
 
 	// 2. delete old token
-	if err := s.token.DeleteTokenByRefresh(refreshToken); err != nil {
+	if err := s.dao.Token.DeleteTokenByRefresh(refreshToken); err != nil {
 		return nil, err
 	}
 
@@ -379,37 +376,38 @@ func (s *Store) issueTokenByRefresh(refreshToken string) (*token.Token, error) {
 	if s.isCache {
 		cacheKey := "token_" + old.AccessToken
 		if !s.cache.Delete(cacheKey) {
-			s.log.Debugf("delete token from cache failed, key: %s", cacheKey)
+			s.log.Debug("delete token from cache failed, key: %s", cacheKey)
 		}
-		s.log.Debugf("delete token from cache success, key: %s", cacheKey)
+		s.log.Debug("delete token from cache success, key: %s", cacheKey)
 	}
 
 	// 4. generate new token
-	tk, err := s.generateToken(old.Scope, old.DomainID, old.UserID, old.ClientID)
+	tk, err := s.generateToken(old.Scope, old.DomainID, old.UserID, old.ApplicationID, token.Bearer)
 	if err != nil {
 		return nil, err
 	}
 
 	// 5. add valiable projects
-	projectIDs, err := s.user.ListUserProjects(tk.DomainID, tk.UserID)
-	if err != nil {
-		return nil, exception.NewInternalServerError(err.Error())
-	}
+	// projectIDs, err := s.dao.Project.ListUserProjects(tk.DomainID, tk.UserID)
+	// if err != nil {
+	// 	return nil, exception.NewInternalServerError(err.Error())
+	// }
 
 	// 6. add valiable projects (default project and other projects)
-	if tk.Scope != nil {
-		tk.Scope = new(token.Scope)
-	}
-	tk.Scope.AvaliableProjects = projectIDs
+	// if tk.Scope != nil {
+	// 	tk.Scope = new(token.Scope)
+	// }
+	// tk.Scope.AvaliableProjects = projectIDs
 
 	// 7. if user hasn't work project set his default
-	user, err := s.user.GetUserByID(old.UserID)
-	if err != nil {
-		return nil, err
-	}
-	if tk.Scope.WorkProject == "" && user.DefaultProjectID != "" {
-		tk.Scope.WorkProject = user.DefaultProjectID
-	}
+	// user, err := s.dao.User.GetUser(user.UserID, old.UserID)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// if tk.Scope.WorkProject == "" && user.DefaultProjectID != "" {
+	// 	tk.Scope.WorkProject = user.DefaultProjectID
+	// }
 
 	return tk, nil
 }
@@ -427,49 +425,49 @@ func (s *Store) issueTokenByUpScope(accessToken, workProject, workDomain string)
 	if err != nil {
 		return nil, err
 	}
-	if t.Scope.WorkProject != "" {
-		return nil, exception.NewBadRequest("your token is an scope token, token scope: project_id: %s", t.Scope.WorkProject)
-	}
+	// if t.Scope.WorkProject != "" {
+	// 	return nil, exception.NewBadRequest("your token is an scope token, token scope: project_id: %s", t.Scope.WorkProject)
+	// }
 
 	// 2. check the work domain is user's other domain
-	if workDomain != "" {
-		var validateD bool
-		otherDs, err := s.user.ListUserOtherDomains(t.UserID)
-		if err != nil {
-			return nil, err
-		}
-		for _, ad := range otherDs {
-			if workDomain == ad {
-				validateD = true
-				break
-			}
-		}
-		if !validateD {
-			return nil, exception.NewForbidden("the domain: %s not belong user: %s", workDomain, t.UserID)
-		}
-	}
+	// if workDomain != "" {
+	// 	var validateD bool
+	// 	otherDs, err := s.user.ListUserOtherDomains(t.UserID)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	for _, ad := range otherDs {
+	// 		if workDomain == ad {
+	// 			validateD = true
+	// 			break
+	// 		}
+	// 	}
+	// 	if !validateD {
+	// 		return nil, exception.NewForbidden("the domain: %s not belong user: %s", workDomain, t.UserID)
+	// 	}
+	// }
 
 	// 3. check the scope, check the scope project is belong to user
-	var pids []string
-	if workProject != "" {
-		projectIDs, err := s.user.ListUserProjects(t.DomainID, t.UserID)
-		if err != nil {
-			return nil, exception.NewInternalServerError(err.Error())
-		}
-		ok, err := s.checkInProject(workProject, projectIDs)
-		if err != nil {
-			return nil, err
-		}
-		if !ok {
-			return nil, exception.NewBadRequest("the project: %s not belong user: %s", workProject, t.UserID)
-		}
+	// var pids []string
+	// if workProject != "" {
+	// 	projects, err := s.dao.Project.ListUserProjects(t.DomainID, t.UserID)
+	// 	if err != nil {
+	// 		return nil, exception.NewInternalServerError(err.Error())
+	// 	}
+	// 	ok, err := s.checkInProject(workProject, projects)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	if !ok {
+	// 		return nil, exception.NewBadRequest("the project: %s not belong user: %s", workProject, t.UserID)
+	// 	}
 
-		pids = projectIDs
-	}
+	// 	pids = projectIDs
+	// }
 
 	// 4. generate an new token
-	scope := token.Scope{WorkProject: workProject}
-	newTK, err := s.generateToken(&scope, t.DomainID, t.UserID, t.ClientID)
+	// scope := token.Scope{WorkProject: workProject}
+	newTK, err := s.generateToken("", t.DomainID, t.UserID, t.ApplicationID, token.Bearer)
 	if err != nil {
 		return nil, err
 	}
@@ -480,10 +478,10 @@ func (s *Store) issueTokenByUpScope(accessToken, workProject, workDomain string)
 	}
 
 	// 6. add aviable projects
-	if newTK.Scope == nil {
-		newTK.Scope = new(token.Scope)
-	}
-	newTK.Scope.AvaliableProjects = pids
+	// if newTK.Scope == nil {
+	// 	newTK.Scope = new(token.Scope)
+	// }
+	// newTK.Scope.AvaliableProjects = pids
 
 	return newTK, nil
 }
@@ -508,7 +506,7 @@ func (s *Store) checkInProject(targetProject string, projectIDs []string) (bool,
 	validated := false
 
 	for _, p := range projectIDs {
-		ok, err := s.project.CheckProjectIsExistByID(p)
+		ok, err := s.dao.Project.CheckProjectIsExistByID(p)
 		if err != nil {
 			return false, err
 		}
@@ -525,44 +523,43 @@ func (s *Store) checkInProject(targetProject string, projectIDs []string) (bool,
 	return validated, nil
 }
 
-func (s *Store) generateToken(scope *token.Scope, domainID, userID, clientID string) (*token.Token, error) {
+func (s *Store) generateToken(scope, domainID, userID, clientID string, tp token.Type) (*token.Token, error) {
 	t := new(token.Token)
 	t.Scope = scope
 	t.DomainID = domainID
 	t.CreatedAt = time.Now().Unix()
 	t.ExpiresIn = s.conf.Token.ExpiresIn
 	t.GrantType = token.PASSWORD
-	t.TokenType = s.conf.Token.Type
+	t.TokenType = tp
 	t.UserID = userID
-	t.ClientID = clientID
+	t.ApplicationID = clientID
 
-	switch t.TokenType {
-	case "bearer":
+	switch tp {
+	case token.Bearer:
 		t.AccessToken = makeBearerToken(24)
 		t.RefreshToken = makeBearerToken(32)
-	case "jwt":
+	case token.JWT:
 	default:
-		return nil, exception.NewInternalServerError("unknown token type, %s", t.TokenType)
+		return nil, exception.NewInternalServerError("unknown token type, %s, only support bearer", tp)
 	}
 
-	retToken, err := s.token.SaveToken(t)
-	if err != nil {
+	if err := s.dao.Token.SaveToken(t); err != nil {
 		return nil, err
 	}
 
 	// check user role, add to token
-	user, err := s.user.GetUserByID(userID)
+	user, err := s.dao.User.GetUser(user.UserID, userID)
 	if err != nil {
 		return nil, exception.NewInternalServerError(err.Error())
 	}
 	for _, rn := range user.RoleNames {
 		switch rn {
 		case "system_admin":
-			retToken.IsSystemAdmin = true
+			t.IsSystemAdmin = true
 		case "domain_admin":
-			retToken.IsDomainAdmin = true
+			t.IsDomainAdmin = true
 		}
 	}
 
-	return retToken, nil
+	return t, nil
 }

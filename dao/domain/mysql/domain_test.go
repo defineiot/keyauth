@@ -22,15 +22,13 @@ func TestDomainSuit(t *testing.T) {
 func testCreateDomain(s *domainSuit) func(t *testing.T) {
 	return func(t *testing.T) {
 		should := require.New(t)
-		dom1, err := s.store.CreateDomain(s.d1)
+		err := s.store.CreateDomain(s.d1)
 		should.NoError(err)
-		dom2, err := s.store.CreateDomain(s.d2)
+		err = s.store.CreateDomain(s.d2)
 		should.NoError(err)
 
-		t.Logf("create domain(%s) success: %s", dom1.Name, dom1)
-		t.Logf("create domain(%s) success: %s", dom2.Name, dom2)
-		s.d1 = dom1
-		s.d2 = dom2
+		t.Logf("create domain(%s) success: %s", s.d1.Name, s.d1)
+		t.Logf("create domain(%s) success: %s", s.d2.Name, s.d2)
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/defineiot/keyauth/dao/service"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
@@ -15,6 +16,8 @@ type Role struct {
 	Description string `json:"description"` // 角色描述
 	CreateAt    int64  `json:"create_at"`   // 创建时间
 	UpdateAt    int64  `json:"update_at"`   // 更新时间
+
+	Features []*service.Feature `json:"features"` // 角色的功能列表
 }
 
 func (r *Role) String() string {
@@ -45,9 +48,11 @@ type Store interface {
 
 // Reader for read data from store
 type Reader interface {
-	GetRole(name string) (*Role, error)
+	GetRole(id string) (*Role, error)
+	GetRoleByName(name string) (*Role, error)
 	CheckRoleExist(name string) (bool, error)
 	ListRole() ([]*Role, error)
+	ListUserRole(domainID, userID string) ([]*Role, error)
 	// VerifyRole(name string, feature string) (bool, error)
 }
 

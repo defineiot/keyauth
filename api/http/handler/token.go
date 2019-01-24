@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -40,10 +41,7 @@ func IssueToken(w http.ResponseWriter, r *http.Request) {
 
 		projectID := val.Get("scope", "project_id").ToString()
 		domainID := val.Get("scope", "domain_id").ToString()
-		scope := new(token.Scope)
-		scope.WorkProject = projectID
-		scope.WorkDomain = domainID
-		tokenReq.Scope = scope
+		tokenReq.Scope = fmt.Sprintf("%s,%s", domainID, projectID)
 	case "", "application/x-www-form-urlencoded":
 		if err := r.ParseForm(); err != nil {
 			response.Failed(w, exception.NewBadRequest("parse x-www-form-urlencoded data error, %s", err))
@@ -57,28 +55,7 @@ func IssueToken(w http.ResponseWriter, r *http.Request) {
 		tokenReq.AccessToken = r.FormValue("access_token")
 		grantType = r.FormValue("grant_type")
 
-		scope := new(token.Scope)
-		scopekv := r.FormValue("scope")
-		if scopekv != "" {
-			scopes := strings.Split(scopekv, ",")
-			for _, kv := range scopes {
-				scopeKV := strings.Split(kv, "=")
-				if len(kv) != 2 {
-					response.Failed(w, exception.NewBadRequest("scope format error, must like project_id=xxxxx,domain_id=xxxxx"))
-					return
-				}
-				switch scopeKV[0] {
-				case "project_id":
-					scope.WorkProject = scopeKV[1]
-				case "domain_id":
-					scope.WorkDomain = scopeKV[1]
-				default:
-					response.Failed(w, exception.NewBadRequest("scope format error, must like project_id=xxxxx,domain_id=xxxxx"))
-					return
-				}
-			}
-		}
-		tokenReq.Scope = scope
+		tokenReq.Scope = ""
 	default:
 		response.Failed(w, exception.NewBadRequest("content-type only support for application/json and application/x-www-form-urlencoded others(%s) don't supported", r.Header.Get("content-type")))
 		return
@@ -158,7 +135,6 @@ func ValidateToken(w http.ResponseWriter, r *http.Request) {
 			response.Failed(w, exception.NewForbidden("client_credentials only can acess RegistryServiceFeatures"))
 			return
 		}
-		t.Scope = &token.Scope{AvaliableProjects: []string{}}
 	case token.PASSWORD, token.UPSCOPE, token.REFRESH:
 		if featureName != "" {
 			if featureName == "RegistryServiceFeatures" {
@@ -218,7 +194,7 @@ func ValidateToken(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
-				for _, f := range role.Featrues {
+				for _, f := range role.Features {
 					if f.Name == featureName {
 						hasPerm = true
 					}
@@ -226,7 +202,7 @@ func ValidateToken(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if !hasPerm {
-				response.Failed(w, exception.NewForbidden("user: %s has no permisson for access feature: %s", u.Name, featureName))
+				response.Failed(w, exception.NewForbidden("user: %s has no permisson for access feature: %s", u.Account, featureName))
 				return
 			}
 		}

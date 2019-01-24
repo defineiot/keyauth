@@ -20,24 +20,24 @@ func TestProjectSuit(t *testing.T) {
 func testCreateDepartmentOK(s *departmentSuit) func(t *testing.T) {
 	return func(t *testing.T) {
 		should := require.New(t)
-		d, err := s.store.CreateDepartment(s.l1)
+		err := s.store.CreateDepartment(s.l1)
 		should.NoError(err)
-		t.Logf("create department(%s) success: %s", d.Name, d)
+		t.Logf("create department(%s) success: %s", s.l1.Name, s.l1)
 
 		s.l2.ParentID = s.l1.ID
-		d2, err := s.store.CreateDepartment(s.l2)
+		err = s.store.CreateDepartment(s.l2)
 		should.NoError(err)
-		t.Logf("create department(%s) success: %s", d2.Name, d2)
+		t.Logf("create department(%s) success: %s", s.l2.Name, s.l2)
 
 		s.l3.ParentID = s.l2.ID
-		d3, err := s.store.CreateDepartment(s.l3)
+		err = s.store.CreateDepartment(s.l3)
 		should.NoError(err)
-		t.Logf("create department(%s) success: %s", d3.Name, d3)
+		t.Logf("create department(%s) success: %s", s.l3.Name, s.l3)
 
 		s.l4.ParentID = s.l3.ID
-		d4, err := s.store.CreateDepartment(s.l4)
+		err = s.store.CreateDepartment(s.l4)
 		should.NoError(err)
-		t.Logf("create department(%s) success: %s", d4.Name, d4)
+		t.Logf("create department(%s) success: %s", s.l4.Name, s.l4)
 	}
 }
 

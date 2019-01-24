@@ -15,7 +15,9 @@ import (
 
 // MyRouter is an hack for httprouter
 type MyRouter struct {
-	Router      *httprouter.Router
+	Router *httprouter.Router
+
+	urlPrefix   string
 	v1endpoints map[string]map[string]string
 }
 
@@ -27,14 +29,15 @@ func NewRouter() *MyRouter {
 		HandleMethodNotAllowed: true,
 	}
 
-	hrouter.NotFound = notFoundHandler
-	hrouter.MethodNotAllowed = methodNotAllowedHandler
-
 	ep := make(map[string]map[string]string)
 
 	r := &MyRouter{Router: hrouter, v1endpoints: ep}
-
 	return r
+}
+
+// SetURLPrefix 设置路由前缀
+func (r *MyRouter) SetURLPrefix(prefix string) {
+	r.urlPrefix = prefix
 }
 
 // Handler is an adapter which allows the usage of an http.Handler as a
@@ -71,8 +74,8 @@ func (r *MyRouter) Handler(method, path, featureName string, handler http.Handle
 					return
 				}
 
-				if t.ServiceName != ps.ByName("sn") {
-					response.Failed(w, exception.NewForbidden("the token: %s is not belong this service: %s", t.AccessToken, t.ServiceName))
+				if t.ServiceID != ps.ByName("sn") {
+					response.Failed(w, exception.NewForbidden("the token: %s is not belong this service: %s", t.AccessToken, t.ServiceID))
 					return
 				}
 
@@ -131,7 +134,7 @@ func (r *MyRouter) Handler(method, path, featureName string, handler http.Handle
 						return
 					}
 
-					for _, f := range role.Featrues {
+					for _, f := range role.Features {
 						if f.Name == featureName {
 							hasPerm = true
 						}
@@ -155,18 +158,15 @@ func (r *MyRouter) Handler(method, path, featureName string, handler http.Handle
 
 // HandlerFunc yes hack
 func (r *MyRouter) HandlerFunc(method, path, featureName string, handleFunc http.HandlerFunc) {
-	// fn := runtime.FuncForPC(reflect.ValueOf(handleFunc).Pointer()).Name()
-	// feathure := strings.Split(fn, ".")[1]
+	path = r.urlPrefix + path
 
-	if strings.HasPrefix(path, "/v1/") {
-		_, ok := r.v1endpoints[method]
-		if !ok {
-			mm := make(map[string]string)
-			r.v1endpoints[method] = mm
-		}
-		if featureName != "" {
-			r.v1endpoints[method][featureName] = path
-		}
+	_, ok := r.v1endpoints[method]
+	if !ok {
+		mm := make(map[string]string)
+		r.v1endpoints[method] = mm
+	}
+	if featureName != "" {
+		r.v1endpoints[method][featureName] = path
 	}
 
 	r.Handler(method, path, featureName, http.HandlerFunc(handleFunc))

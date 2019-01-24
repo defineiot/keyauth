@@ -1,30 +1,27 @@
 package store
 
 import (
-	"strings"
-
 	"github.com/defineiot/keyauth/dao/role"
-	"github.com/defineiot/keyauth/internal/exception"
 )
 
 // CreateRole todo
-func (s *Store) CreateRole(name, description string) (*role.Role, error) {
-	return s.role.CreateRole(name, description)
+func (s *Store) CreateRole(r *role.Role) error {
+	return s.dao.Role.CreateRole(r)
 }
 
 // ListRoles todo
 func (s *Store) ListRoles() ([]*role.Role, error) {
-	roles, err := s.role.ListRole()
+	roles, err := s.dao.Role.ListRole()
 	if err != nil {
 		return nil, err
 	}
 
 	for _, r := range roles {
-		features, err := s.service.ListRoleFeatures(r.Name)
+		features, err := s.dao.Service.ListRoleFeatures(r.ID)
 		if err != nil {
 			return nil, err
 		}
-		r.Featrues = features
+		r.Features = features
 	}
 
 	return roles, nil
@@ -32,77 +29,81 @@ func (s *Store) ListRoles() ([]*role.Role, error) {
 
 // GetRole todo
 func (s *Store) GetRole(name string) (*role.Role, error) {
-	r, err := s.role.GetRole(name)
+	r, err := s.dao.Role.GetRole(name)
 	if err != nil {
 		return nil, err
 	}
 
-	features, err := s.service.ListRoleFeatures(r.Name)
+	features, err := s.dao.Service.ListRoleFeatures(r.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	r.Featrues = features
+	r.Features = features
 
 	return r, nil
 }
 
 // DeleteRole todo
 func (s *Store) DeleteRole(name string) error {
-	return s.role.DeleteRole(name)
+	return s.dao.Role.DeleteRole(name)
 }
 
 // CheckRoleExist todo
 func (s *Store) CheckRoleExist(roleName string) (bool, error) {
-	return s.role.CheckRoleExist(roleName)
+	return s.dao.Role.CheckRoleExist(roleName)
 }
 
 // AddFeaturesToRole todo
-func (s *Store) AddFeaturesToRole(name string, features ...int64) error {
-	errMsg := []string{}
-	notExist := []int64{}
-	for _, fid := range features {
-		ok, err := s.service.CheckFeatureIsExist(fid)
-		if err != nil {
-			errMsg = append(errMsg, err.Error())
-		}
-		if !ok {
-			notExist = append(notExist, fid)
-		}
-	}
+func (s *Store) AddFeaturesToRole(id string, features ...string) error {
+	// errMsg := []string{}
+	// notExist := []string{}
 
-	if len(errMsg) != 0 {
-		return exception.NewInternalServerError(strings.Join(errMsg, ","))
-	}
-	if len(notExist) != 0 {
-		return exception.NewBadRequest("feature %v not exist", notExist)
-	}
+	// // 检查feature是否存在
+	// for _, fid := range features {
+	// 	ok, err := s.dao.Service.CheckFeatureIsExist(fid)
+	// 	if err != nil {
+	// 		errMsg = append(errMsg, err.Error())
+	// 	}
+	// 	if !ok {
+	// 		notExist = append(notExist, fid)
+	// 	}
+	// }
 
-	exist, err := s.role.GetRoleFeature(name)
-	if err != nil {
-		return err
-	}
+	// if len(errMsg) != 0 {
+	// 	return exception.NewInternalServerError(strings.Join(errMsg, ","))
+	// }
+	// if len(notExist) != 0 {
+	// 	return exception.NewBadRequest("feature %v not exist", notExist)
+	// }
 
-	needAdded := []int64{}
-	isAdded := []int64{}
-	for _, infid := range features {
-		var inExist bool
-		for _, efif := range exist {
-			if efif == infid {
-				inExist = true
-				isAdded = append(isAdded, infid)
-			}
-		}
-		if !inExist {
-			needAdded = append(needAdded, infid)
-		}
-	}
+	// // 对比, 哪些已经添加, 哪些未添加
+	// exist, err := s.dao.Service.ListRoleFeatures(id)
+	// if err != nil {
+	// 	return err
+	// }
 
-	if len(isAdded) != 0 {
-		return exception.NewBadRequest("the feature %v has added to role: %s", isAdded, name)
-	}
+	// needAdded := []*service.Feature{}
+	// isAdded := []*service.Feature{}-
+	// for _, infid := range features {
+	// 	var inExist bool
+	// 	for _, efif := range exist {
+	// 		if efif.ID == infid {
+	// 			inExist = true
+	// 			isAdded = append(isAdded, efif)
+	// 		}
+	// 	}
+	// 	if !inExist {
+	// 		needAdded = append(needAdded, infid)
+	// 	}
+	// }
 
-	return s.role.AssociateFeaturesToRole(name, needAdded...)
+	// if len(isAdded) != 0 {
+	// 	return exception.NewBadRequest("the feature %v has added to role: %s", isAdded, id)
+	// }
+
+	// return s.dao.Service.AssociateFeaturesToRole(id, needAdded...)
+	return nil
 }
 
 // RemoveFeaturesFromRole todo

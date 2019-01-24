@@ -71,7 +71,7 @@ type Reader interface {
 
 // Writer write project information to store
 type Writer interface {
-	CreateProject(p *Project) (*Project, error)
+	CreateProject(p *Project) error
 	DeleteProjectByID(id string) error
 	DeleteProjectByName(domainName, prjectName string) error
 	AddUsersToProject(projectID string, userIDs ...string) error

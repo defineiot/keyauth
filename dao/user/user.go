@@ -42,10 +42,6 @@ type User struct {
 	ExpiresActiveDays int       `json:"expires_active_days"` // 用户多久未登录时(天), 冻结改用户, 防止僵尸用户的账号被利用
 	Password          *Password `json:"password"`            // 密码相关信息
 
-	DomainID         string `json:"-"`
-	DepartmentID     string `json:"-"`
-	DefaultProjectID string `json:"-"`
-
 	Domain         *domain.Domain         `json:"domain"`       // 如果需要对象由上层进行查找
 	DefaultProject *project.Project       `json:"project"`      //  如果需要对象由上层进行查找
 	Department     *department.Department `json:"department"`   // 所属部门信息
@@ -102,11 +98,11 @@ func (u *User) Validate() error {
 		return exception.NewBadRequest("user password length must not be less than 6")
 	}
 
-	if u.DomainID == "" {
+	if u.Domain == nil {
 		return exception.NewBadRequest("the user's domain required!")
 	}
 
-	if u.DepartmentID == "" {
+	if u.Department == nil {
 		return exception.NewBadRequest("the user's department required!")
 	}
 
@@ -143,6 +139,8 @@ type Reader interface {
 	// CheckUserIsExistByID(userID string) (bool, error)
 	// ListUserProjects(domainID, userID string) ([]string, error)
 	// ListUserOtherDomains(userID string) ([]string, error)
+	CheckUserIsExistByID(userID string) (bool, error)
+	// ValidateUser(domainID, userName, password string) (string, error)
 }
 
 // Writer use to write user information to store
@@ -150,6 +148,8 @@ type Writer interface {
 	CreateUser(u *User) error
 	DeleteUser(domainID, userID string) error
 
+	BindRole(domainID, userID, roleID string) error
+	UnBindRole(domainID, userID, roleID string) error
 	// SaveUserOtherDomain(userID, otherDomainID string) error
 	// DeleteUserOtherDomain(userID, otherDomainID string) error
 
@@ -157,8 +157,7 @@ type Writer interface {
 	// SetDefaultProject(domainID, userID, projectID string) error
 	// AddProjectsToUser(domainID, userID string, projectIDs ...string) error
 	// RemoveProjectsFromUser(domainID, userID string, projectIDs ...string) error
-	// BindRole(domainID, userID, roleName string) error
-	// UnBindRole(domainID, userID, roleName string) error
+
 	// SaveInvitationsRecord(inviterID string, invitedRoles, accessProjects []string) (*Invitation, error)
 	// ListInvitationRecord(inviterID string) ([]*Invitation, error)
 	// GetInvitationRecord(inviterID, code string) (*Invitation, error)

@@ -11,11 +11,13 @@ import (
 )
 
 const (
-	SaveRole    = "save-role"
-	FindAllRole = "find-role"
-	FindOneRole = "find-role-by-name"
-	DeleteRole  = "delete-role"
-	CheckRole   = "check-role-exist"
+	SaveRole       = "save-role"
+	FindAllRole    = "find-role"
+	FindRoleByName = "find-role-by-name"
+	FindRoleByID   = "find-role-by-id"
+	DeleteRole     = "delete-role"
+	CheckRole      = "check-role-exist"
+	FindRoleByUser = "find-role-by-user"
 )
 
 // NewRoleStore use to create domain storage service
@@ -29,7 +31,20 @@ func NewRoleStore(opt *dao.Options) (role.Store, error) {
 			SELECT id, name, description, create_at, update_at  
 			FROM roles;
 		`,
-		FindOneRole: `
+		FindRoleByUser: `
+			SELECT id, name, description, create_at, update_at  
+			FROM roles r 
+			LEFT JOIN role_user_mappings m
+			ON r.id = m.role_id
+			WHERE domain_id = ?  
+			AND user_id = ?;
+		`,
+		FindRoleByName: `
+		    SELECT id, name, description, create_at, update_at 
+			FROM roles
+			WHERE name = ?;
+		`,
+		FindRoleByID: `
 		    SELECT id, name, description, create_at, update_at 
 			FROM roles
 			WHERE id = ?;

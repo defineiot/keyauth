@@ -10,10 +10,11 @@ import (
 )
 
 const (
-	CreateAPP    = "create-application"
-	DeleteAPP    = "delete-app"
-	ListUserAPPS = "list-user-apps"
-	GetUserAPP   = "get-user-app"
+	CreateAPP            = "create-application"
+	DeleteAPP            = "delete-app"
+	ListUserAPPS         = "list-user-apps"
+	GetUserAPP           = "get-user-app"
+	GetUserAPPByClientID = "get-user-app-by-client-id"
 
 	CheckExistByID   = "check-exist-by-id"
 	CheckExistByName = "check-exist-by-name"
@@ -40,9 +41,12 @@ func NewAppStore(opt *dao.Options) (application.Store, error) {
 		GetUserAPP: `
 		    SELECT id, name, user_id, website, logo_image, description, create_at, redirect_uri, client_id, client_secret, locked, last_login_time, last_login_ip, login_failed_times, login_success_times, token_expire_time
 		    FROM applications 
-		    WHERE id = ? 
-		    ORDER BY create_at 
-		    DESC;
+		    WHERE id = ?;
+		`,
+		GetUserAPPByClientID: `
+		    SELECT id, name, user_id, website, logo_image, description, create_at, redirect_uri, client_id, client_secret, locked, last_login_time, last_login_ip, login_failed_times, login_success_times, token_expire_time
+		    FROM applications 
+		    WHERE client_id = ?;
 	    `,
 		DeleteAPP: `
 			DELETE FROM applications 

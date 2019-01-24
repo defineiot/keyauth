@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/defineiot/keyauth/dao/application"
 	"github.com/defineiot/keyauth/internal/exception"
@@ -116,6 +116,22 @@ func (s *store) GetApplication(appid string) (*application.Application, error) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewNotFound("application %s not find", appid)
+		}
+
+		return nil, exception.NewInternalServerError("query single application error, %s", err)
+	}
+
+	return &app, nil
+}
+
+func (s *store) GetApplicationByClientID(clientID string) (*application.Application, error) {
+	app := application.Application{}
+	err := s.stmts[GetUserAPPByClientID].QueryRow(clientID).Scan(&app.ID, &app.Name, &app.UserID, &app.Website, &app.LogoImage, &app.Description,
+		&app.CreateAt, &app.RedirectURI, &app.ClientID, &app.ClientSecret, &app.Locked,
+		&app.LastLoginTime, &app.LastLoginIP, &app.LoginFailedTimes, &app.LoginSuccessTimes, &app.TokenExpireTime)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, exception.NewNotFound("application %s not find", clientID)
 		}
 
 		return nil, exception.NewInternalServerError("query single application error, %s", err)

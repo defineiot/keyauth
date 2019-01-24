@@ -4,25 +4,25 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/defineiot/keyauth/dao/domain"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
 // CreateDomain use to create an domain
-func (s *store) CreateDomain(d *domain.Domain) (*domain.Domain, error) {
+func (s *store) CreateDomain(d *domain.Domain) error {
 	if err := d.Validate(); err != nil {
-		return nil, err
+		return err
 	}
 
 	ok, err := s.CheckDomainIsExistByName(d.Name)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if ok {
-		return nil, exception.NewBadRequest("domain %s exist", d.Name)
+		return exception.NewBadRequest("domain %s exist", d.Name)
 	}
 
 	d.ID = uuid.NewV4().String()
@@ -33,9 +33,9 @@ func (s *store) CreateDomain(d *domain.Domain) (*domain.Domain, error) {
 		d.ContactsName, d.ContactsTitle, d.ContactsMobile, d.ContactsEmail,
 		d.Owner)
 	if err != nil {
-		return nil, exception.NewInternalServerError("insert domain exec sql err, %s", err)
+		return exception.NewInternalServerError("insert domain exec sql err, %s", err)
 	}
-	return d, nil
+	return nil
 }
 
 // GetDomain use to get domain detail
