@@ -8,11 +8,12 @@ import (
 // RouteToV1 use to route to ep
 func RouteToV1(r *router.MyRouter) {
 	// User
+	r.HandlerFunc("POST", "/members/", "CreateMemberUser", handler.CreateMemberUser)
 	// r.HandlerFunc("POST", "/v1/domains/users/", "CreateDomainUser", handler.CreateDomainUser)
-	// r.HandlerFunc("POST", "/v1/users/", "CreateUser", handler.CreateUser)
+
 	// r.HandlerFunc("GET", "/v1/users/", "ListDomainUser", handler.ListDomainUser)
 	// r.HandlerFunc("GET", "/v1/users/:uid/", "GetUser", handler.GetUser)
-	// r.HandlerFunc("GET", "/v1/users/:uid/projects/", "ListUserProject", handler.ListUserProject)
+
 	// r.HandlerFunc("GET", "/v1/users/:uid/domains/", "ListUserDomain", handler.ListUserDomain)
 	// r.HandlerFunc("PUT", "/v1/users/:uid/password/", "SetUserPassword", handler.SetUserPassword)
 	// r.HandlerFunc("DELETE", "/v1/users/:uid/", "DeleteUser", handler.DeleteUser)
@@ -38,11 +39,12 @@ func RouteToV1(r *router.MyRouter) {
 	r.HandlerFunc("GET", "/oauth2/tokens/", "ValidateToken", handler.ValidateToken)
 	r.HandlerFunc("DELETE", "/oauth2/tokens/", "RevolkToken", handler.RevolkToken)
 
-	// // Project
-	// r.HandlerFunc("GET", "/v1/projects/", "ListProject", handler.ListProject)
-	// r.HandlerFunc("POST", "/v1/projects/", "CreateProject", handler.CreateProject)
-	// r.HandlerFunc("GET", "/v1/projects/:pid/", "GetProject", handler.GetProject)
-	// r.HandlerFunc("DELETE", "/v1/projects/:pid/", "DeleteProject", handler.DeleteProject)
+	// Project
+	r.HandlerFunc("POST", "/projects/", "CreateProject", handler.CreateProject)
+	r.HandlerFunc("GET", "/projects/", "ListDomainProjects", handler.ListDomainProjects)
+	r.HandlerFunc("GET", "/self/projects/", "ListUserProjects", handler.ListUserProjects)
+	r.HandlerFunc("GET", "/projects/:pid/", "GetProject", handler.GetProject)
+	r.HandlerFunc("DELETE", "/projects/:pid/", "DeleteProject", handler.DeleteProject)
 	// r.HandlerFunc("GET", "/v1/projects/:pid/users/", "ListProjectUser", handler.ListProjectUser)
 	// r.HandlerFunc("POST", "/v1/projects/:pid/users/", "AddUsersToProject", handler.AddUsersToProject)
 	// r.HandlerFunc("DELETE", "/v1/projects/:pid/users/", "RemoveUsersFromProject", handler.RemoveUsersFromProject)

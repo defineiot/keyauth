@@ -11,11 +11,12 @@ import (
 )
 
 const (
-	SaveDepartment      = "save-department"
-	FindDepartment      = "find-department"
-	FindSubDepartments  = "find-sub-departments"
-	CountSubDepartments = "count-sub-departments"
-	DeleteDepartment    = "delete-departments"
+	SaveDepartment       = "save-department"
+	FindDepartment       = "find-department"
+	FindDepartmentByName = "find-department-by-name"
+	FindSubDepartments   = "find-sub-departments"
+	CountSubDepartments  = "count-sub-departments"
+	DeleteDepartment     = "delete-departments"
 )
 
 // NewDepartmentStore use to create domain storage service
@@ -36,6 +37,12 @@ func NewDepartmentStore(opt *dao.Options) (department.Store, error) {
 			SELECT id, name, parent, grade, path, manager, domain_id, create_at 
 			FROM departments 
 			WHERE id = ?;
+		`,
+		FindDepartmentByName: `
+			SELECT id, name, parent, grade, path, manager, domain_id, create_at 
+			FROM departments 
+			WHERE name = ? 
+			AND domain_id = ?;
 		`,
 		FindSubDepartments: `
 			SELECT id, name, parent, grade, path, manager, domain_id, create_at 

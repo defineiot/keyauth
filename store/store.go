@@ -24,7 +24,11 @@ type Store struct {
 	conf    *conf.Config
 	isCache bool
 
-	tokenCachePrefix string
+	cachePrefix struct {
+		token   string
+		project string
+		user    string
+	}
 }
 
 // NewStore store engine
@@ -50,7 +54,9 @@ func NewStore(conf *conf.Config) (*Store, error) {
 	s.log = log
 	s.dao = defaultDao
 
-	s.tokenCachePrefix = "token_"
+	s.cachePrefix.token = "token_"
+	s.cachePrefix.project = "project_"
+	s.cachePrefix.user = "user_"
 
 	return s, nil
 }

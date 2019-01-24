@@ -151,7 +151,7 @@ func (s *Store) ValidateToken(accessToken string) (*token.Token, error) {
 
 	tk := new(token.Token)
 	// 尝试从缓存中获取Token
-	cacheKey := s.tokenCachePrefix + accessToken
+	cacheKey := s.cachePrefix.token + accessToken
 	if s.isCache {
 		if s.cache.Get(cacheKey, tk) {
 			s.log.Debug("get token from cache key: %s", cacheKey)
@@ -207,7 +207,7 @@ func (s *Store) ValidateToken(accessToken string) (*token.Token, error) {
 func (s *Store) RevokeToken(accessToken string) error {
 	var err error
 
-	cacheKey := s.tokenCachePrefix + accessToken
+	cacheKey := s.cachePrefix.token + accessToken
 
 	err = s.dao.Token.DeleteToken(accessToken)
 	if err != nil {
@@ -334,7 +334,7 @@ func (s *Store) issueTokenByRefresh(refreshToken string) (*token.Token, error) {
 
 	// 清除缓存的token
 	if s.isCache {
-		cacheKey := s.tokenCachePrefix + old.AccessToken
+		cacheKey := s.cachePrefix.token + old.AccessToken
 		if !s.cache.Delete(cacheKey) {
 			s.log.Debug("delete token from cache failed, key: %s", cacheKey)
 		}

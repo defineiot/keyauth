@@ -42,7 +42,7 @@ func (s *Store) GetProject(id string) (*project.Project, error) {
 	var err error
 
 	pro := new(project.Project)
-	cacheKey := "project_" + id
+	cacheKey := s.cachePrefix.project + id
 
 	if s.isCache {
 		if s.cache.Get(cacheKey, pro) {
@@ -74,7 +74,7 @@ func (s *Store) GetProject(id string) (*project.Project, error) {
 func (s *Store) DeleteProjectByID(id string) error {
 	var err error
 
-	cacheKey := "project_" + id
+	cacheKey := s.cachePrefix.project + id
 
 	err = s.dao.Project.DeleteProjectByID(id)
 	if err != nil {
@@ -95,7 +95,7 @@ func (s *Store) DeleteProjectByID(id string) error {
 func (s *Store) DeleteProjectByName(projectName, domainID string) error {
 	var err error
 
-	cacheKey := "project_" + domainID + projectName
+	cacheKey := s.cachePrefix.project + domainID + projectName
 
 	err = s.dao.Project.DeleteProjectByName(projectName, domainID)
 	if err != nil {
@@ -120,7 +120,7 @@ func (s *Store) AddUsersToProject(accessToken, projectID string, userIDs ...stri
 
 	err := s.dao.Project.AddUsersToProject(projectID, userIDs...)
 
-	cacheKey := "token_" + accessToken
+	cacheKey := s.cachePrefix.token + accessToken
 	if s.isCache {
 		if !s.cache.Delete(cacheKey) {
 			s.log.Debug("delete token from cache failed, key: %s", cacheKey)
@@ -139,7 +139,7 @@ func (s *Store) RemoveUsersFromProject(accessToken, projectID string, userIDs ..
 
 	err := s.dao.Project.RemoveUsersFromProject(projectID, userIDs...)
 
-	cacheKey := "token_" + accessToken
+	cacheKey := s.cachePrefix.token + accessToken
 	if s.isCache {
 		if !s.cache.Delete(cacheKey) {
 			s.log.Debug("delete token from cache failed, key: %s", cacheKey)

@@ -108,3 +108,19 @@ func (s *store) DelDepartment(depID string) error {
 
 	return nil
 }
+
+func (s *store) GetDepartmentByName(domainID, departmentName string) (*department.Department, error) {
+	d := new(department.Department)
+
+	err := s.stmts[FindDepartmentByName].QueryRow(domainID, departmentName).Scan(
+		&d.ID, &d.Name, &d.ParentID, &d.Grade, &d.Path, &d.ManagerID, &d.DomainID, &d.CreateAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, exception.NewNotFound("department %s not find", departmentName)
+		}
+
+		return nil, exception.NewInternalServerError("query single verify code error, %s", err)
+	}
+
+	return d, nil
+}
