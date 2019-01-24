@@ -28,10 +28,10 @@ func (s *store) CreateDomain(d *domain.Domain) error {
 	d.ID = uuid.NewV4().String()
 	d.CreateAt = time.Now().Unix()
 	_, err = s.stmts[CreateDomain].Exec(
-		d.ID, d.Name, d.DisplayName, d.LogoPath, d.Description, d.Enabled, int(d.Type), d.CreateAt,
-		d.Size, d.Location, d.Industry, d.Address, d.Fax, d.Phone,
-		d.ContactsName, d.ContactsTitle, d.ContactsMobile, d.ContactsEmail,
-		d.Owner)
+		d.ID, d.Name, d.DisplayName, d.LogoPath, d.Description, d.Enabled,
+		int(d.Type), d.CreateAt, d.Size, d.Location, d.Industry, d.Address,
+		d.Fax, d.Phone, d.ContactsName, d.ContactsTitle, d.ContactsMobile,
+		d.ContactsEmail, d.Owner)
 	if err != nil {
 		return exception.NewInternalServerError("insert domain exec sql err, %s", err)
 	}
@@ -42,10 +42,10 @@ func (s *store) CreateDomain(d *domain.Domain) error {
 func (s *store) GetDomainByID(domainID string) (*domain.Domain, error) {
 	d := new(domain.Domain)
 	err := s.stmts[FindDomainByID].QueryRow(domainID).Scan(
-		&d.ID, &d.Name, &d.DisplayName, &d.LogoPath, &d.Description, &d.Enabled, &d.Type, &d.CreateAt, &d.UpdateAt,
-		&d.Size, &d.Location, &d.Industry, &d.Address, &d.Fax, &d.Phone,
-		&d.ContactsName, &d.ContactsTitle, &d.ContactsMobile, &d.ContactsEmail,
-		&d.Owner)
+		&d.ID, &d.Name, &d.DisplayName, &d.LogoPath, &d.Description, &d.Enabled,
+		&d.Type, &d.CreateAt, &d.UpdateAt, &d.Size, &d.Location, &d.Industry,
+		&d.Address, &d.Fax, &d.Phone, &d.ContactsName, &d.ContactsTitle,
+		&d.ContactsMobile, &d.ContactsEmail, &d.Owner)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewNotFound("domain %s not find", domainID)
@@ -60,10 +60,10 @@ func (s *store) GetDomainByID(domainID string) (*domain.Domain, error) {
 func (s *store) GetDomainByName(name string) (*domain.Domain, error) {
 	d := new(domain.Domain)
 	err := s.stmts[FindDomainByName].QueryRow(name).Scan(
-		&d.ID, &d.Name, &d.DisplayName, &d.LogoPath, &d.Description, &d.Enabled, &d.Type, &d.CreateAt, &d.UpdateAt,
-		&d.Size, &d.Location, &d.Industry, &d.Address, &d.Fax, &d.Phone,
-		&d.ContactsName, &d.ContactsTitle, &d.ContactsMobile, &d.ContactsEmail,
-		&d.Owner)
+		&d.ID, &d.Name, &d.DisplayName, &d.LogoPath, &d.Description, &d.Enabled,
+		&d.Type, &d.CreateAt, &d.UpdateAt, &d.Size, &d.Location, &d.Industry,
+		&d.Address, &d.Fax, &d.Phone, &d.ContactsName, &d.ContactsTitle,
+		&d.ContactsMobile, &d.ContactsEmail, &d.Owner)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewNotFound("domain %s not find", name)
@@ -100,10 +100,10 @@ func (s *store) ListDomain(pageNumber, pageSize int64) ([]*domain.Domain, int64,
 	for rows.Next() {
 		d := new(domain.Domain)
 		err := rows.Scan(
-			&d.ID, &d.Name, &d.DisplayName, &d.LogoPath, &d.Description, &d.Enabled, &d.Type, &d.CreateAt, &d.UpdateAt,
-			&d.Size, &d.Location, &d.Industry, &d.Address, &d.Fax, &d.Phone,
-			&d.ContactsName, &d.ContactsTitle, &d.ContactsMobile, &d.ContactsEmail,
-			&d.Owner)
+			&d.ID, &d.Name, &d.DisplayName, &d.LogoPath, &d.Description, &d.Enabled,
+			&d.Type, &d.CreateAt, &d.UpdateAt, &d.Size, &d.Location, &d.Industry,
+			&d.Address, &d.Fax, &d.Phone, &d.ContactsName, &d.ContactsTitle,
+			&d.ContactsMobile, &d.ContactsEmail, &d.Owner)
 		if err != nil {
 			return nil, 0, exception.NewInternalServerError("scan domain record error, %s", err)
 		}

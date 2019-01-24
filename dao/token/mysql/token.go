@@ -20,9 +20,9 @@ func (s *store) SaveToken(t *token.Token) error {
 		t.ExpiresIn = 3600
 	}
 
-	if _, err := s.stmts[SaveToken].Exec(t.AccessToken, t.RefreshToken, string(t.GrantType), string(t.TokenType),
-		t.UserID, t.DomainID, t.CurrentProject, t.ServiceID, t.ApplicationID,
-		t.Name, t.Scope, t.CreatedAt, t.ExpiresIn, t.Description); err != nil {
+	if _, err := s.stmts[SaveToken].Exec(t.AccessToken, t.RefreshToken, string(t.GrantType),
+		string(t.TokenType), t.UserID, t.DomainID, t.CurrentProject, t.ServiceID,
+		t.ApplicationID, t.Name, t.Scope, t.CreatedAt, t.ExpiresIn, t.Description); err != nil {
 		return exception.NewInternalServerError("insert token exec sql err, %s", err)
 	}
 

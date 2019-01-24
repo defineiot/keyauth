@@ -24,20 +24,21 @@ import (
 
 var stopSignal = make(chan bool, 1)
 
-// Service is gateway service
+// Service is auth service
 type Service struct {
-	http        *http.Server
-	conf        *conf.Config
-	log         logger.Logger
+	http *http.Server
+	conf *conf.Config
+	log  logger.Logger
+
 	v1endpoints map[string]map[string]string
 	description string
 }
 
-// NewService use to new an gateway service
+// NewService  new http service
 func NewService(config *conf.Config) (*Service, error) {
 	err := config.Validate()
 	if err != nil {
-		return nil, fmt.Errorf("config validate failed, %s", err)
+		return nil, fmt.Errorf("配置校验失败, %s", err)
 	}
 
 	logger, err := config.GetLogger()
@@ -45,7 +46,7 @@ func NewService(config *conf.Config) (*Service, error) {
 		return nil, err
 	}
 
-	desc := `iot平台权限管理服务, 提供用户的管理, 认证, 鉴权, 服务发现等功能`
+	desc := `微服务权限管理中心, 提供用户的管理, 认证, 鉴权, 服务发现等功能`
 
 	return &Service{conf: config, log: logger, description: desc}, nil
 }
@@ -65,10 +66,12 @@ func (s *Service) Start() error {
 	s.log.Debug("initial http service success")
 
 	// registe service
-	// if err := s.registryService(); err != nil {
-	// 	return err
-	// }
-	// s.log.Debug("registry github.com/defineiot/keyauth service features success")
+	if s.conf.Etcd.EnableRegisteFeatures {
+		if err := s.registryService(); err != nil {
+			return err
+		}
+		s.log.Debug("registry github.com/defineiot/keyauth service features success")
+	}
 
 	// start http service
 	if err := s.start(); err != nil {
@@ -135,6 +138,8 @@ func (s *Service) initGlobal() error {
 
 func (s *Service) prepare() error {
 	n := negroni.New()
+
+	//
 	r := router.NewRouter()
 	r.SetURLPrefix("/keyauth/v1")
 	RouteToV1(r)
@@ -172,69 +177,36 @@ func (s *Service) prepare() error {
 	return nil
 }
 
-// func (s *Service) registryService() error {
-// 	if len(s.v1endpoints) == 0 {
-// 		return errors.New("there is no feature to registry")
-// 	}
+func (s *Service) registryService() error {
+	if len(s.v1endpoints) == 0 {
+		return errors.New("there is no feature to registry")
+	}
 
-// 	name := s.conf.APP.Name
-// 	ok, err := global.Store.CheckService(name)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if !ok {
-// 		if _, err := global.Store.CreateService(name, s.description); err != nil {
-// 			return err
-// 		}
-// 	}
+	// name := s.conf.APP.Name
+	// ok, err := global.Store.CheckService(name)
+	// if err != nil {
+	// 	return err
+	// }
+	// if !ok {
+	// 	if _, err := global.Store.CreateService(name, s.description); err != nil {
+	// 		return err
+	// 	}
+	// }
 
-// 	features := []service.Feature{}
-// 	for method, v := range s.v1endpoints {
-// 		for feature, ep := range v {
-// 			f := service.Feature{Name: feature, Endpoint: ep, Method: method}
-// 			features = append(features, f)
-// 		}
-// 	}
+	// features := []service.Feature{}
+	// for method, v := range s.v1endpoints {
+	// 	for feature, ep := range v {
+	// 		f := service.Feature{Name: feature, Endpoint: ep, Method: method}
+	// 		features = append(features, f)
+	// 	}
+	// }
 
-// 	if err := global.Store.RegistryServiceFeatures(name, features...); err != nil {
-// 		return err
-// 	}
+	// if err := global.Store.RegistryServiceFeatures(name, features...); err != nil {
+	// 	return err
+	// }
 
-// 	return nil
-// }
-
-// func (s *Service) initialSysAdmin(domainName, domainDisplay, username, password string) error {
-// 	gs := global.Store
-
-// 	ok, err := gs.CheckDomainExistByName(domainName)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if !ok {
-// 		dom, err := gs.CreateDomain(domainName, "超级管理员域", domainDisplay, true)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		us, err := gs.CreateUser(dom.ID, username, password, true, 8760, 8760)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		app, err := gs.CreateApplication(us.ID, "dashboard", "", "超级管理员的默认APP", "")
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		if err := gs.BindRole(dom.ID, us.ID, "system_admin"); err != nil {
-// 			return err
-// 		}
-
-// 		s.log.Infof("super admin client_id: %s", app.Client.ID)
-// 		s.log.Infof("super admin client_secret: %s", app.Client.Secret)
-// 	}
-
-// 	return nil
-// }
+	return nil
+}
 
 func (s *Service) start() error {
 	if s.http == nil {
