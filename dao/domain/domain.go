@@ -78,6 +78,7 @@ type Reader interface {
 	CheckDomainIsExistByID(domainID string) (bool, error)
 	CheckDomainIsExistByName(domainName string) (bool, error)
 	ListDomain(pageNumber, pageSize int64) (domains []*Domain, totalPage int64, err error)
+	ListUserThirdDomains(userID string) ([]*Domain, error)
 }
 
 // Writer for write data to store

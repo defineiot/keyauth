@@ -62,8 +62,8 @@ func (s *store) GetTokenByRefresh(refreshToken string) (*token.Token, error) {
 	return t, nil
 }
 
-func (s *store) SetTokenProject(accessToken, projectID string) error {
-	ret, err := s.stmts[SetTokenProject].Exec(projectID, accessToken)
+func (s *store) UpdateTokenScope(accessToken, scope string) error {
+	ret, err := s.stmts[UpdateTokenScope].Exec(scope, accessToken)
 	if err != nil {
 		return exception.NewInternalServerError("update token project exec sql error, %s", err)
 	}

@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/defineiot/keyauth/dao"
 	_ "github.com/defineiot/keyauth/dao/all"
+
+	"github.com/defineiot/keyauth/dao"
 	"github.com/defineiot/keyauth/dao/token"
 	"github.com/defineiot/keyauth/internal/conf/mock"
 	"github.com/stretchr/testify/require"

@@ -23,6 +23,8 @@ type Store struct {
 	ttl     time.Duration
 	conf    *conf.Config
 	isCache bool
+
+	tokenCachePrefix string
 }
 
 // NewStore store engine
@@ -47,6 +49,8 @@ func NewStore(conf *conf.Config) (*Store, error) {
 	s.conf = conf
 	s.log = log
 	s.dao = defaultDao
+
+	s.tokenCachePrefix = "token_"
 
 	return s, nil
 }

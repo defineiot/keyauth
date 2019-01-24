@@ -12,10 +12,10 @@ import (
 // Role is rbac's role
 type Role struct {
 	ID          string `json:"id"`
-	Name        string `json:"name"`        // 角色名称
-	Description string `json:"description"` // 角色描述
-	CreateAt    int64  `json:"create_at"`   // 创建时间
-	UpdateAt    int64  `json:"update_at"`   // 更新时间
+	Name        string `json:"name"`                  // 角色名称
+	Description string `json:"description,omitempty"` // 角色描述
+	CreateAt    int64  `json:"create_at,omitempty"`   // 创建时间
+	UpdateAt    int64  `json:"update_at,omitempty"`   // 更新时间
 
 	Features []*service.Feature `json:"features"` // 角色的功能列表
 }

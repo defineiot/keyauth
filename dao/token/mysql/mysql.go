@@ -15,7 +15,7 @@ const (
 	DeleteToken          = "delete-token"
 	DeleteTokenByRefresh = "delete-token-by-refresh"
 	FindTokenByRefresh   = "find-token-by-refresh"
-	SetTokenProject      = "set-token-project"
+	UpdateTokenScope     = "set-token-project"
 )
 
 // NewTokenStore use to create domain storage service
@@ -43,9 +43,9 @@ func NewTokenStore(opt *dao.Options) (token.Store, error) {
 		    FROM tokens 
 		    WHERE refresh_token = ?;
 		`,
-		SetTokenProject: `
+		UpdateTokenScope: `
 			UPDATE tokens 
-			SET project_id = ? 
+			SET scope = ? 
 			WHERE access_token = ?;
 		`,
 	}

@@ -15,13 +15,14 @@ const (
 	DeleteDomainByName = "delete-domain-by-name"
 	UpdateDomainByID   = "update-domain-by-id"
 
-	FindDomains         = "find-domains"
-	FindDomainsWithPage = "find-domains-with-page"
-	FindDomainByID      = "find-domain-by-id"
-	FindDomainByName    = "find-domain-by-name"
-	DomainCount         = "domain-count"
-	FindDomainID        = "find-domain-id"
-	FindDomainName      = "find-domain-name"
+	FindDomains          = "find-domains"
+	FindUserThirdDomains = "find-user-third-domains"
+	FindDomainsWithPage  = "find-domains-with-page"
+	FindDomainByID       = "find-domain-by-id"
+	FindDomainByName     = "find-domain-by-name"
+	DomainCount          = "domain-count"
+	FindDomainID         = "find-domain-id"
+	FindDomainName       = "find-domain-name"
 )
 
 // NewDomainStore use to create domain storage service
@@ -43,6 +44,15 @@ func NewDomainStore(opt *dao.Options) (domain.Store, error) {
 		FindDomains: `
 			SELECT id, name, display_name, logo_path, description, enabled, type, create_at, update_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email, owner_id 
 			FROM domains
+			ORDER BY create_at 
+			DESC;
+		`,
+		FindUserThirdDomains: `
+			SELECT id, name, display_name, logo_path, description, enabled, type, create_at, update_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email, owner_id 
+			FROM domains d 
+			LEFT JOIN user_domain_mappings m 
+			ON m.domain_id = d.id 
+			WHERE m.user_id = ? 
 			ORDER BY create_at 
 			DESC;
 		`,

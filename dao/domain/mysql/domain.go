@@ -57,6 +57,29 @@ func (s *store) GetDomainByID(domainID string) (*domain.Domain, error) {
 	return d, nil
 }
 
+func (s *store) ListUserThirdDomains(userID string) ([]*domain.Domain, error) {
+	rows, err := s.stmts[FindUserThirdDomains].Query(userID)
+	if err != nil {
+		return nil, exception.NewInternalServerError("query user third domains error, %s", err)
+	}
+
+	domains := []*domain.Domain{}
+	for rows.Next() {
+		d := new(domain.Domain)
+		err := rows.Scan(
+			&d.ID, &d.Name, &d.DisplayName, &d.LogoPath, &d.Description, &d.Enabled,
+			&d.Type, &d.CreateAt, &d.UpdateAt, &d.Size, &d.Location, &d.Industry,
+			&d.Address, &d.Fax, &d.Phone, &d.ContactsName, &d.ContactsTitle,
+			&d.ContactsMobile, &d.ContactsEmail, &d.Owner)
+		if err != nil {
+			return nil, exception.NewInternalServerError("scan domain record error, %s", err)
+		}
+		domains = append(domains, d)
+	}
+
+	return domains, nil
+}
+
 func (s *store) GetDomainByName(name string) (*domain.Domain, error) {
 	d := new(domain.Domain)
 	err := s.stmts[FindDomainByName].QueryRow(name).Scan(
