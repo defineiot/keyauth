@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/defineiot/keyauth/dao/project"
-
 	"github.com/defineiot/keyauth/dao/token"
 	"github.com/defineiot/keyauth/dao/user"
 	"github.com/defineiot/keyauth/internal/exception"
@@ -93,7 +91,8 @@ func (t *TokenRequest) validate() error {
 
 	if t.isCheckClient {
 		if t.ClientID == "" || t.ClientSecret == "" {
-			return exception.NewBadRequest("if use %s grant type, client id and client secret is needed", t.GrantType)
+			return exception.NewBadRequest("if use %s grant type, client id and client secret is needed",
+				t.GrantType)
 		}
 	}
 
@@ -120,13 +119,13 @@ func (s *Store) IssueToken(req *TokenRequest) (*token.Token, error) {
 	var t *token.Token
 	switch req.GrantType {
 	case token.AUTHCODE:
-		t, err = s.issueTokenByAuthCode(req.ClientID, req.Code, req.RedirectURI)
+		t, err = s.issueTokenByAuthCode(app.ID, req.Code, req.RedirectURI)
 	case token.IMPLICIT:
-		t, err = s.issueTokenByImplicit(req.ClientID, req.RedirectURI)
+		t, err = s.issueTokenByImplicit(app.ID, req.RedirectURI)
 	case token.PASSWORD:
-		t, err = s.issueTokenByPassword(req.Scope, app.ClientID, req.Username, req.Password)
+		t, err = s.issueTokenByPassword(req.Scope, app.ID, req.Username, req.Password)
 	case token.CLIENT:
-		t, err = s.issueTokenByClient(req.ClientID, req.Scope)
+		t, err = s.issueTokenByClient(app.ID, req.Scope)
 	case token.REFRESH:
 		t, err = s.issueTokenByRefresh(req.RefreshToken)
 	case token.UPSCOPE:
@@ -239,7 +238,7 @@ func (s *Store) issueTokenByImplicit(clientID, redirectURI string) (*token.Token
 
 // issueTokenByPassword implement Resource Owner Password Credentials Grant
 // https://tools.ietf.org/html/rfc6749#section-4.3
-func (s *Store) issueTokenByPassword(scope, clientID, account, password string) (*token.Token, error) {
+func (s *Store) issueTokenByPassword(scope, appID, account, password string) (*token.Token, error) {
 	// 查询用户是否存在
 	user, err := s.dao.User.GetUser(user.Account, account)
 	if err != nil {
@@ -252,7 +251,7 @@ func (s *Store) issueTokenByPassword(scope, clientID, account, password string) 
 	}
 
 	// 生成Token
-	tk, err := s.generateToken(scope, user.Domain.ID, user.ID, clientID, token.Bearer)
+	tk, err := s.generateToken(scope, user.Domain.ID, user.ID, appID, token.Bearer, token.PASSWORD)
 	if err != nil {
 		return nil, err
 	}
@@ -271,13 +270,22 @@ func (s *Store) issueTokenByPassword(scope, clientID, account, password string) 
 	}
 	tk.Roles = roles
 
+	for i := range roles {
+		switch roles[i].Name {
+		case "system_admin":
+			tk.IsSystemAdmin = true
+		case "domain_admin":
+			tk.IsDomainAdmin = true
+		}
+	}
+
 	return tk, nil
 }
 
 // issueTokenByClient implement Client Credentials Grant
 // https://tools.ietf.org/html/rfc6749#section-4.4.2
-func (s *Store) issueTokenByClient(clientID string, scope string) (*token.Token, error) {
-	svr, err := s.dao.Service.GetServiceByClientID(clientID)
+func (s *Store) issueTokenByClient(serviceID string, scope string) (*token.Token, error) {
+	svr, err := s.dao.Service.GetServiceByClientID(serviceID)
 	fmt.Println(svr)
 	if err != nil {
 		return nil, exception.NewUnauthorized("only service client can issue by client credentials grant, but %s", err)
@@ -288,7 +296,7 @@ func (s *Store) issueTokenByClient(clientID string, scope string) (*token.Token,
 	t.CreatedAt = time.Now().Unix()
 	t.ExpiresIn = s.conf.Token.ExpiresIn
 	t.GrantType = token.CLIENT
-	t.ApplicationID = clientID
+	t.ServiceID = serviceID
 
 	switch t.TokenType {
 	case "bearer":
@@ -334,16 +342,16 @@ func (s *Store) issueTokenByRefresh(refreshToken string) (*token.Token, error) {
 	}
 
 	// 生成新token
-	tk, err := s.generateToken(old.Scope, old.DomainID, old.UserID, old.ApplicationID, token.Bearer)
+	tk, err := s.generateToken(old.Scope, old.DomainID, old.UserID, old.ApplicationID, token.Bearer, token.REFRESH)
 	if err != nil {
 		return nil, err
 	}
 
 	// 新token项目不变
 	tk.AvaliableProjects = old.AvaliableProjects
-
-	// 新token权限不变
 	tk.Roles = old.Roles
+	tk.IsSystemAdmin = old.IsSystemAdmin
+	tk.IsDomainAdmin = old.IsDomainAdmin
 
 	return tk, nil
 }
@@ -424,37 +432,17 @@ func makeBearerToken(lenth int) string {
 	return base64.RawURLEncoding.EncodeToString([]byte(token))
 }
 
-func (s *Store) checkInProject(targetProject string, projects []*project.Project) (bool, error) {
-	validated := false
-
-	for _, p := range projects {
-		ok, err := s.dao.Project.CheckProjectIsExistByID(p.ID)
-		if err != nil {
-			return false, err
-		}
-		if !ok {
-			return false, exception.NewBadRequest("project %s not exist", p)
-		}
-
-		if targetProject == p.ID {
-			validated = true
-			break
-		}
+func (s *Store) generateToken(scope, domainID, userID, appID string, tp token.Type, gt token.GrantType) (*token.Token, error) {
+	t := &token.Token{
+		Scope:         scope,
+		DomainID:      domainID,
+		CreatedAt:     time.Now().Unix(),
+		ExpiresIn:     s.conf.Token.ExpiresIn,
+		TokenType:     tp,
+		UserID:        userID,
+		ApplicationID: appID,
+		GrantType:     gt,
 	}
-
-	return validated, nil
-}
-
-func (s *Store) generateToken(scope, domainID, userID, clientID string, tp token.Type) (*token.Token, error) {
-	t := new(token.Token)
-	t.Scope = scope
-	t.DomainID = domainID
-	t.CreatedAt = time.Now().Unix()
-	t.ExpiresIn = s.conf.Token.ExpiresIn
-	t.GrantType = token.PASSWORD
-	t.TokenType = tp
-	t.UserID = userID
-	t.ApplicationID = clientID
 
 	switch tp {
 	case token.Bearer:
@@ -467,20 +455,6 @@ func (s *Store) generateToken(scope, domainID, userID, clientID string, tp token
 
 	if err := s.dao.Token.SaveToken(t); err != nil {
 		return nil, err
-	}
-
-	// check user role, add to token
-	user, err := s.dao.User.GetUser(user.UserID, userID)
-	if err != nil {
-		return nil, exception.NewInternalServerError(err.Error())
-	}
-	for _, rn := range user.RoleNames {
-		switch rn {
-		case "system_admin":
-			t.IsSystemAdmin = true
-		case "domain_admin":
-			t.IsDomainAdmin = true
-		}
 	}
 
 	return t, nil

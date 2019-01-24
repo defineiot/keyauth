@@ -10,7 +10,6 @@ import (
 // Response to be used by controllers.
 type Response struct {
 	Code     int         `json:"code"`
-	Status   string      `json:"status"`
 	Message  string      `json:"message,omitempty"`
 	Data     interface{} `json:"data,omitempty"`
 	TotalPag int64       `json:"total_page,omitempty"`
@@ -19,30 +18,37 @@ type Response struct {
 // Failed use to response error messge
 func Failed(w http.ResponseWriter, err error) {
 	msg := err.Error()
-	code := http.StatusInternalServerError
+	httCode := http.StatusInternalServerError
+	customeCode := 0
 
 	switch t := err.(type) {
 	case *exception.BadRequest:
-		code = t.Code()
+		httCode = t.Code()
+		customeCode = 4000
 	case *exception.NotFound:
-		code = t.Code()
+		httCode = t.Code()
+		customeCode = 4004
 	case *exception.InternalServerError:
-		code = t.Code()
+		httCode = t.Code()
+		customeCode = 5000
 	case *exception.Unauthorized:
-		code = t.Code()
+		httCode = t.Code()
+		customeCode = 4001
 	case *exception.MethodNotAllowed:
-		code = t.Code()
+		httCode = t.Code()
+		customeCode = 4005
 	case *exception.Forbidden:
-		code = t.Code()
+		httCode = t.Code()
+		customeCode = 4003
 	case *exception.Expired:
-		code = t.Code()
-		w.Header().Set("x-oauth-token-expired", "true")
+		httCode = t.Code()
+		customeCode = 4100
 	default:
-		code = http.StatusInternalServerError
+		httCode = http.StatusInternalServerError
 	}
 
 	resp := Response{
-		Status:  "error",
+		Code:    customeCode,
 		Message: msg,
 	}
 
@@ -57,7 +63,7 @@ func Failed(w http.ResponseWriter, err error) {
 		return
 	}
 
-	w.WriteHeader(code)
+	w.WriteHeader(httCode)
 	w.Write(respByt)
 	return
 }
@@ -65,7 +71,6 @@ func Failed(w http.ResponseWriter, err error) {
 // Success use to response success data
 func Success(w http.ResponseWriter, code int, data interface{}) {
 	resp := Response{
-		Status:  "success",
 		Message: "",
 		Data:    data,
 	}
@@ -88,7 +93,6 @@ func Success(w http.ResponseWriter, code int, data interface{}) {
 // SuccessWithPage use to response success data
 func SuccessWithPage(w http.ResponseWriter, code int, data interface{}, totoalPage int64) {
 	resp := Response{
-		Status:   "success",
 		Message:  "",
 		Data:     data,
 		TotalPag: totoalPage,

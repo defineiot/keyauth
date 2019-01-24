@@ -17,7 +17,7 @@ type Role struct {
 	CreateAt    int64  `json:"create_at,omitempty"`   // 创建时间
 	UpdateAt    int64  `json:"update_at,omitempty"`   // 更新时间
 
-	Features []*service.Feature `json:"features"` // 角色的功能列表
+	Features []*service.Feature `json:"features,omitempty"` // 角色的功能列表
 }
 
 func (r *Role) String() string {
