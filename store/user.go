@@ -1,161 +1,96 @@
 package store
 
 import (
-	"github.com/defineiot/keyauth/dao/application"
-	"github.com/defineiot/keyauth/dao/department"
-	"github.com/defineiot/keyauth/dao/domain"
-	"github.com/defineiot/keyauth/dao/role"
 	"github.com/defineiot/keyauth/dao/user"
+	"github.com/defineiot/keyauth/internal/exception"
 )
 
-const (
-	systemAdminRoleName = "system_admin"
-	domainAdminRoleName = "domain_admin"
-	commonUserRoleName  = "member"
-	adminDomainName     = "admin_domain"
-	adminDepartmentName = "admin_department"
-)
+// CreateMemberUser use to create user
+func (s *Store) CreateMemberUser(u *user.User) error {
+	// 判断用户名是否存在
+	if _, err := s.dao.User.GetUser(user.Account, u.Account); err != nil {
+		if _, ok := err.(*exception.NotFound); !ok {
+			return err
+		}
+	} else {
+		return exception.NewBadRequest("account: %s is exist", u.Account)
+	}
 
-// InitAdmin 初始化系统管理员相关信息
-func (s *Store) InitAdmin(username, password string) error {
-	if err := s.initRoles(); err != nil {
+	// 判断用户的秘密是否符合复杂度要求
+
+	// 如果用户未选择部门, 则使用默认部门
+	if u.Department.ID == "" {
+		defaultDep, err := s.dao.Department.GetDepartmentByName(u.Domain.ID, defaultDepartmentName)
+		if err != nil {
+			return err
+		}
+
+		u.Department.ID = defaultDep.ID
+	}
+
+	// 创建用户
+	if err := s.dao.User.CreateUser(u); err != nil {
 		return err
 	}
 
-	if err := s.initAdminUser(username, password); err != nil {
+	// 绑定成员角色
+	role, err := s.dao.Role.GetRoleByName(memberUserRoleName)
+	if err != nil {
 		return err
 	}
-
-	if err := s.initAdminAPPs(username); err != nil {
+	if err := s.dao.User.BindRole(u.Domain.ID, u.ID, role.ID); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// 初始化3个角色:
-// 系统管理员: system_admin
-// 域管理员:   domain_admin
-// 普通用户:   member
-func (s *Store) initRoles() error {
-	systemAdmin := &role.Role{
-		Name:        systemAdminRoleName,
-		Description: "系统管理员",
-	}
-	domainAdmin := &role.Role{
-		Name:        domainAdminRoleName,
-		Description: "域管理员/公司管理员/组织管理员",
-	}
-	common := &role.Role{
-		Name:        commonUserRoleName,
-		Description: "成员用户",
+// GetUser get an user
+func (s *Store) GetUser(domainID, userID string) (*user.User, error) {
+	var err error
+
+	u := new(user.User)
+	cacheKey := s.cachePrefix.user + userID
+
+	if s.isCache {
+		if s.cache.Get(cacheKey, u) {
+			s.log.Debug("get project from cache key: %s", cacheKey)
+			return u, nil
+		}
+		s.log.Debug("get project from cache failed, key: %s", cacheKey)
 	}
 
-	if err := s.dao.Role.CreateRole(systemAdmin); err != nil {
-		return err
-	}
-
-	if err := s.dao.Role.CreateRole(domainAdmin); err != nil {
-		return err
-	}
-
-	if err := s.dao.Role.CreateRole(common); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// 创建管理员的账号和域
-func (s *Store) initAdminUser(username, password string) error {
-	adminDomain := &domain.Domain{
-		Type:        domain.Enterprise,
-		Name:        adminDomainName,
-		DisplayName: "系统管理员域空间",
-		Description: "系统管理员域空间",
-	}
-
-	if err := s.dao.Domain.CreateDomain(adminDomain); err != nil {
-		return err
-	}
-
-	adminDep := &department.Department{
-		Name:     adminDepartmentName,
-		DomainID: adminDomain.ID,
-	}
-
-	if err := s.dao.Department.CreateDepartment(adminDep); err != nil {
-		return err
-	}
-
-	adminUser := &user.User{
-		Account:    username,
-		Password:   &user.Password{Password: s.hmacHash(password)},
-		Domain:     adminDomain,
-		Department: adminDep,
-	}
-
-	if err := s.dao.User.CreateUser(adminUser); err != nil {
-		return err
-	}
-
-	sysrole, err := s.dao.Role.GetRoleByName(systemAdminRoleName)
+	u, err = s.dao.User.GetUser(user.UserID, userID)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if err := s.dao.User.BindRole(adminUser.Domain.ID, adminUser.ID, sysrole.ID); err != nil {
-		return err
+	if u == nil {
+		return nil, exception.NewBadRequest("user %s not found", userID)
 	}
 
-	domainrole, err := s.dao.Role.GetRoleByName(domainAdminRoleName)
+	// query user's roles
+	roles, err := s.dao.Role.ListUserRole(domainID, userID)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if err := s.dao.User.BindRole(adminUser.Domain.ID, adminUser.ID, domainrole.ID); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Store) initAdminAPPs(account string) error {
-	u, err := s.dao.User.GetUser(user.Account, account)
-	if err != nil {
-		return err
+	for i := range roles {
+		u.RoleNames = append(u.RoleNames, roles[i].Name)
 	}
 
-	web := &application.Application{
-		Name:   "web_app",
-		UserID: u.ID,
-	}
-	android := &application.Application{
-		Name:   "android_app",
-		UserID: u.ID,
-	}
-	ios := &application.Application{
-		Name:   "ios_app",
-		UserID: u.ID,
-	}
-	sdk := &application.Application{
-		Name:   "sdk_app",
-		UserID: u.ID,
+	if u.DefaultProject.ID != "" {
+		pro, err := s.dao.Project.GetProjectByID(u.DefaultProject.ID)
+		if err != nil {
+			return nil, err
+		}
+		u.DefaultProject = pro
 	}
 
-	if err := s.dao.Application.CreateApplication(web); err != nil {
-		return err
+	if s.isCache {
+		if !s.cache.Set(cacheKey, u, s.ttl) {
+			s.log.Debug("set user cache failed, key: %s", cacheKey)
+		}
+		s.log.Debug("set user cache ok, key: %s", cacheKey)
 	}
 
-	if err := s.dao.Application.CreateApplication(android); err != nil {
-		return err
-	}
-
-	if err := s.dao.Application.CreateApplication(ios); err != nil {
-		return err
-	}
-
-	if err := s.dao.Application.CreateApplication(sdk); err != nil {
-		return err
-	}
-
-	return nil
+	return u, nil
 }

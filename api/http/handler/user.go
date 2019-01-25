@@ -1,20 +1,43 @@
 package handler
 
-// import (
-// 	"encoding/json"
-// 	"fmt"
-// 	"io/ioutil"
-// 	"net/http"
-// 	"strconv"
-// 	"time"
+import (
+	"net/http"
 
-// 	"github.com/defineiot/keyauth/api/global"
-// 	"github.com/defineiot/keyauth/api/http/context"
-// 	"github.com/defineiot/keyauth/api/http/request"
-// 	"github.com/defineiot/keyauth/api/http/response"
-// 	"github.com/defineiot/keyauth/dao/user"
-// 	"github.com/defineiot/keyauth/internal/exception"
-// )
+	"github.com/defineiot/keyauth/dao/department"
+
+	"github.com/defineiot/keyauth/api/global"
+	"github.com/defineiot/keyauth/api/http/context"
+	"github.com/defineiot/keyauth/api/http/request"
+	"github.com/defineiot/keyauth/api/http/response"
+	"github.com/defineiot/keyauth/dao/domain"
+	"github.com/defineiot/keyauth/dao/user"
+)
+
+// CreateMemberUser use to create domain
+func CreateMemberUser(w http.ResponseWriter, r *http.Request) {
+	tk := context.GetTokenFromContext(r)
+
+	val, err := request.CheckObjectBody(r)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	u := new(user.User)
+	u.Domain = &domain.Domain{ID: tk.DomainID}
+	u.Department = &department.Department{ID: val.Get("deparment_id").ToString()}
+	u.Account = val.Get("account").ToString()
+	u.Password = &user.Password{Password: val.Get("password").ToString()}
+
+	// 交给业务控制层处理
+	if err := global.Store.CreateMemberUser(u); err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusCreated, u)
+	return
+}
 
 // // RegistryUser use to create domain
 // func RegistryUser(w http.ResponseWriter, r *http.Request) {
@@ -264,69 +287,6 @@ package handler
 // 	}
 
 // 	response.Success(w, http.StatusCreated, ir)
-// 	return
-// }
-
-// // CreateUser use to create domain
-// func CreateUser(w http.ResponseWriter, r *http.Request) {
-// 	val, err := request.CheckObjectBody(r)
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
-
-// 	domainName := val.Get("domain_name").ToString()
-// 	name := val.Get("user_name").ToString()
-// 	pass := val.Get("password").ToString()
-
-// 	if name == "" || pass == "" {
-// 		response.Failed(w, exception.NewBadRequest("user_name or password is missed"))
-// 		return
-// 	}
-
-// 	// only system admin can create user in other domain
-// 	tk := context.GetTokenFromContext(r)
-
-// 	did := ""
-// 	if domainName != "" {
-// 		dom, err := global.Store.GetDomain("name", domainName)
-// 		if err != nil {
-// 			response.Failed(w, err)
-// 			return
-// 		}
-// 		if dom == nil {
-// 			response.Failed(w, exception.NewBadRequest("domain %s not found", domainName))
-// 			return
-// 		}
-
-// 		if !tk.IsSystemAdmin && tk.DomainID != dom.ID {
-// 			response.Failed(w, exception.NewForbidden("your create user must be in your own domain"))
-// 			return
-// 		}
-// 		did = dom.ID
-// 	} else {
-// 		did = tk.DomainID
-// 	}
-
-// 	// check user exist
-// 	ok, err := global.Store.CheckUserIsGlobalExist(name)
-// 	if err != nil {
-// 		response.Failed(w, exception.NewInternalServerError("check username exist error, %s", err.Error()))
-// 		return
-// 	}
-// 	if ok {
-// 		response.Failed(w, exception.NewBadRequest("username: %s is exist", name))
-// 		return
-// 	}
-
-// 	// 交给业务控制层处理
-// 	user, err := global.Store.CreateUser(did, name, pass, true, 6360, 6360)
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
-
-// 	response.Success(w, http.StatusCreated, user)
 // 	return
 // }
 

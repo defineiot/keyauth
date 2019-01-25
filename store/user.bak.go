@@ -5,9 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/defineiot/keyauth/dao/user"
 	"github.com/defineiot/keyauth/dao/verifycode"
-	"github.com/defineiot/keyauth/internal/exception"
 )
 
 // IssueVerifyCode todo
@@ -136,12 +134,6 @@ func (s *Store) RevolkCode(purpose verifycode.CodePurpose, target string, code s
 // 	return code, nil
 // }
 
-// CreateUser use to create user
-func (s *Store) CreateUser(u *user.User) error {
-	// 1. create user
-	return s.dao.User.CreateUser(u)
-}
-
 // CheckUserIsGlobalExist use to create user
 // func (s *Store) CheckUserIsGlobalExist(username string) (bool, error) {
 // 	return s.user.CheckUserNameIsGlobalExist(username)
@@ -248,56 +240,6 @@ func (s *Store) CreateUser(u *user.User) error {
 
 // 	return users, nil
 // }
-
-// GetUser get an user
-func (s *Store) GetUser(domainID, userID string) (*user.User, error) {
-	var err error
-
-	u := new(user.User)
-	cacheKey := "user_" + userID
-
-	if s.isCache {
-		if s.cache.Get(cacheKey, u) {
-			s.log.Debug("get project from cache key: %s", cacheKey)
-			return u, nil
-		}
-		s.log.Debug("get project from cache failed, key: %s", cacheKey)
-	}
-
-	u, err = s.dao.User.GetUser(user.UserID, userID)
-	if err != nil {
-		return nil, err
-	}
-	if u == nil {
-		return nil, exception.NewBadRequest("user %s not found", userID)
-	}
-
-	// query user's roles
-	roles, err := s.dao.Role.ListUserRole(domainID, userID)
-	if err != nil {
-		return nil, err
-	}
-	for i := range roles {
-		u.RoleNames = append(u.RoleNames, roles[i].Name)
-	}
-
-	if u.DefaultProject.ID != "" {
-		pro, err := s.dao.Project.GetProjectByID(u.DefaultProject.ID)
-		if err != nil {
-			return nil, err
-		}
-		u.DefaultProject = pro
-	}
-
-	if s.isCache {
-		if !s.cache.Set(cacheKey, u, s.ttl) {
-			s.log.Debug("set user cache failed, key: %s", cacheKey)
-		}
-		s.log.Debug("set user cache ok, key: %s", cacheKey)
-	}
-
-	return u, nil
-}
 
 // // DeleteUser delete an user by id
 // func (s *Store) DeleteUser(domainID, userID string) error {

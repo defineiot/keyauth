@@ -29,8 +29,9 @@ func (s *store) CreateApplication(app *application.Application) error {
 	app.CreateAt = time.Now().Unix()
 	app.ID = uuid.NewV4().String()
 
-	_, err = s.stmts[CreateAPP].Exec(app.ID, app.Name, app.UserID, app.Website, app.LogoImage, app.Description,
-		app.CreateAt, app.RedirectURI, app.ClientID, app.ClientSecret, app.Locked, app.TokenExpireTime)
+	_, err = s.stmts[CreateAPP].Exec(app.ID, app.Name, app.UserID, app.Website, app.LogoImage,
+		app.Description, app.CreateAt, app.RedirectURI, app.ClientID, app.ClientSecret,
+		app.Locked, app.TokenExpireTime)
 	if err != nil {
 		return exception.NewInternalServerError("insert application exec sql err, %s", err)
 	}
@@ -98,9 +99,10 @@ func (s *store) ListUserApplications(userID string) ([]*application.Application,
 	applications := []*application.Application{}
 	for rows.Next() {
 		app := new(application.Application)
-		if err := rows.Scan(&app.ID, &app.Name, &app.UserID, &app.Website, &app.LogoImage, &app.Description, &app.CreateAt,
-			&app.RedirectURI, &app.ClientID, &app.ClientSecret, &app.Locked,
-			&app.LastLoginTime, &app.LastLoginIP, &app.LoginFailedTimes, &app.LoginSuccessTimes, &app.TokenExpireTime); err != nil {
+		if err := rows.Scan(&app.ID, &app.Name, &app.UserID, &app.Website, &app.LogoImage,
+			&app.Description, &app.CreateAt, &app.RedirectURI, &app.ClientID, &app.ClientSecret,
+			&app.Locked, &app.LastLoginTime, &app.LastLoginIP, &app.LoginFailedTimes,
+			&app.LoginSuccessTimes, &app.TokenExpireTime); err != nil {
 			return nil, exception.NewInternalServerError("scan application record error, %s", err)
 		}
 		applications = append(applications, app)
@@ -110,9 +112,10 @@ func (s *store) ListUserApplications(userID string) ([]*application.Application,
 
 func (s *store) GetApplication(appid string) (*application.Application, error) {
 	app := application.Application{}
-	err := s.stmts[GetUserAPP].QueryRow(appid).Scan(&app.ID, &app.Name, &app.UserID, &app.Website, &app.LogoImage, &app.Description,
-		&app.CreateAt, &app.RedirectURI, &app.ClientID, &app.ClientSecret, &app.Locked,
-		&app.LastLoginTime, &app.LastLoginIP, &app.LoginFailedTimes, &app.LoginSuccessTimes, &app.TokenExpireTime)
+	err := s.stmts[GetUserAPP].QueryRow(appid).Scan(&app.ID, &app.Name, &app.UserID, &app.Website,
+		&app.LogoImage, &app.Description, &app.CreateAt, &app.RedirectURI, &app.ClientID,
+		&app.ClientSecret, &app.Locked, &app.LastLoginTime, &app.LastLoginIP, &app.LoginFailedTimes,
+		&app.LoginSuccessTimes, &app.TokenExpireTime)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewNotFound("application %s not find", appid)
@@ -126,9 +129,10 @@ func (s *store) GetApplication(appid string) (*application.Application, error) {
 
 func (s *store) GetApplicationByClientID(clientID string) (*application.Application, error) {
 	app := application.Application{}
-	err := s.stmts[GetUserAPPByClientID].QueryRow(clientID).Scan(&app.ID, &app.Name, &app.UserID, &app.Website, &app.LogoImage, &app.Description,
-		&app.CreateAt, &app.RedirectURI, &app.ClientID, &app.ClientSecret, &app.Locked,
-		&app.LastLoginTime, &app.LastLoginIP, &app.LoginFailedTimes, &app.LoginSuccessTimes, &app.TokenExpireTime)
+	err := s.stmts[GetUserAPPByClientID].QueryRow(clientID).Scan(&app.ID, &app.Name, &app.UserID,
+		&app.Website, &app.LogoImage, &app.Description, &app.CreateAt, &app.RedirectURI,
+		&app.ClientID, &app.ClientSecret, &app.Locked, &app.LastLoginTime, &app.LastLoginIP,
+		&app.LoginFailedTimes, &app.LoginSuccessTimes, &app.TokenExpireTime)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewNotFound("application %s not find", clientID)

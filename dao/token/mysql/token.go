@@ -20,9 +20,9 @@ func (s *store) SaveToken(t *token.Token) error {
 		t.ExpiresIn = 3600
 	}
 
-	if _, err := s.stmts[SaveToken].Exec(t.AccessToken, t.RefreshToken, string(t.GrantType), string(t.TokenType),
-		t.UserID, t.DomainID, t.CurrentProject, t.ServiceID, t.ApplicationID,
-		t.Name, t.Scope, t.CreatedAt, t.ExpiresIn, t.Description); err != nil {
+	if _, err := s.stmts[SaveToken].Exec(t.AccessToken, t.RefreshToken, string(t.GrantType),
+		string(t.TokenType), t.UserID, t.DomainID, t.CurrentProject, t.ServiceID,
+		t.ApplicationID, t.Name, t.Scope, t.CreatedAt, t.ExpiresIn, t.Description); err != nil {
 		return exception.NewInternalServerError("insert token exec sql err, %s", err)
 	}
 
@@ -62,8 +62,8 @@ func (s *store) GetTokenByRefresh(refreshToken string) (*token.Token, error) {
 	return t, nil
 }
 
-func (s *store) SetTokenProject(accessToken, projectID string) error {
-	ret, err := s.stmts[SetTokenProject].Exec(projectID, accessToken)
+func (s *store) UpdateTokenScope(accessToken, scope string) error {
+	ret, err := s.stmts[UpdateTokenScope].Exec(scope, accessToken)
 	if err != nil {
 		return exception.NewInternalServerError("update token project exec sql error, %s", err)
 	}

@@ -42,9 +42,10 @@ func (s *store) CreateUser(u *user.User) error {
 		dpid = u.DefaultProject.ID
 	}
 	// 存入
-	if _, err = userPre.Exec(u.ID, u.Department.ID, u.Account, u.Mobile, u.Email, u.Phone, u.Address, u.RealName, u.NickName,
-		u.Gender, u.Avatar, u.Language, u.City, u.Province, u.Locked, u.Domain.ID, u.CreateAt,
-		u.ExpiresActiveDays, dpid); err != nil {
+	if _, err = userPre.Exec(u.ID, u.Department.ID, u.Account, u.Mobile, u.Email,
+		u.Phone, u.Address, u.RealName, u.NickName, u.Gender, u.Avatar, u.Language,
+		u.City, u.Province, u.Locked, u.Domain.ID, u.CreateAt, u.ExpiresActiveDays,
+		dpid); err != nil {
 		return exception.NewInternalServerError("insert user exec sql err, %s", err)
 	}
 
@@ -57,7 +58,12 @@ func (s *store) CreateUser(u *user.User) error {
 			return exception.NewInternalServerError("prepare insert user password error, user: %s, %s", u.Account, err)
 		}
 
-		pass := user.Password{CreateAt: time.Now().Unix(), ExpireAt: u.Password.ExpireAt, Password: u.Password.Password, UserID: u.ID}
+		pass := user.Password{
+			CreateAt: time.Now().Unix(),
+			ExpireAt: u.Password.ExpireAt,
+			Password: u.Password.Password,
+			UserID:   u.ID,
+		}
 		// 存入
 		if _, err = passPre.Exec(pass.Password, pass.ExpireAt, pass.CreateAt, pass.UserID); err != nil {
 			return exception.NewInternalServerError("insert password exec sql err, %s", err)

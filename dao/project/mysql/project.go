@@ -229,7 +229,6 @@ func (s *store) AddUsersToProject(projectID string, userIDs ...string) error {
 	}
 
 	for _, userID := range userIDs {
-		fmt.Println("xxx", userID, projectID)
 		_, err = s.stmts[AddUsersToProject].Exec(userID, projectID)
 		if err != nil {
 			return fmt.Errorf("insert add users to project mapping exec sql err, %s", err)

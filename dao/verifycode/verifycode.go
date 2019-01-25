@@ -24,12 +24,12 @@ type SendMode int
 
 // VerifyCode 一次性使用验证码, 使用过后则立即删除
 type VerifyCode struct {
-	Code       string      `json:"code"`        // 验证码, 6位的数字
-	Purpose    CodePurpose `json:"purpose"`     // 用途
-	SendMode   SendMode    `json:"send_mode"`   // 发送方式
-	SendTarget string      `json:"send_target"` // 发送人地址
-	CreateAt   int64       `json:"create_at"`   // 创建时间
-	ExpireAt   int64       `json:"expire_at"`   // 过期时间
+	Code       string      `json:"code"`                  // 验证码, 6位的数字
+	Purpose    CodePurpose `json:"purpose,omitempty"`     // 用途
+	SendMode   SendMode    `json:"send_mode,omitempty"`   // 发送方式
+	SendTarget string      `json:"send_target,omitempty"` // 发送人地址
+	CreateAt   int64       `json:"create_at,omitempty"`   // 创建时间
+	ExpireAt   int64       `json:"expire_at,omitempty"`   // 过期时间
 }
 
 func (v *VerifyCode) String() string {

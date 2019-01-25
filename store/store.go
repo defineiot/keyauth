@@ -23,6 +23,12 @@ type Store struct {
 	ttl     time.Duration
 	conf    *conf.Config
 	isCache bool
+
+	cachePrefix struct {
+		token   string
+		project string
+		user    string
+	}
 }
 
 // NewStore store engine
@@ -47,6 +53,10 @@ func NewStore(conf *conf.Config) (*Store, error) {
 	s.conf = conf
 	s.log = log
 	s.dao = defaultDao
+
+	s.cachePrefix.token = "token_"
+	s.cachePrefix.project = "project_"
+	s.cachePrefix.user = "user_"
 
 	return s, nil
 }

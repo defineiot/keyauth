@@ -115,7 +115,7 @@ func (s *store) DeleteRole(id string) error {
 }
 
 func (s *store) ListUserRole(domainID, userID string) ([]*role.Role, error) {
-	rows, err := s.stmts[FindRoleByUser].Query()
+	rows, err := s.stmts[FindRoleByUser].Query(domainID, userID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query role list error, %s", err)
 	}
