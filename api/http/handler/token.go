@@ -158,8 +158,8 @@ func ValidateToken(w http.ResponseWriter, r *http.Request) {
 			response.Failed(w, err)
 			return
 		}
-		for _, rn := range u.RoleNames {
-			switch rn {
+		for i := range u.Roles {
+			switch u.Roles[i].Name {
 			case "system_admin":
 				t.IsSystemAdmin = true
 			case "domain_admin":
@@ -182,7 +182,8 @@ func ValidateToken(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			for _, rn := range u.RoleNames {
+			for i := range u.Roles {
+				rn := u.Roles[i].Name
 				if rn == "system_admin" {
 					hasPerm = true
 					break

@@ -112,7 +112,7 @@ func (s *store) DelDepartment(depID string) error {
 func (s *store) GetDepartmentByName(domainID, departmentName string) (*department.Department, error) {
 	d := new(department.Department)
 
-	err := s.stmts[FindDepartmentByName].QueryRow(domainID, departmentName).Scan(
+	err := s.stmts[FindDepartmentByName].QueryRow(departmentName, domainID).Scan(
 		&d.ID, &d.Number, &d.Name, &d.ParentID, &d.Grade, &d.Path, &d.ManagerID, &d.DomainID, &d.CreateAt)
 	if err != nil {
 		if err == sql.ErrNoRows {

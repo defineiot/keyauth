@@ -112,8 +112,8 @@ func (r *MyRouter) Handler(method, path, featureName string, handler http.Handle
 					return
 				}
 
-				for _, rn := range u.RoleNames {
-					switch rn {
+				for i := range u.Roles {
+					switch u.Roles[i].Name {
 					case "system_admin":
 						t.IsSystemAdmin = true
 					case "domain_admin":
@@ -122,13 +122,14 @@ func (r *MyRouter) Handler(method, path, featureName string, handler http.Handle
 					}
 				}
 
-				for _, rn := range u.RoleNames {
-					if rn == "system_admin" {
+				for i := range u.Roles {
+					role := u.Roles[i]
+					if role.Name == "system_admin" {
 						hasPerm = true
 						break
 					}
 
-					role, err := global.Store.GetRole(rn)
+					role, err := global.Store.GetRole(role.ID)
 					if err != nil {
 						response.Failed(w, exception.NewUnauthorized(err.Error()))
 						return

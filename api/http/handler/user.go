@@ -3,14 +3,14 @@ package handler
 import (
 	"net/http"
 
-	"github.com/defineiot/keyauth/dao/department"
-
 	"github.com/defineiot/keyauth/api/global"
 	"github.com/defineiot/keyauth/api/http/context"
 	"github.com/defineiot/keyauth/api/http/request"
 	"github.com/defineiot/keyauth/api/http/response"
+	"github.com/defineiot/keyauth/dao/department"
 	"github.com/defineiot/keyauth/dao/domain"
 	"github.com/defineiot/keyauth/dao/user"
+	"github.com/defineiot/keyauth/internal/exception"
 )
 
 // CreateMemberUser use to create domain
@@ -36,6 +36,84 @@ func CreateMemberUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.Success(w, http.StatusCreated, u)
+	return
+}
+
+// ListMemberUsers list all users can filter by domain or project
+func ListMemberUsers(w http.ResponseWriter, r *http.Request) {
+	var err error
+
+	tk := context.GetTokenFromContext(r)
+	did := tk.DomainID
+
+	users := []*user.User{}
+
+	users, err = global.Store.ListMemberUsers(did)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusOK, users)
+	return
+}
+
+// GetMemberUser use to get an user information
+func GetMemberUser(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	tk := context.GetTokenFromContext(r)
+	uid := ps.ByName("mid")
+
+	u, err := global.Store.GetUser(tk.DomainID, uid)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	// check permisson
+	if tk.DomainID != u.Domain.ID {
+		response.Failed(w, exception.NewForbidden("this user not belong to you"))
+	}
+
+	response.Success(w, http.StatusOK, u)
+	return
+}
+
+// DeleteMemberUser delete an user
+func DeleteMemberUser(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	tk := context.GetTokenFromContext(r)
+	uid := ps.ByName("mid")
+
+	// user can't delete self, when delete self your ungristry api
+	if tk.UserID == uid {
+		response.Failed(w, exception.NewForbidden("your can't delete your self, but your can unregistry your"))
+		return
+	}
+
+	u, err := global.Store.GetUser(tk.DomainID, uid)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+	// 1. check user is in your domain
+	if u.Domain.ID != tk.DomainID {
+		response.Failed(w, exception.NewForbidden("this user: %s not in your domain", uid))
+		return
+	}
+
+	// 2. the initial system admin can't delete
+	if u.Account == global.Conf.Admin.UserName && tk.IsSystemAdmin {
+		response.Failed(w, exception.NewForbidden("can't delete system initial admin user"))
+		return
+	}
+
+	if err := global.Store.DeleteUser(tk.DomainID, uid); err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusNoContent, "")
 	return
 }
 
@@ -367,27 +445,6 @@ func CreateMemberUser(w http.ResponseWriter, r *http.Request) {
 // 	return
 // }
 
-// // GetUser use to get an user information
-// func GetUser(w http.ResponseWriter, r *http.Request) {
-// 	ps := context.GetParamsFromContext(r)
-// 	tk := context.GetTokenFromContext(r)
-// 	uid := ps.ByName("uid")
-
-// 	u, err := global.Store.GetUser(tk.DomainID, uid)
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
-
-// 	// check permisson
-// 	if tk.DomainID != u.DomainID {
-// 		response.Failed(w, exception.NewForbidden("this user not belong to you"))
-// 	}
-
-// 	response.Success(w, http.StatusOK, u)
-// 	return
-// }
-
 // // SetUserPassword use to set user's password
 // func SetUserPassword(w http.ResponseWriter, r *http.Request) {
 // 	val, err := request.CheckObjectBody(r)
@@ -455,63 +512,6 @@ func CreateMemberUser(w http.ResponseWriter, r *http.Request) {
 // 	}
 
 // 	response.Success(w, http.StatusOK, users)
-// 	return
-// }
-
-// // ListDomainUser list all users can filter by domain or project
-// func ListDomainUser(w http.ResponseWriter, r *http.Request) {
-// 	var err error
-
-// 	tk := context.GetTokenFromContext(r)
-// 	did := tk.DomainID
-
-// 	users := []*user.User{}
-
-// 	users, err = global.Store.ListDomainUser(did)
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
-
-// 	response.Success(w, http.StatusOK, users)
-// 	return
-// }
-
-// // DeleteUser delete an user
-// func DeleteUser(w http.ResponseWriter, r *http.Request) {
-// 	ps := context.GetParamsFromContext(r)
-// 	tk := context.GetTokenFromContext(r)
-// 	uid := ps.ByName("uid")
-
-// 	// user can't delete self, when delete self your ungristry api
-// 	if tk.UserID == uid {
-// 		response.Failed(w, exception.NewForbidden("your can't delete your self, but your can unregistry your"))
-// 		return
-// 	}
-
-// 	u, err := global.Store.GetUser(tk.DomainID, uid)
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
-// 	// 1. check user is in your domain
-// 	if u.DomainID != tk.DomainID {
-// 		response.Failed(w, exception.NewForbidden("this user: %s not in your domain", uid))
-// 		return
-// 	}
-
-// 	// 2. the initial system admin can't delete
-// 	if u.Name == global.Conf.Admin.UserName && tk.IsSystemAdmin {
-// 		response.Failed(w, exception.NewForbidden("can't delete system initial admin user"))
-// 		return
-// 	}
-
-// 	if err := global.Store.DeleteUser(tk.DomainID, uid); err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
-
-// 	response.Success(w, http.StatusNoContent, "")
 // 	return
 // }
 
