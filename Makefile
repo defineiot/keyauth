@@ -5,7 +5,11 @@ all: test build
 
 run:
 		go build -o ${BINARY_NAME} ${MAIN_FILE_PAHT}
-		./${BINARY_NAME} service bootstrap -f cmd/etc/keyauth.conf
+		./${BINARY_NAME} service start -f cmd/etc/keyauth.conf
+
+init_admin:
+		go build -o ${BINARY_NAME} ${MAIN_FILE_PAHT}
+		./${BINARY_NAME} init -f cmd/etc/keyauth.conf -u admin -p password
 
 clean:
 		go clean

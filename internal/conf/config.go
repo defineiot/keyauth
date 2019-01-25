@@ -97,6 +97,9 @@ func (c *Config) Validate() error {
 	if c.APP.Port == "" {
 		c.APP.Port = "8080"
 	}
+	if c.APP.Key == "" {
+		c.APP.Key = "qjPmB1agz5Au1So5TVIpPiLyEYN3SKOK"
+	}
 
 	if c.Log.Level == "" {
 		c.Log.Level = "debug"

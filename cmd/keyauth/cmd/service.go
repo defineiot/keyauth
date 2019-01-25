@@ -46,19 +46,8 @@ var serviceCmd = &cobra.Command{
 			if err := s.Start(); err != nil {
 				return err
 			}
-
-		case "bootstrap":
-			// start service
-			s, err := http.NewService(conf)
-			if err != nil {
-				return err
-			}
-
-			if err := s.BootStrap(); err != nil {
-				return err
-			}
 		default:
-			return errors.New("not support argument, support [start/bootstrap]")
+			return errors.New("not support argument, support [start]")
 		}
 
 		return nil

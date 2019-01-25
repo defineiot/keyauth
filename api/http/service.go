@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	stdlog "log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -26,9 +25,10 @@ var stopSignal = make(chan bool, 1)
 
 // Service is auth service
 type Service struct {
-	http *http.Server
-	conf *conf.Config
-	log  logger.Logger
+	http  *http.Server
+	conf  *conf.Config
+	log   logger.Logger
+	store *store.Store
 
 	v1endpoints map[string]map[string]string
 	description string
@@ -36,34 +36,64 @@ type Service struct {
 
 // NewService  new http service
 func NewService(config *conf.Config) (*Service, error) {
+	// 检查服务配置是否正确
 	err := config.Validate()
 	if err != nil {
 		return nil, fmt.Errorf("配置校验失败, %s", err)
 	}
 
+	// 初始化路由
+	n := negroni.New()
+
+	// 添加路由
+	r := router.NewRouter()
+	r.SetURLPrefix("/keyauth/v1")
+	RouteToV1(r)
+	n.UseHandler(r.Router)
+
+	// 设置路由中间件
+	corsM := cors.AllowAll()
+	recoverM := negroni.NewRecovery()
+	accessL := negroni.NewLogger()
+	n.Use(corsM)
+	n.Use(accessL)
+	n.Use(recoverM)
+
+	// 生成HTTP服务对象
+	addr := fmt.Sprintf("%s:%s", config.APP.Host, config.APP.Port)
+	httpSvr := &http.Server{
+		ReadHeaderTimeout: 3 * time.Second,
+		ReadTimeout:       5 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       120 * time.Second,
+		MaxHeaderBytes:    1 << 20,
+		Addr:              addr,
+		Handler:           n,
+	}
+
+	// 获取服务日志对象
 	logger, err := config.GetLogger()
 	if err != nil {
 		return nil, err
 	}
 
-	desc := `微服务权限管理中心, 提供用户的管理, 认证, 鉴权, 服务发现等功能`
+	return &Service{
+		http: httpSvr,
+		conf: config,
+		log:  logger,
 
-	return &Service{conf: config, log: logger, description: desc}, nil
+		v1endpoints: r.GetEndpoints(),
+		description: `微服务权限管理中心, 提供用户的管理, 认证, 鉴权, 服务发现等功能`,
+	}, nil
 }
 
 // Start use to start openauth http service
 func (s *Service) Start() error {
 	// initial global variables
-	if err := s.initGlobal(); err != nil {
+	if err := s.init(); err != nil {
 		return err
 	}
 	s.log.Debug("initial global variables success")
-
-	// prepare http service
-	if err := s.prepare(); err != nil {
-		return err
-	}
-	s.log.Debug("initial http service success")
 
 	// registe service
 	if s.conf.Etcd.EnableRegisteFeatures {
@@ -81,98 +111,29 @@ func (s *Service) Start() error {
 	return nil
 }
 
-// BootStrap todo
-func (s *Service) BootStrap() error {
-	// initial global variables
-	if err := s.initGlobal(); err != nil {
-		return err
-	}
-	s.log.Debug("initial global variables success")
+// // InitAdmin 初始化系统管理员相关信息
+// func (s *Service) InitAdmin(config *conf.Config) error {
+// 	// 初始化全局变量
+// 	store, err := store.NewStore(config)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	// prepare http service
-	if err := s.prepare(); err != nil {
-		return err
-	}
-	s.log.Debug("initial http service success")
+// 	s.store = store
+// }
 
-	// registe service
-	// if err := s.registryService(); err != nil {
-	// 	return err
-	// }
-	// s.log.Debug("registry github.com/defineiot/keyauth service features success")
-
-	// initial roles
-	// if err := s.initialRoles(); err != nil {
-	// 	return err
-	// }
-	// s.log.Debug("initial default roles for system success")
-
-	// initial sysadmin
-	// admin := s.conf.Admin
-	// if err := s.initialSysAdmin(admin.Domain, admin.DomainDisplay, admin.UserName, admin.Password); err != nil {
-	// 	return err
-	// }
-	// s.log.Debug("initial supser admin success")
-
-	// start http service
-	if err := s.start(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Service) initGlobal() error {
+func (s *Service) init() error {
+	// 初始化全局变量
 	store, err := store.NewStore(s.conf)
 	if err != nil {
 		return err
 	}
+	s.store = store
 
 	store.SetCache(cache.Newmemcache(100000), time.Minute*5)
 	global.Store = store
 	global.Conf = s.conf
 	global.Log = s.log
-
-	return nil
-}
-
-func (s *Service) prepare() error {
-	n := negroni.New()
-
-	//
-	r := router.NewRouter()
-	r.SetURLPrefix("/keyauth/v1")
-	RouteToV1(r)
-
-	// includes some default middlewares
-	corsM := cors.AllowAll()
-	corsM.Log = stdlog.New(os.Stdout, "Info: ", stdlog.Ltime|stdlog.Lshortfile)
-	recoverM := negroni.NewRecovery()
-	accessL := negroni.NewLogger()
-	// timeout := middleware.NewTimeoutHandler(3*time.Second, "test")
-	n.Use(corsM)
-	n.Use(accessL)
-	n.Use(recoverM)
-	s.log.Info("loading http middleware success")
-
-	// config router
-	n.UseHandler(r.Router)
-	s.log.Info("loading router success")
-
-	// run http service
-	addr := fmt.Sprintf("%s:%s", s.conf.APP.Host, s.conf.APP.Port)
-	srv := &http.Server{
-		ReadHeaderTimeout: 3 * time.Second,
-		ReadTimeout:       5 * time.Second,
-		WriteTimeout:      10 * time.Second,
-		IdleTimeout:       120 * time.Second,
-		MaxHeaderBytes:    1 << 20,
-		Addr:              addr,
-		Handler:           n,
-	}
-
-	s.http = srv
-	s.v1endpoints = r.GetEndpoints()
 
 	return nil
 }

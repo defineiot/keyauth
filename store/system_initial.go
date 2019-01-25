@@ -1,6 +1,8 @@
 package store
 
 import (
+	"errors"
+
 	"github.com/defineiot/keyauth/dao/application"
 	"github.com/defineiot/keyauth/dao/department"
 	"github.com/defineiot/keyauth/dao/domain"
@@ -19,6 +21,16 @@ const (
 
 // InitAdmin 初始化系统管理员相关信息
 func (s *Store) InitAdmin(username, password string) error {
+	ok, err := s.dao.Domain.CheckDomainIsExistByName(adminDomainName)
+	if err != nil {
+		return err
+	}
+
+	if ok {
+		return errors.New("admin is initialed")
+	}
+
+	s.log.Info("start initial admin user info ...")
 	if err := s.initRoles(); err != nil {
 		return err
 	}
@@ -30,6 +42,7 @@ func (s *Store) InitAdmin(username, password string) error {
 	if err := s.initAdminAPPs(username); err != nil {
 		return err
 	}
+	s.log.Info("initial success")
 
 	return nil
 }
