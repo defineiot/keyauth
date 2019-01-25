@@ -15,27 +15,35 @@ var (
 
 // startCmd represents the start command
 var initCmd = &cobra.Command{
-	Use:   "init",
+	Use:   "admin [init]",
 	Short: "初始化服务的系统管理员账号",
 	Long:  `初始化服务的系统管理员账号`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-
-		conf, err := checkConfType(confType)
-		if err != nil {
-			return err
+		if len(args) == 0 {
+			return errors.New("缺少子命令")
 		}
 
-		if adminAccount == "" || adminPass == "" {
-			return errors.New("系统管理员的账号名称或者账号秘密未设置")
-		}
+		switch args[0] {
+		case "init":
+			conf, err := checkConfType(confType)
+			if err != nil {
+				return err
+			}
 
-		s, err := store.NewStore(conf)
-		if err != nil {
-			return err
-		}
+			if adminAccount == "" || adminPass == "" {
+				return errors.New("系统管理员的账号名称或者账号秘密未设置")
+			}
 
-		if err := s.InitAdmin(adminAccount, adminPass); err != nil {
-			return err
+			s, err := store.NewStore(conf)
+			if err != nil {
+				return err
+			}
+
+			if err := s.InitAdmin(adminAccount, adminPass); err != nil {
+				return err
+			}
+		default:
+			return errors.New("未知子命令")
 		}
 
 		return nil
