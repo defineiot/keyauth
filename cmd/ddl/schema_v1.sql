@@ -43,16 +43,18 @@ COMMENT = 'OAuth2.0授权码'
 ROW_FORMAT = dynamic;
 
 CREATE TABLE `dbmanager` (
-`id` int(11) NOT NULL AUTO_INCREMENT,
-`version` int(11) NOT NULL,
-`description` text NOT NULL,
+`id` int(11) NOT NULL AUTO_INCREMENT COMMENT '支持SQL计数',
+`version` int(11) NOT NULL COMMENT 'SQL文件的版本',
+`md5` int(11) NOT NULL COMMENT 'SQL文件内容的MD5消息摘要',
+`create_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '执行数据库升级的时间',
+`description` text NOT NULL COMMENT '该次schema变更说明',
 PRIMARY KEY (`id`) 
 )
 ENGINE = InnoDB
 AUTO_INCREMENT = 0
 DEFAULT CHARACTER SET = utf8
 COLLATE = utf8_general_ci
-COMMENT = '数据库版本管理表'
+COMMENT = '数据库版本变更管理表'
 ROW_FORMAT = dynamic;
 
 CREATE TABLE `domains` (

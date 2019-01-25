@@ -19,12 +19,12 @@ keyauth的具体设计请参考: [iot-auth概要设计](./docs/design/summary.md
 + 编辑器: 推荐使用vscod
 + 开发环境: macOS/Linux
 
-根据实际情况配置好实际数据库influxDB和状态数据库redis, 配置文件位置: .keyauth/keyauth.conf
+根据实际情况配置好实际数据库influxDB和状态数据库redis, 配置文件位置: cmd/etc/keyauth.conf
 然后执行编译并启动:
 
 ```bash
+$ make init_admin
 $ make run
-$ ...
 ```
 
 ## 快速部署

@@ -62,8 +62,8 @@ function build () {
     _info "start docker build ..."
     echo -e ""
         docker run --rm -e 'CGO_ENABLED=0' -e 'GOOS=linux' -e 'GOARCH=amd64' \
-        -v "$PWD":/go/src/iot-auth \
-        -w /go/src/iot-auth golang:1.10.1 \
+        -v "$PWD":/go/src/github.com/defineiot/keyauth \
+        -w /go/src/github.com/defineiot/keyauth golang:1.10.1 \
         go build -v -a -o ${bin_name} -ldflags "-X '${Path}.GIT_TAG=${TAG}' -X '${Path}.GIT_BRANCH=${BRANCH}' -X '${Path}.GIT_COMMIT=${COMMIT}' -X '${Path}.BUILD_TIME=${DATE}' -X '${Path}.GO_VERSION=${version}'" ${main_file}
     echo -e ""
   else
@@ -79,7 +79,7 @@ function main() {
     COMMIT=$(get_commit)
     DATE=$(date '+%Y-%m-%d %H:%M:%S')
 
-    Path="iot-auth/version"
+    Path="github.com/defineiot/keyauth/version"
     _info "collect project verion from git: tag:$TAG, data:$DATE, branch:$BRANCH, commit:$COMMIT"
 
     build $1 $2 $3

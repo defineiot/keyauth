@@ -1,4 +1,4 @@
-BINARY_NAME=keyauth
+BINARY_NAME=keyauthd
 MAIN_FILE_PAHT=cmd/keyauth/main.go
 
 all: test build
@@ -9,7 +9,7 @@ run:
 
 init_admin:
 		go build -o ${BINARY_NAME} ${MAIN_FILE_PAHT}
-		./${BINARY_NAME} init -f cmd/etc/keyauth.conf -u admin -p password
+		./${BINARY_NAME} admin init -f cmd/etc/keyauth.conf -u admin -p password
 
 clean:
 		go clean
