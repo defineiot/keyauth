@@ -30,22 +30,22 @@ func NewDepartmentStore(opt *dao.Options) (department.Store, error) {
 
 	unprepared := map[string]string{
 		SaveDepartment: `
-			INSERT INTO departments (id, name, parent, grade, path, manager, domain_id, create_at) 
-			VALUES (?,?,?,?,?,?,?,?);
+			INSERT INTO departments (id, number, name, parent, grade, path, manager, domain_id, create_at) 
+			VALUES (?,?,?,?,?,?,?,?,?);
 		`,
 		FindDepartment: `
-			SELECT id, name, parent, grade, path, manager, domain_id, create_at 
+			SELECT id, number, name, parent, grade, path, manager, domain_id, create_at 
 			FROM departments 
 			WHERE id = ?;
 		`,
 		FindDepartmentByName: `
-			SELECT id, name, parent, grade, path, manager, domain_id, create_at 
+			SELECT id, number, name, parent, grade, path, manager, domain_id, create_at 
 			FROM departments 
 			WHERE name = ? 
 			AND domain_id = ?;
 		`,
 		FindSubDepartments: `
-			SELECT id, name, parent, grade, path, manager, domain_id, create_at 
+			SELECT id, number, name, parent, grade, path, manager, domain_id, create_at 
 			FROM departments 
 			WHERE parent = ?;
 		`,

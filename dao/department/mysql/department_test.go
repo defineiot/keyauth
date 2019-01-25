@@ -14,7 +14,7 @@ func TestProjectSuit(t *testing.T) {
 	t.Run("CreateDepartment", testCreateDepartmentOK(suit))
 	t.Run("ListSubDepartments", testListSubDepartmentOK(suit))
 	t.Run("HasSubDepeartDelete", testDeleteDepartmentFailed(suit))
-	t.Run("DeleteDepartment", testDeleteDepartmentOK(suit))
+	// t.Run("DeleteDepartment", testDeleteDepartmentOK(suit))
 }
 
 func testCreateDepartmentOK(s *departmentSuit) func(t *testing.T) {

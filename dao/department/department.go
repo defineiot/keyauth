@@ -11,7 +11,7 @@ import (
 // Department user's department
 type Department struct {
 	ID       string `json:"id"`
-	Number   string `json:"-"`                   // 部门编号
+	Number   string `json:"number,omitempty"`    // 部门编号
 	Name     string `json:"name,omitempty"`      // 部门名称
 	Grade    string `json:"grade,omitempty"`     // 第几级部门
 	Path     string `json:"path,omitempty"`      // 部门访问路径

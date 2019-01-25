@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"strconv"
 	"strings"
 	"time"
 
@@ -26,25 +27,24 @@ func (s *store) CreateDepartment(d *department.Department) error {
 	}
 
 	// 默认为顶层部门(根部门)
-	if d.ID == "" {
-		d.ID = uuid.NewV4().String()
-	}
+	d.ID = uuid.NewV4().String()
+	d.CreateAt = time.Now().Unix()
+	d.Number = d.DomainID[:2] + strconv.FormatInt(d.CreateAt, 36) + d.ID[:4]
+
 	if d.ParentID == "" {
 		d.ParentID = "/"
-		d.Path = "/" + d.ID
+		d.Path = d.Number
 	} else {
 		parentDep, err := s.GetDepartment(d.ParentID)
 		if err != nil {
 			return err
 		}
-		d.Path = parentDep.Path + "/" + d.ID
+		d.Path = parentDep.Path + "/" + d.Number
 	}
 
-	d.CreateAt = time.Now().Unix()
-
-	_, err := s.stmts[SaveDepartment].Exec(d.ID, d.Name, d.ParentID, d.Grade, d.Path, d.ManagerID, d.DomainID, d.CreateAt)
+	_, err := s.stmts[SaveDepartment].Exec(d.ID, d.Number, d.Name, d.ParentID, d.Grade, d.Path, d.ManagerID, d.DomainID, d.CreateAt)
 	if err != nil {
-		return exception.NewInternalServerError("insert verify code exec sql err, %s", err)
+		return exception.NewInternalServerError("insert save department exec sql err, %s", err)
 	}
 
 	return nil
@@ -54,7 +54,7 @@ func (s *store) GetDepartment(depID string) (*department.Department, error) {
 	d := new(department.Department)
 
 	err := s.stmts[FindDepartment].QueryRow(depID).Scan(
-		&d.ID, &d.Name, &d.ParentID, &d.Grade, &d.Path, &d.ManagerID, &d.DomainID, &d.CreateAt)
+		&d.ID, &d.Number, &d.Name, &d.ParentID, &d.Grade, &d.Path, &d.ManagerID, &d.DomainID, &d.CreateAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewNotFound("department %s not find", depID)
@@ -76,7 +76,7 @@ func (s *store) ListSubDepartments(parentDepID string) ([]*department.Department
 	deps := []*department.Department{}
 	for rows.Next() {
 		d := new(department.Department)
-		if err := rows.Scan(&d.ID, &d.Name, &d.ParentID, &d.Grade, &d.Path, &d.ManagerID, &d.DomainID, &d.CreateAt); err != nil {
+		if err := rows.Scan(&d.ID, &d.Number, &d.Name, &d.ParentID, &d.Grade, &d.Path, &d.ManagerID, &d.DomainID, &d.CreateAt); err != nil {
 			return nil, exception.NewInternalServerError("scan user's project id error, %s", err)
 		}
 		deps = append(deps, d)
@@ -113,7 +113,7 @@ func (s *store) GetDepartmentByName(domainID, departmentName string) (*departmen
 	d := new(department.Department)
 
 	err := s.stmts[FindDepartmentByName].QueryRow(domainID, departmentName).Scan(
-		&d.ID, &d.Name, &d.ParentID, &d.Grade, &d.Path, &d.ManagerID, &d.DomainID, &d.CreateAt)
+		&d.ID, &d.Number, &d.Name, &d.ParentID, &d.Grade, &d.Path, &d.ManagerID, &d.DomainID, &d.CreateAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewNotFound("department %s not find", departmentName)

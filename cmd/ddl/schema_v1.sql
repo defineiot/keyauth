@@ -379,7 +379,8 @@ ROW_FORMAT = dynamic;
 
 CREATE TABLE `departments` (
 `id` char(64) NOT NULL,
-`name` char(64) NOT NULL COMMENT '用户组的名称',
+`name` char(64) NOT NULL COMMENT '部门名称',
+`number` char(64) NOT NULL COMMENT '部门编号',
 `parent` char(64) NOT NULL DEFAULT '' COMMENT '上级部门ID',
 `grade` tinyint(3) NOT NULL DEFAULT 0 COMMENT '第几层',
 `path` text NOT NULL DEFAULT '' COMMENT '具体路径',
@@ -387,7 +388,8 @@ CREATE TABLE `departments` (
 `domain_id` char(64) NOT NULL DEFAULT '' COMMENT '所属的域ID',
 `create_at` int(64) UNSIGNED NOT NULL DEFAULT 0 COMMENT '创建时间',
 `extra` text NOT NULL COMMENT '预留字段',
-PRIMARY KEY (`id`) 
+PRIMARY KEY (`id`),
+UNIQUE INDEX `dept` (`number` ASC) 
 )
 ENGINE = InnoDB
 AUTO_INCREMENT = 0
