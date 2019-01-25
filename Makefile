@@ -1,4 +1,4 @@
-BINARY_NAME=keyauth
+BINARY_NAME=keyauthd
 MAIN_FILE_PAHT=cmd/keyauth/main.go
 
 all: test build
