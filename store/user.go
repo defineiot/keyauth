@@ -183,3 +183,37 @@ func (s *Store) DeleteUser(domainID, userID string) error {
 
 	return nil
 }
+
+// ListProjectUser list all user
+func (s *Store) ListProjectUser(projectID string) ([]*user.User, error) {
+	users, err := s.dao.User.ListProjectUsers(projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range users {
+		u := users[i]
+		// 查询出域的具体详情
+		dom, err := s.dao.Domain.GetDomainByID(u.Domain.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		// 查询用户部门的详情
+		dep, err := s.dao.Department.GetDepartment(u.Department.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		roles, err := s.dao.Role.ListUserRole(u.Domain.ID, u.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		u.Domain = dom
+		u.Department = dep
+		u.Roles = roles
+	}
+
+	return users, nil
+}

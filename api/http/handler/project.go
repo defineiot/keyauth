@@ -126,6 +126,104 @@ func DeleteProject(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// AddUsersToProject use to create domain
+func AddUsersToProject(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	pid := ps.ByName("pid")
+
+	iter, err := request.CheckArrayBody(r)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	uids := make([]string, 0)
+	for iter.ReadArray() {
+		if uid := iter.ReadString(); uid != "" {
+			uids = append(uids, uid)
+		}
+	}
+	if iter.Error != nil {
+		response.Failed(w, exception.NewBadRequest("get userid from body array error, %s", iter.Error))
+		return
+	}
+
+	if len(uids) == 0 {
+		response.Failed(w, exception.NewBadRequest(`body array hase no userid`))
+		return
+	}
+
+	proj, err := global.Store.GetProject(pid)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	// check permisson
+	tk := context.GetTokenFromContext(r)
+	if proj.DomainID != tk.DomainID {
+		response.Failed(w, exception.NewForbidden("the project not belong to your"))
+		return
+	}
+
+	if err := global.Store.AddUsersToProject(tk.AccessToken, pid, uids...); err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusCreated, "add user to project success")
+	return
+}
+
+// RemoveUsersFromProject use to create domain
+func RemoveUsersFromProject(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	pid := ps.ByName("pid")
+
+	iter, err := request.CheckArrayBody(r)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	uids := make([]string, 0)
+	for iter.ReadArray() {
+		if uid := iter.ReadString(); uid != "" {
+			uids = append(uids, uid)
+		}
+	}
+	if iter.Error != nil {
+		response.Failed(w, exception.NewBadRequest("get userid from body array error, %s", iter.Error))
+		return
+	}
+
+	if len(uids) == 0 {
+		response.Failed(w, exception.NewBadRequest(`body array hase no userid`))
+		return
+	}
+
+	proj, err := global.Store.GetProject(pid)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	// check permisson
+	tk := context.GetTokenFromContext(r)
+	if proj.DomainID != tk.DomainID {
+		response.Failed(w, exception.NewForbidden("the project not belong to your"))
+		return
+	}
+
+	if err := global.Store.RemoveUsersFromProject(tk.AccessToken, pid, uids...); err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusCreated, nil)
+	return
+}
+
 // // ListUserDomain list users under his domain
 // func ListUserDomain(w http.ResponseWriter, r *http.Request) {
 // 	var err error
@@ -162,103 +260,5 @@ func DeleteProject(w http.ResponseWriter, r *http.Request) {
 // 	}
 
 // 	response.Success(w, http.StatusOK, domains)
-// 	return
-// }
-
-// // AddUsersToProject use to create domain
-// func AddUsersToProject(w http.ResponseWriter, r *http.Request) {
-// 	ps := context.GetParamsFromContext(r)
-// 	pid := ps.ByName("pid")
-
-// 	iter, err := request.CheckArrayBody(r)
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
-
-// 	uids := make([]string, 0)
-// 	for iter.ReadArray() {
-// 		if uid := iter.ReadString(); uid != "" {
-// 			uids = append(uids, uid)
-// 		}
-// 	}
-// 	if iter.Error != nil {
-// 		response.Failed(w, exception.NewBadRequest("get userid from body array error, %s", iter.Error))
-// 		return
-// 	}
-
-// 	if len(uids) == 0 {
-// 		response.Failed(w, exception.NewBadRequest(`body array hase no userid`))
-// 		return
-// 	}
-
-// 	proj, err := global.Store.GetProject(pid)
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
-
-// 	// check permisson
-// 	tk := context.GetTokenFromContext(r)
-// 	if proj.DomainID != tk.DomainID {
-// 		response.Failed(w, exception.NewForbidden("the project not belong to your"))
-// 		return
-// 	}
-
-// 	if err := global.Store.AddUsersToProject(tk.AccessToken, pid, uids...); err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
-
-// 	response.Success(w, http.StatusCreated, nil)
-// 	return
-// }
-
-// // RemoveUsersFromProject use to create domain
-// func RemoveUsersFromProject(w http.ResponseWriter, r *http.Request) {
-// 	ps := context.GetParamsFromContext(r)
-// 	pid := ps.ByName("pid")
-
-// 	iter, err := request.CheckArrayBody(r)
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
-
-// 	uids := make([]string, 0)
-// 	for iter.ReadArray() {
-// 		if uid := iter.ReadString(); uid != "" {
-// 			uids = append(uids, uid)
-// 		}
-// 	}
-// 	if iter.Error != nil {
-// 		response.Failed(w, exception.NewBadRequest("get userid from body array error, %s", iter.Error))
-// 		return
-// 	}
-
-// 	if len(uids) == 0 {
-// 		response.Failed(w, exception.NewBadRequest(`body array hase no userid`))
-// 		return
-// 	}
-
-// 	proj, err := global.Store.GetProject(pid)
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
-
-// 	// check permisson
-// 	tk := context.GetTokenFromContext(r)
-// 	if proj.DomainID != tk.DomainID {
-// 		response.Failed(w, exception.NewForbidden("the project not belong to your"))
-// 		return
-// 	}
-
-// 	if err := global.Store.RemoveUsersFromProject(tk.AccessToken, pid, uids...); err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
-
-// 	response.Success(w, http.StatusCreated, nil)
 // 	return
 // }

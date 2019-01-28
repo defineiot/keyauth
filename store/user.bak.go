@@ -183,37 +183,6 @@ func (s *Store) RevolkCode(purpose verifycode.CodePurpose, target string, code s
 // 	return nil
 // }
 
-// // ListProjectUser list all user
-// func (s *Store) ListProjectUser(projectID string) ([]*user.User, error) {
-// 	p, err := s.project.GetProject(projectID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	uids, err := s.project.ListProjectUsers(projectID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	users := []*user.User{}
-// 	for _, uid := range uids {
-// 		u, err := s.user.GetUserByID(uid)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		// query user's roles
-// 		roles, err := s.user.ListUserRoles(p.DomainID, u.ID)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		u.RoleNames = roles
-
-// 		users = append(users, u)
-// 	}
-
-// 	return users, nil
-// }
-
 // // AddProjectsToUser add project to user
 // func (s *Store) AddProjectsToUser(domainID, userID string, projectIDs ...string) error {
 // 	if err := s.checkProjectExist(projectIDs...); err != nil {

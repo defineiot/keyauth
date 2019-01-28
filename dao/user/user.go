@@ -131,6 +131,7 @@ type Store interface {
 // Reader use to read user information form store
 type Reader interface {
 	ListDomainUsers(domainID string) ([]*User, error)
+	ListProjectUsers(projectID string) ([]*User, error)
 	GetUser(index FoundIndex, value string) (*User, error)
 
 	// ListUserRoles(domainID, userID string) ([]string, error)

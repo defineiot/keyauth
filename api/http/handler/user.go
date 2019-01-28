@@ -117,6 +117,35 @@ func DeleteMemberUser(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// ListProjectUser list all users can filter by domain or project
+func ListProjectUser(w http.ResponseWriter, r *http.Request) {
+	var err error
+
+	ps := context.GetParamsFromContext(r)
+	tk := context.GetTokenFromContext(r)
+	pid := ps.ByName("pid")
+
+	users := []*user.User{}
+
+	proj, err := global.Store.GetProject(pid)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+	if proj.DomainID != tk.DomainID {
+		response.Failed(w, exception.NewForbidden("the project not belonge to you"))
+		return
+	}
+	users, err = global.Store.ListProjectUser(pid)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusOK, users)
+	return
+}
+
 // // RegistryUser use to create domain
 // func RegistryUser(w http.ResponseWriter, r *http.Request) {
 // 	val, err := request.CheckObjectBody(r)
@@ -483,35 +512,6 @@ func DeleteMemberUser(w http.ResponseWriter, r *http.Request) {
 // 	}
 
 // 	response.Success(w, http.StatusCreated, "")
-// 	return
-// }
-
-// // ListProjectUser list all users can filter by domain or project
-// func ListProjectUser(w http.ResponseWriter, r *http.Request) {
-// 	var err error
-
-// 	ps := context.GetParamsFromContext(r)
-// 	tk := context.GetTokenFromContext(r)
-// 	pid := ps.ByName("pid")
-
-// 	users := []*user.User{}
-
-// 	proj, err := global.Store.GetProject(pid)
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
-// 	if proj.DomainID != tk.DomainID {
-// 		response.Failed(w, exception.NewForbidden("the project not belonge to you"))
-// 		return
-// 	}
-// 	users, err = global.Store.ListProjectUser(pid)
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
-
-// 	response.Success(w, http.StatusOK, users)
 // 	return
 // }
 
