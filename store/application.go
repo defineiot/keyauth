@@ -24,7 +24,7 @@ func (s *Store) CreateApplication(app *application.Application) error {
 func (s *Store) DeleteApplication(id string) error {
 	var err error
 
-	cacheKey := "app_" + id
+	cacheKey := s.cachePrefix.app + id
 
 	app, err := s.dao.Application.GetApplication(id)
 	if err != nil {
@@ -65,7 +65,7 @@ func (s *Store) GetUserApp(appid string) (*application.Application, error) {
 	var err error
 
 	app := new(application.Application)
-	cacheKey := "app_" + appid
+	cacheKey := s.cachePrefix.app + appid
 
 	if s.isCache {
 		if s.cache.Get(cacheKey, app) {
