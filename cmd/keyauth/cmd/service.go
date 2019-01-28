@@ -22,8 +22,8 @@ var (
 // startCmd represents the start command
 var serviceCmd = &cobra.Command{
 	Use:   "service [start/stop/reload/restart]",
-	Short: "management keyauth service",
-	Long:  `use to start keyauth service`,
+	Short: "管理分布式权限中心服务(Keyauth)",
+	Long:  `管理分布式权限中心服务(Keyauth)`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		if len(args) == 0 {
