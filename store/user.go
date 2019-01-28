@@ -38,11 +38,67 @@ func (s *Store) CreateMemberUser(u *user.User) error {
 	if err != nil {
 		return err
 	}
+
 	if err := s.dao.User.BindRole(u.Domain.ID, u.ID, role.ID); err != nil {
 		return err
 	}
 
+	// 查询出域的具体详情
+	dom, err := s.dao.Domain.GetDomainByID(u.Domain.ID)
+	if err != nil {
+		return err
+	}
+
+	// 查询用户部门的详情
+	dep, err := s.dao.Department.GetDepartment(u.Department.ID)
+	if err != nil {
+		return err
+	}
+
+	roles, err := s.dao.Role.ListUserRole(u.Domain.ID, u.ID)
+	if err != nil {
+		return err
+	}
+
+	u.Domain = dom
+	u.Department = dep
+	u.Roles = roles
+
 	return nil
+}
+
+// ListMemberUsers list all user
+func (s *Store) ListMemberUsers(domainID string) ([]*user.User, error) {
+	users, err := s.dao.User.ListDomainUsers(domainID)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range users {
+		u := users[i]
+		// 查询出域的具体详情
+		dom, err := s.dao.Domain.GetDomainByID(u.Domain.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		// 查询用户部门的详情
+		dep, err := s.dao.Department.GetDepartment(u.Department.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		roles, err := s.dao.Role.ListUserRole(u.Domain.ID, u.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		u.Domain = dom
+		u.Department = dep
+		u.Roles = roles
+	}
+
+	return users, nil
 }
 
 // GetUser get an user
@@ -68,14 +124,26 @@ func (s *Store) GetUser(domainID, userID string) (*user.User, error) {
 		return nil, exception.NewBadRequest("user %s not found", userID)
 	}
 
-	// query user's roles
-	roles, err := s.dao.Role.ListUserRole(domainID, userID)
+	// 查询出域的具体详情
+	dom, err := s.dao.Domain.GetDomainByID(u.Domain.ID)
 	if err != nil {
 		return nil, err
 	}
-	for i := range roles {
-		u.RoleNames = append(u.RoleNames, roles[i].Name)
+
+	// 查询用户部门的详情
+	dep, err := s.dao.Department.GetDepartment(u.Department.ID)
+	if err != nil {
+		return nil, err
 	}
+
+	roles, err := s.dao.Role.ListUserRole(u.Domain.ID, u.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	u.Domain = dom
+	u.Department = dep
+	u.Roles = roles
 
 	if u.DefaultProject.ID != "" {
 		pro, err := s.dao.Project.GetProjectByID(u.DefaultProject.ID)
@@ -93,4 +161,59 @@ func (s *Store) GetUser(domainID, userID string) (*user.User, error) {
 	}
 
 	return u, nil
+}
+
+// DeleteUser delete an user by id
+func (s *Store) DeleteUser(domainID, userID string) error {
+	var err error
+
+	cacheKey := s.cachePrefix.user + userID
+
+	err = s.dao.User.DeleteUser(domainID, userID)
+	if err != nil {
+		return err
+	}
+
+	if s.isCache {
+		if !s.cache.Delete(cacheKey) {
+			s.log.Debug("delete user from cache failed, key: %s", cacheKey)
+		}
+		s.log.Debug("delete user from cache success, key: %s", cacheKey)
+	}
+
+	return nil
+}
+
+// ListProjectUser list all user
+func (s *Store) ListProjectUser(projectID string) ([]*user.User, error) {
+	users, err := s.dao.User.ListProjectUsers(projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range users {
+		u := users[i]
+		// 查询出域的具体详情
+		dom, err := s.dao.Domain.GetDomainByID(u.Domain.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		// 查询用户部门的详情
+		dep, err := s.dao.Department.GetDepartment(u.Department.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		roles, err := s.dao.Role.ListUserRole(u.Domain.ID, u.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		u.Domain = dom
+		u.Department = dep
+		u.Roles = roles
+	}
+
+	return users, nil
 }

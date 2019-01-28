@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/defineiot/keyauth/dao/role"
+
 	"github.com/defineiot/keyauth/dao/department"
 	"github.com/defineiot/keyauth/dao/domain"
 	"github.com/defineiot/keyauth/dao/project"
@@ -46,7 +48,7 @@ type User struct {
 	DefaultProject *project.Project       `json:"project,omitempty"`      //  如果需要对象由上层进行查找
 	Department     *department.Department `json:"department,omitempty"`   // 所属部门信息
 	LoginStatus    *LoginStatus           `json:"login_status,omitempty"` // 用户登录状态
-	RoleNames      []string               `json:"roles"`                  // 角色列表
+	Roles          []*role.Role           `json:"roles"`                  // 角色列表
 }
 
 // Password user's password
@@ -129,6 +131,7 @@ type Store interface {
 // Reader use to read user information form store
 type Reader interface {
 	ListDomainUsers(domainID string) ([]*User, error)
+	ListProjectUsers(projectID string) ([]*User, error)
 	GetUser(index FoundIndex, value string) (*User, error)
 
 	// ListUserRoles(domainID, userID string) ([]string, error)

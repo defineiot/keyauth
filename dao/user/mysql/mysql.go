@@ -24,6 +24,7 @@ const (
 	SaveUser          = "save-user"
 	SavePass          = "save-pass"
 	FindDomainUsers   = "find-domain-users"
+	FindProjectUsers  = "find-project-users"
 	FindUserByID      = "find-user-by-id"
 	FindUserByAccount = "find-user-by-account"
 	FindUserByMobile  = "find-user-by-mobile"
@@ -104,6 +105,13 @@ func NewUserStore(opt *dao.Options) (user.Store, error) {
 			FROM users u
 			LEFT JOIN passwords p ON p.user_id = u.id 
 			WHERE u.domain_id = ?;
+		`,
+		FindProjectUsers: `
+			SELECT u.id, u.department, u.account, u.mobile, u.email, u.phone, u.address, u.real_name, u.nick_name, u.gender, u.avatar, u.language, u.city, u.province, u.locked, u.domain_id, u.create_at, u.expires_active_days, u.default_project_id, p.password, p.expires_at, p.create_at, p.update_at  
+			FROM users u
+			LEFT JOIN passwords p ON p.user_id = u.id 
+			LEFT JOIN user_project_mappings m ON m.user_id = u.id 
+			WHERE m.project_id = ?;
 		`,
 		FindUserByID: `
 			SELECT u.id, u.department, u.account, u.mobile, u.email, u.phone, u.address, u.real_name, u.nick_name, u.gender, u.avatar, u.language, u.city, u.province, u.locked, u.domain_id, u.create_at, u.expires_active_days, u.default_project_id, p.password, p.expires_at, p.create_at, p.update_at  

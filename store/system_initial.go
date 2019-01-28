@@ -11,12 +11,12 @@ import (
 )
 
 const (
-	systemAdminRoleName   = "system_admin"
-	domainAdminRoleName   = "domain_admin"
-	memberUserRoleName    = "member"
-	adminDomainName       = "admin_domain"
-	adminDepartmentName   = "admin_department"
-	defaultDepartmentName = "default_department"
+	systemAdminRoleName   string = "system_admin"
+	domainAdminRoleName          = "domain_admin"
+	memberUserRoleName           = "member"
+	adminDomainName              = "admin_domain"
+	adminDepartmentName          = "admin_department"
+	defaultDepartmentName        = "default_department"
 )
 
 // InitAdmin 初始化系统管理员相关信息

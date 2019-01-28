@@ -144,6 +144,34 @@ func (s *store) ListDomainUsers(domainID string) ([]*user.User, error) {
 	return users, nil
 }
 
+func (s *store) ListProjectUsers(projectID string) ([]*user.User, error) {
+	rows, err := s.stmts[FindProjectUsers].Query(projectID)
+	if err != nil {
+		return nil, exception.NewInternalServerError("query project user list error, %s", err)
+	}
+	defer rows.Close()
+
+	users := []*user.User{}
+	for rows.Next() {
+		u := new(user.User)
+		pass := new(user.Password)
+		u.Password = pass
+		u.DefaultProject = new(project.Project)
+		u.Domain = new(domain.Domain)
+		u.Department = new(department.Department)
+		if err := rows.Scan(&u.ID, &u.Department.ID, &u.Account, &u.Mobile, &u.Email, &u.Phone, &u.Address,
+			&u.RealName, &u.NickName, &u.Gender, &u.Avatar, &u.Language, &u.City, &u.Province,
+			&u.Locked, &u.Domain.ID, &u.CreateAt, &u.ExpiresActiveDays, &u.DefaultProject.ID,
+			&pass.Password, &pass.ExpireAt, &pass.CreateAt, &pass.UpdateAt); err != nil {
+			return nil, exception.NewInternalServerError("scan project's user id error, %s", err)
+		}
+
+		users = append(users, u)
+	}
+
+	return users, nil
+}
+
 func (s *store) GetUser(index user.FoundIndex, value string) (*user.User, error) {
 	var row *sql.Row
 
