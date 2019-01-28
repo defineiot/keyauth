@@ -28,6 +28,7 @@ type Store struct {
 		token   string
 		project string
 		user    string
+		app     string
 	}
 }
 
@@ -57,6 +58,7 @@ func NewStore(conf *conf.Config) (*Store, error) {
 	s.cachePrefix.token = "token_"
 	s.cachePrefix.project = "project_"
 	s.cachePrefix.user = "user_"
+	s.cachePrefix.app = "app_"
 
 	return s, nil
 }

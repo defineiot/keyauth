@@ -46,11 +46,11 @@ func RouteToV1(r *router.MyRouter) {
 	r.HandlerFunc("POST", "/projects/:pid/members/", "AddUsersToProject", handler.AddUsersToProject)
 	r.HandlerFunc("DELETE", "/projects/:pid/members/", "RemoveUsersFromProject", handler.RemoveUsersFromProject)
 
-	// // Application
-	// r.HandlerFunc("POST", "/v1/applications/", "CreateApplication", handler.CreateApplication)
-	// r.HandlerFunc("GET", "/v1/applications/", "ListApplications", handler.ListApplications)
-	// r.HandlerFunc("GET", "/v1/applications/:aid/", "GetApplication", handler.GetApplication)
-	// r.HandlerFunc("DELETE", "/v1/applications/:aid/", "DeleteApplication", handler.DeleteApplication)
+	// Application
+	r.HandlerFunc("POST", "/applications/", "CreateApplication", handler.CreateApplication)
+	r.HandlerFunc("GET", "/applications/", "ListUserApplications", handler.ListUserApplications)
+	r.HandlerFunc("GET", "/applications/:aid/", "GetApplication", handler.GetApplication)
+	r.HandlerFunc("DELETE", "/applications/:aid/", "DeleteApplication", handler.DeleteApplication)
 	// // r.HandlerFunc("PUT", "/v1/users/:uid/applications/:aid/", handler.UpdateApplication)
 
 	// // Service
