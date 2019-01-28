@@ -5,16 +5,14 @@ BINARY_NAME=$2
 function _info(){
     local msg=$1
     local now=`date '+%Y-%m-%d %H:%M:%S'`
-    echo -e "\033[1;46;30m [INFO] ${now} ${msg} \033[0m"
+    echo -e "\033[1;46;30m[INFO]\033[0m ${now} ${msg}"
 }
 
 function _version(){
     local msg=$1
     local now=`date '+%Y-%m-%d %H:%M:%S'`
-    echo -e "\033[1;46;30m [INFO] ${now} ${msg} \033[0m"
-    # echo -e "\033[42m [INFO] ${now} ${msg} \033[0m"
+    echo -e "\033[1;46;30m[INFO]\033[0m ${now} ${msg}"
 }
-
 
 function get_tag () {
     local tag=$(git describe --tags)
