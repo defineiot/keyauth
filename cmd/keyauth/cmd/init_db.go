@@ -54,5 +54,5 @@ func init() {
 	initDBCmd.Flags().StringVarP(&confType, "config-type", "t", "file", "服务配置类型 [file/env/etcd]")
 	initDBCmd.Flags().StringVarP(&confFile, "config-file", "f", "cmd/etc/keyauth.conf", "如果服务采用配置文件配置时, 配置文件的具体路径")
 	initDBCmd.Flags().StringVarP(&confEtcd, "config-etcd", "e", "127.0.0.1:2379", "如果服务采用Etcd来存储配置时, Etcd的服务地址")
-	RootCmd.AddCommand(initCmd)
+	RootCmd.AddCommand(initDBCmd)
 }

@@ -14,7 +14,7 @@ var (
 )
 
 // startCmd represents the start command
-var initCmd = &cobra.Command{
+var initAdminCmd = &cobra.Command{
 	Use:   "admin [init]",
 	Short: "初始化服务的系统管理员账号",
 	Long:  `初始化服务的系统管理员账号`,
@@ -51,10 +51,10 @@ var initCmd = &cobra.Command{
 }
 
 func init() {
-	initCmd.Flags().StringVarP(&adminAccount, "account", "u", "", "系统管理员账号名称")
-	initCmd.Flags().StringVarP(&adminPass, "password", "p", "", "系统管理员秘密")
-	initCmd.Flags().StringVarP(&confType, "config-type", "t", "file", "服务配置类型 [file/env/etcd]")
-	initCmd.Flags().StringVarP(&confFile, "config-file", "f", "cmd/etc/keyauth.conf", "如果服务采用配置文件配置时, 配置文件的具体路径")
-	initCmd.Flags().StringVarP(&confEtcd, "config-etcd", "e", "127.0.0.1:2379", "如果服务采用Etcd来存储配置时, Etcd的服务地址")
-	RootCmd.AddCommand(initCmd)
+	initAdminCmd.Flags().StringVarP(&adminAccount, "account", "u", "", "系统管理员账号名称")
+	initAdminCmd.Flags().StringVarP(&adminPass, "password", "p", "", "系统管理员秘密")
+	initAdminCmd.Flags().StringVarP(&confType, "config-type", "t", "file", "服务配置类型 [file/env/etcd]")
+	initAdminCmd.Flags().StringVarP(&confFile, "config-file", "f", "cmd/etc/keyauth.conf", "如果服务采用配置文件配置时, 配置文件的具体路径")
+	initAdminCmd.Flags().StringVarP(&confEtcd, "config-etcd", "e", "127.0.0.1:2379", "如果服务采用Etcd来存储配置时, Etcd的服务地址")
+	RootCmd.AddCommand(initAdminCmd)
 }
