@@ -5,12 +5,13 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/json-iterator/go"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
-func checkBody(r *http.Request) ([]byte, error) {
+// CheckBody 读取Body当中的数据
+func CheckBody(r *http.Request) ([]byte, error) {
 	// 检测请求大小
 	if r.ContentLength == 0 {
 		return nil, exception.NewBadRequest("request body is empty")
@@ -32,7 +33,7 @@ func checkBody(r *http.Request) ([]byte, error) {
 
 // CheckObjectBody check json array body
 func CheckObjectBody(r *http.Request) (jsoniter.Any, error) {
-	body, err := checkBody(r)
+	body, err := CheckBody(r)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +49,7 @@ func CheckObjectBody(r *http.Request) (jsoniter.Any, error) {
 
 // CheckArrayBody check json object body
 func CheckArrayBody(r *http.Request) (*jsoniter.Iterator, error) {
-	body, err := checkBody(r)
+	body, err := CheckBody(r)
 	if err != nil {
 		return nil, err
 	}

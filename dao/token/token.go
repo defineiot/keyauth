@@ -63,10 +63,10 @@ type Token struct {
 	CreatedAt      int64     `json:"create_at,omitempty"`       // 凭证创建时间
 	ExpiresIn      int64     `json:"expires_in,omitempty"`      // 凭证过期的时间
 
-	IsSystemAdmin     bool               `json:"is_system_admin,omitempty"` // 是否是系统管理员
-	IsDomainAdmin     bool               `json:"is_domain_admin,omitempty"` // 是否是域管理员
-	Roles             []*role.Role       `json:"roles"`                     // 该凭证的权限列表
-	AvaliableProjects []*project.Project `json:"available_projects"`        // 该用户可以访问的项目列表
+	IsSystemAdmin     bool               `json:"is_system_admin,omitempty"`    // 是否是系统管理员
+	IsDomainAdmin     bool               `json:"is_domain_admin,omitempty"`    // 是否是域管理员
+	Roles             []*role.Role       `json:"roles,omitempty"`              // 该凭证的权限列表
+	AvaliableProjects []*project.Project `json:"available_projects,omitempty"` // 该用户可以访问的项目列表
 }
 
 // Store is auth service
@@ -102,8 +102,8 @@ func (t *Token) String() string {
 
 // ValidateSave 校验token创建
 func (t *Token) ValidateSave() error {
-	if t.UserID == "" {
-		return exception.NewBadRequest("token's user_id is missed")
+	if t.UserID == "" && t.ServiceID == "" {
+		return exception.NewBadRequest("token's user_id or service_id is missed")
 	}
 	if t.ServiceID == "" && t.ApplicationID == "" {
 		return exception.NewBadRequest("token's service_id or application_id required!")

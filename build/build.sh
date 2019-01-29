@@ -5,8 +5,15 @@ BINARY_NAME=$2
 function _info(){
     local msg=$1
     local now=`date '+%Y-%m-%d %H:%M:%S'`
-    echo -e "\033[44;37m [INFO] ${now} ${msg} \033[0m"
+    echo -e "\033[1;46;30m[INFO]\033[0m ${now} ${msg}"
 }
+
+function _version(){
+    local msg=$1
+    local now=`date '+%Y-%m-%d %H:%M:%S'`
+    echo -e "\033[1;46;30m[INFO]\033[0m ${now} ${msg}"
+}
+
 function get_tag () {
     local tag=$(git describe --tags)
 
@@ -46,20 +53,20 @@ function build () {
 
   local version=$(go version | grep -o  'go[0-9].[0-9].*')
 
-  echo ${platform}
+
   if [ ${platform} == "local" ]; then
-    _info "start local build ..."
+    _info "开始本地构建 ..."
     echo -e ""
-    go build -v -a -o ${bin_name} -ldflags "-X '${Path}.GIT_TAG=${TAG}' -X '${Path}.GIT_BRANCH=${BRANCH}' -X '${Path}.GIT_COMMIT=${COMMIT}' -X '${Path}.BUILD_TIME=${DATE}' -X '${Path}.GO_VERSION=${version}'" ${main_file}
+    go build -a -o ${bin_name} -ldflags "-X '${Path}.GIT_TAG=${TAG}' -X '${Path}.GIT_BRANCH=${BRANCH}' -X '${Path}.GIT_COMMIT=${COMMIT}' -X '${Path}.BUILD_TIME=${DATE}' -X '${Path}.GO_VERSION=${version}'" ${main_file}
     echo -e ""
   elif [ ${platform} == "linux" ]; then
-     _info "start linux build ..."
+     _info "开始构建Linux平台版本 ..."
     echo -e ""
     GOOS=linux GOARCH=amd64 \
-        go build -v -a -o ${bin_name} -ldflags "-X '${Path}.GIT_TAG=${TAG}' -X '${Path}.GIT_BRANCH=${BRANCH}' -X '${Path}.GIT_COMMIT=${COMMIT}' -X '${Path}.BUILD_TIME=${DATE}' -X '${Path}.GO_VERSION=${version}'" ${main_file}
+        go build -a -o ${bin_name} -ldflags "-X '${Path}.GIT_TAG=${TAG}' -X '${Path}.GIT_BRANCH=${BRANCH}' -X '${Path}.GIT_COMMIT=${COMMIT}' -X '${Path}.BUILD_TIME=${DATE}' -X '${Path}.GO_VERSION=${version}'" ${main_file}
     echo -e ""
   elif [ ${platform} == "docker" ]; then
-    _info "start docker build ..."
+    _info "开始基于Docker ..."
     echo -e ""
         docker run --rm -e 'CGO_ENABLED=0' -e 'GOOS=linux' -e 'GOARCH=amd64' \
         -v "$PWD":/go/src/github.com/defineiot/keyauth \
@@ -72,7 +79,7 @@ function build () {
 }
 
 function main() {
-    _info "start get version ..."
+    _info "开始构建 [keyauth] ..."
 
     TAG=$(get_tag)
     BRANCH=$(get_branch)
@@ -80,11 +87,14 @@ function main() {
     DATE=$(date '+%Y-%m-%d %H:%M:%S')
 
     Path="github.com/defineiot/keyauth/version"
-    _info "collect project verion from git: tag:$TAG, data:$DATE, branch:$BRANCH, commit:$COMMIT"
+    _version "构建版本的时间(Build Time): $DATE"
+    _version "当前构建的版本(Git   Tag ): $TAG"
+    _version "当前构建的分支(Git Branch): $BRANCH"
+    _version "当前构建的提交(Git Commit): $COMMIT"
 
     build $1 $2 $3
 
-    _info "build completed,the binary file in this directory."
+    _info "构建完成 程序: $2"
 }
 
 main $1 $2 $3

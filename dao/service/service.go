@@ -42,6 +42,14 @@ type Feature struct {
 	ServiceID      string `json:"service_id,omitempty"`           // 该功能属于那个服务
 }
 
+// Validate 校验对象是否合法
+func (f *Feature) Validate() error {
+	if f.Name == "" || f.Tag == "" {
+		return exception.NewBadRequest("feature's name and tag required")
+	}
+	return nil
+}
+
 // Service is service provider
 type Service struct {
 	ID               string     `json:"id"`                          // 唯一ID
