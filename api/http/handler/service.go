@@ -1,145 +1,164 @@
 package handler
 
-// import (
-// 	"net/http"
+import (
+	"encoding/json"
+	"net/http"
 
-// 	"github.com/defineiot/keyauth/api/global"
-// 	"github.com/defineiot/keyauth/api/http/context"
-// 	"github.com/defineiot/keyauth/api/http/request"
-// 	"github.com/defineiot/keyauth/api/http/response"
-// 	"github.com/defineiot/keyauth/dao/service"
-// 	"github.com/defineiot/keyauth/internal/exception"
-// )
+	"github.com/defineiot/keyauth/dao/service"
 
-// // CreateService use to create an service
-// func CreateService(w http.ResponseWriter, r *http.Request) {
-// 	val, err := request.CheckObjectBody(r)
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
+	"github.com/defineiot/keyauth/api/global"
+	"github.com/defineiot/keyauth/api/http/context"
+	"github.com/defineiot/keyauth/api/http/request"
+	"github.com/defineiot/keyauth/api/http/response"
+	"github.com/defineiot/keyauth/internal/exception"
+)
 
-// 	name := val.Get("name").ToString()
-// 	desc := val.Get("description").ToString()
+// CreateService use to create an service
+func CreateService(w http.ResponseWriter, r *http.Request) {
+	val, err := request.CheckObjectBody(r)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
 
-// 	if name == "" {
-// 		response.Failed(w, exception.NewBadRequest("service name missed"))
-// 		return
-// 	}
+	name := val.Get("name").ToString()
+	desc := val.Get("description").ToString()
 
-// 	// 交给业务控制层处理
-// 	svr, err := global.Store.CreateService(name, desc)
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
+	var stype service.Type
+	switch val.Get("type").ToString() {
+	case "controlle_pannel":
+		stype = service.Public
+	case "data_pannel":
+		stype = service.Agent
+	case "internal_rpc":
+		stype = service.Internal
+	default:
+		response.Failed(w, exception.NewBadRequest("unknown service type, support type (controlle_pannel,data_pannel,internal_rpc)"))
+		return
+	}
 
-// 	response.Success(w, http.StatusCreated, svr)
-// 	return
-// }
+	if name == "" {
+		response.Failed(w, exception.NewBadRequest("service name missed"))
+		return
+	}
 
-// // ListServices todo
-// func ListServices(w http.ResponseWriter, r *http.Request) {
-// 	svrs, err := global.Store.ListServices()
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
+	svr := &service.Service{
+		Name:        name,
+		Description: desc,
+		Type:        stype,
+		Enabled:     true,
+	}
 
-// 	response.Success(w, http.StatusOK, svrs)
-// 	return
-// }
+	// 交给业务控制层处理
+	if err := global.Store.CreateService(svr); err != nil {
+		response.Failed(w, err)
+		return
+	}
 
-// // GetService todo
-// func GetService(w http.ResponseWriter, r *http.Request) {
-// 	ps := context.GetParamsFromContext(r)
-// 	sn := ps.ByName("sn")
+	response.Success(w, http.StatusCreated, svr)
+	return
+}
 
-// 	svr, err := global.Store.GetService(sn)
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
+// ListServices todo
+func ListServices(w http.ResponseWriter, r *http.Request) {
+	svrs, err := global.Store.ListServices()
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
 
-// 	response.Success(w, http.StatusOK, svr)
-// 	return
-// }
+	response.Success(w, http.StatusOK, svrs)
+	return
+}
 
-// // DeleteService todo
-// func DeleteService(w http.ResponseWriter, r *http.Request) {
-// 	ps := context.GetParamsFromContext(r)
-// 	sn := ps.ByName("sn")
+// GetService todo
+func GetService(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	sid := ps.ByName("sid")
 
-// 	err := global.Store.DeleteService(sn)
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
+	svr, err := global.Store.GetService(sid)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
 
-// 	response.Success(w, http.StatusNoContent, "")
-// 	return
-// }
+	response.Success(w, http.StatusOK, svr)
+	return
+}
 
-// // RegistryServiceFeatures todo
-// func RegistryServiceFeatures(w http.ResponseWriter, r *http.Request) {
-// 	ps := context.GetParamsFromContext(r)
-// 	sn := ps.ByName("sn")
+// DeleteService todo
+func DeleteService(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	sid := ps.ByName("sid")
 
-// 	iter, err := request.CheckArrayBody(r)
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
+	err := global.Store.DeleteService(sid)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
 
-// 	features := []service.Feature{}
-// 	for iter.ReadArray() {
-// 		f := service.Feature{}
-// 		for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
-// 			switch l1Field {
-// 			case "name":
-// 				f.Name = iter.ReadString()
-// 			case "method":
-// 				f.Method = iter.ReadString()
-// 			case "endpoint":
-// 				f.Endpoint = iter.ReadString()
-// 			default:
-// 				iter.Skip()
-// 			}
-// 		}
+	response.Success(w, http.StatusNoContent, "")
+	return
+}
 
-// 		features = append(features, f)
-// 	}
+// ListServiceFeatures todo
+func ListServiceFeatures(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	sid := ps.ByName("sid")
 
-// 	if iter.Error != nil {
-// 		response.Failed(w, exception.NewBadRequest("get service features from body array error, %s", iter.Error))
-// 		return
-// 	}
+	features, err := global.Store.ListServiceFeatures(sid)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
 
-// 	if len(features) == 0 {
-// 		response.Failed(w, exception.NewBadRequest(`body array parse not features`))
-// 		return
-// 	}
+	response.Success(w, http.StatusOK, features)
+	return
+}
 
-// 	if err := global.Store.RegistryServiceFeatures(sn, features...); err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
+// FeatureRegistryReq 服务功能注册接口
+type FeatureRegistryReq struct {
+	Version  string             `json:"version"`
+	Features []*service.Feature `json:"features"`
+}
 
-// 	response.Success(w, http.StatusCreated, nil)
-// 	return
-// }
+// RegistryServiceFeatures todo
+func RegistryServiceFeatures(w http.ResponseWriter, r *http.Request) {
+	tk := context.GetTokenFromContext(r)
+	sid := tk.ServiceID
 
-// // ListServiceFeatures todo
-// func ListServiceFeatures(w http.ResponseWriter, r *http.Request) {
-// 	ps := context.GetParamsFromContext(r)
-// 	sn := ps.ByName("sn")
+	if sid == "" {
+		response.Failed(w, exception.NewBadRequest("service id not found in token"))
+		return
+	}
 
-// 	features, err := global.Store.ListServiceFeatures(sn)
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
+	body, err := request.CheckBody(r)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
 
-// 	response.Success(w, http.StatusOK, features)
-// 	return
-// }
+	frReq := new(FeatureRegistryReq)
+	if err := json.Unmarshal(body, frReq); err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	if frReq.Version == "" {
+		response.Failed(w, exception.NewBadRequest("service version required"))
+		return
+	}
+
+	if len(frReq.Features) == 0 {
+		response.Failed(w, exception.NewBadRequest(`body array parse not features`))
+		return
+	}
+
+	if err := global.Store.RegistryServiceFeatures(sid, frReq.Version, frReq.Features...); err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusCreated, nil)
+	return
+}

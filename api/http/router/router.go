@@ -74,11 +74,7 @@ func (r *MyRouter) Handler(method, path, featureName string, handler http.Handle
 					return
 				}
 
-				if t.ServiceID != ps.ByName("sn") {
-					response.Failed(w, exception.NewForbidden("the token: %s is not belong this service: %s", t.AccessToken, t.ServiceID))
-					return
-				}
-
+				rctx.Token = t
 			default:
 				var hasPerm bool
 				authHeader := req.Header.Get("Authorization")

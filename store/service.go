@@ -31,6 +31,12 @@ func (s *Store) DeleteService(id string) error {
 
 // RegistryServiceFeatures todo
 func (s *Store) RegistryServiceFeatures(id, version string, features ...*service.Feature) error {
+	for i := range features {
+		if err := features[i].Validate(); err != nil {
+			return err
+		}
+	}
+
 	return s.dao.Service.RegistryServiceFeatures(id, version, features...)
 }
 

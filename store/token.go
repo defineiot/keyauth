@@ -2,7 +2,6 @@ package store
 
 import (
 	"encoding/base64"
-	"fmt"
 	"math/rand"
 	"regexp"
 	"strings"
@@ -105,38 +104,92 @@ func (s *Store) IssueToken(req *TokenRequest) (*token.Token, error) {
 		return nil, err
 	}
 
-	app, err := s.dao.Application.GetApplicationByClientID(req.ClientID)
-	if err != nil {
-		return nil, err
-	}
-
-	if req.isCheckClient {
-		if req.ClientSecret != app.ClientSecret {
-			return nil, exception.NewUnauthorized("unauthorized_client")
-		}
-	}
-
 	var t *token.Token
 	switch req.GrantType {
 	case token.AUTHCODE:
+		app, err := s.dao.Application.GetApplicationByClientID(req.ClientID)
+		if err != nil {
+			return nil, err
+		}
+		if req.ClientSecret != app.ClientSecret {
+			return nil, exception.NewUnauthorized("unauthorized_client")
+		}
+
 		t, err = s.issueTokenByAuthCode(app.ID, req.Code, req.RedirectURI)
+		if err != nil {
+			return nil, err
+		}
+
 	case token.IMPLICIT:
+		app, err := s.dao.Application.GetApplicationByClientID(req.ClientID)
+		if err != nil {
+			return nil, err
+		}
+
 		t, err = s.issueTokenByImplicit(app.ID, req.RedirectURI)
+		if err != nil {
+			return nil, err
+		}
+
 	case token.PASSWORD:
+		app, err := s.dao.Application.GetApplicationByClientID(req.ClientID)
+		if err != nil {
+			return nil, err
+		}
+		if req.ClientSecret != app.ClientSecret {
+			return nil, exception.NewUnauthorized("unauthorized_client")
+		}
+
 		t, err = s.issueTokenByPassword(req.Scope, app.ID, req.Username, req.Password)
+		if err != nil {
+			return nil, err
+		}
+
 	case token.CLIENT:
-		t, err = s.issueTokenByClient(app.ID, req.Scope)
+		svr, err := s.dao.Service.GetServiceByClientID(req.ClientID)
+		if err != nil {
+			return nil, err
+		}
+		if req.ClientSecret != svr.ClientSecret {
+			return nil, exception.NewUnauthorized("unauthorized_client")
+		}
+
+		t, err = s.issueTokenByClient(svr.ID, req.Scope)
+		if err != nil {
+			return nil, err
+		}
+
 	case token.REFRESH:
+		app, err := s.dao.Application.GetApplicationByClientID(req.ClientID)
+		if err != nil {
+			return nil, err
+		}
+		if req.ClientSecret != app.ClientSecret {
+			return nil, exception.NewUnauthorized("unauthorized_client")
+		}
+
 		t, err = s.issueTokenByRefresh(req.RefreshToken)
+		if err != nil {
+			return nil, err
+		}
+
 	case token.UPSCOPE:
+		app, err := s.dao.Application.GetApplicationByClientID(req.ClientID)
+		if err != nil {
+			return nil, err
+		}
+		if req.ClientSecret != app.ClientSecret {
+			return nil, exception.NewUnauthorized("unauthorized_client")
+		}
+
 		t, err = s.issueTokenByUpScope(req.AccessToken, req.Scope)
+		if err != nil {
+			return nil, err
+		}
+
 	default:
 		return nil, exception.NewBadRequest(`invalid_grant only support 
 		[authorization_code, implicit, password, client_credentials, refresh_token, upgrade_scope]`)
-	}
-
-	if err != nil {
-		return nil, err
 	}
 
 	return t, nil
@@ -285,12 +338,6 @@ func (s *Store) issueTokenByPassword(scope, appID, account, password string) (*t
 // issueTokenByClient implement Client Credentials Grant
 // https://tools.ietf.org/html/rfc6749#section-4.4.2
 func (s *Store) issueTokenByClient(serviceID string, scope string) (*token.Token, error) {
-	svr, err := s.dao.Service.GetServiceByClientID(serviceID)
-	fmt.Println(svr)
-	if err != nil {
-		return nil, exception.NewUnauthorized("only service client can issue by client credentials grant, but %s", err)
-	}
-
 	t := new(token.Token)
 	t.Scope = scope
 	t.CreatedAt = time.Now().Unix()
@@ -299,10 +346,12 @@ func (s *Store) issueTokenByClient(serviceID string, scope string) (*token.Token
 	t.ServiceID = serviceID
 
 	switch t.TokenType {
-	case "bearer":
+	case "bearer", "":
+		t.TokenType = token.Bearer
 		t.AccessToken = makeBearerToken(24)
 		t.RefreshToken = makeBearerToken(32)
 	case "jwt":
+		t.TokenType = token.JWT
 	default:
 		return nil, exception.NewInternalServerError("unknown token type, %s", t.TokenType)
 	}
@@ -328,7 +377,7 @@ func (s *Store) issueTokenByRefresh(refreshToken string) (*token.Token, error) {
 	}
 
 	// 删除旧的token
-	if err := s.dao.Token.DeleteTokenByRefresh(refreshToken); err != nil {
+	if err := s.dao.Token.DeleteToken(old.AccessToken); err != nil {
 		return nil, err
 	}
 
