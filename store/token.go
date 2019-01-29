@@ -427,7 +427,7 @@ func (s *Store) issueTokenByUpScope(accessToken, scope string) (*token.Token, er
 	}
 
 	// 切换用户的域空间, 判断需要切换的域是否属于该用户
-	if domainID != "" {
+	if domainID != "" && domainID != t.DomainID {
 		var validateD bool
 		otherDs, err := s.dao.Domain.ListUserThirdDomains(t.UserID)
 		if err != nil {

@@ -3,9 +3,8 @@ package store
 import (
 	"fmt"
 
-	"github.com/defineiot/keyauth/dao/service"
-
 	"github.com/defineiot/keyauth/dao/role"
+	"github.com/defineiot/keyauth/dao/service"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 

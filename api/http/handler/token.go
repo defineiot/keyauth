@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -37,11 +36,9 @@ func IssueToken(w http.ResponseWriter, r *http.Request) {
 		tokenReq.Password = val.Get("password").ToString()
 		tokenReq.RefreshToken = val.Get("refresh_token").ToString()
 		tokenReq.AccessToken = val.Get("access_token").ToString()
+		tokenReq.Scope = val.Get("scope").ToString()
 		grantType = val.Get("grant_type").ToString()
 
-		projectID := val.Get("scope", "project_id").ToString()
-		domainID := val.Get("scope", "domain_id").ToString()
-		tokenReq.Scope = fmt.Sprintf("%s,%s", domainID, projectID)
 	case "", "application/x-www-form-urlencoded":
 		if err := r.ParseForm(); err != nil {
 			response.Failed(w, exception.NewBadRequest("parse x-www-form-urlencoded data error, %s", err))
@@ -55,7 +52,7 @@ func IssueToken(w http.ResponseWriter, r *http.Request) {
 		tokenReq.AccessToken = r.FormValue("access_token")
 		grantType = r.FormValue("grant_type")
 
-		tokenReq.Scope = ""
+		tokenReq.Scope = r.FormValue("scope")
 	default:
 		response.Failed(w, exception.NewBadRequest("content-type only support for application/json and application/x-www-form-urlencoded others(%s) don't supported", r.Header.Get("content-type")))
 		return
