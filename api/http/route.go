@@ -43,13 +43,13 @@ func RouteToV1(r *router.MyRouter) {
 	r.HandlerFunc("POST", "/features/", "RegistryServiceFeatures", handler.RegistryServiceFeatures)
 	r.HandlerFunc("GET", "/services/:sid/features/", "ListServiceFeatures", handler.ListServiceFeatures)
 
-	// // Role
-	// r.HandlerFunc("POST", "/v1/roles/", "CreateRole", handler.CreateRole)
-	// r.HandlerFunc("GET", "/v1/roles/", "ListRoles", handler.ListRoles)
-	// r.HandlerFunc("GET", "/v1/roles/:rn/", "GetRole", handler.GetRole)
-	// r.HandlerFunc("DELETE", "/v1/roles/:rn/", "DeleteRole", handler.DeleteRole)
-	// r.HandlerFunc("POST", "/v1/roles/:rn/features/", "AddFeaturesToRole", handler.AddFeaturesToRole)
-	// r.HandlerFunc("DELETE", "/v1/roles/:rn/features/", "RemoveFeaturesFromRole", handler.RemoveFeaturesFromRole)
+	// Role
+	r.HandlerFunc("POST", "/roles/", "CreateRole", handler.CreateRole)
+	r.HandlerFunc("GET", "/roles/", "ListRoles", handler.ListRoles)
+	r.HandlerFunc("GET", "/roles/:ri/", "GetRole", handler.GetRole)
+	r.HandlerFunc("DELETE", "/roles/:ri/", "DeleteRole", handler.DeleteRole)
+	r.HandlerFunc("POST", "/roles/:ri/features/", "AddFeaturesToRole", handler.AddFeaturesToRole)
+	r.HandlerFunc("DELETE", "/roles/:ri/features/", "RemoveFeaturesFromRole", handler.RemoveFeaturesFromRole)
 
 	// r.HandlerFunc("POST", "/v1/domains/users/", "CreateDomainUser", handler.CreateDomainUser)
 	// r.HandlerFunc("GET", "/v1/users/:uid/domains/", "ListUserDomain", handler.ListUserDomain)

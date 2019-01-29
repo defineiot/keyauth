@@ -1,7 +1,12 @@
 package store
 
 import (
+	"fmt"
+
+	"github.com/defineiot/keyauth/dao/service"
+
 	"github.com/defineiot/keyauth/dao/role"
+	"github.com/defineiot/keyauth/internal/exception"
 )
 
 // CreateRole todo
@@ -28,13 +33,13 @@ func (s *Store) ListRoles() ([]*role.Role, error) {
 }
 
 // GetRole todo
-func (s *Store) GetRole(name string) (*role.Role, error) {
-	r, err := s.dao.Role.GetRole(name)
+func (s *Store) GetRole(id string) (*role.Role, error) {
+	r, err := s.dao.Role.GetRole(id)
 	if err != nil {
 		return nil, err
 	}
 
-	features, err := s.dao.Service.ListRoleFeatures(r.Name)
+	features, err := s.dao.Service.ListRoleFeatures(r.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -46,6 +51,11 @@ func (s *Store) GetRole(name string) (*role.Role, error) {
 
 // DeleteRole todo
 func (s *Store) DeleteRole(name string) error {
+	if name == systemAdminRoleName || name == domainAdminRoleName ||
+		name == memberUserRoleName {
+		return exception.NewForbidden("system initial role can't be delete")
+	}
+
 	return s.dao.Role.DeleteRole(name)
 }
 
@@ -56,57 +66,106 @@ func (s *Store) CheckRoleExist(roleName string) (bool, error) {
 
 // AddFeaturesToRole todo
 func (s *Store) AddFeaturesToRole(id string, features ...string) error {
-	// errMsg := []string{}
-	// notExist := []string{}
+	// 获取当前角色
+	ro, err := s.GetRole(id)
+	if err != nil {
+		return err
+	}
+	emap := make(map[string]bool)
+	for i := range ro.Features {
+		emap[ro.Features[i].ID] = true
+	}
 
-	// // 检查feature是否存在
-	// for _, fid := range features {
-	// 	ok, err := s.dao.Service.CheckFeatureIsExist(fid)
-	// 	if err != nil {
-	// 		errMsg = append(errMsg, err.Error())
-	// 	}
-	// 	if !ok {
-	// 		notExist = append(notExist, fid)
-	// 	}
-	// }
+	// 获取系统所有功能列表
+	fmap := make(map[string]*service.Feature)
+	all, err := s.dao.Service.ListAllFeatures()
+	if err != nil {
+		return err
+	}
+	for i := range all {
+		fmap[all[i].ID] = all[i]
+	}
 
-	// if len(errMsg) != 0 {
-	// 	return exception.NewInternalServerError(strings.Join(errMsg, ","))
-	// }
-	// if len(notExist) != 0 {
-	// 	return exception.NewBadRequest("feature %v not exist", notExist)
-	// }
+	// 判断要添加的功能是否存在, 是否已经添加
+	notExist := []string{}
+	hasAdded := []string{}
+	needAdded := []*service.Feature{}
+	for i := range features {
+		if v, ok := fmap[features[i]]; !ok {
+			notExist = append(notExist, features[i])
+		} else {
+			needAdded = append(needAdded, v)
+		}
 
-	// // 对比, 哪些已经添加, 哪些未添加
-	// exist, err := s.dao.Service.ListRoleFeatures(id)
-	// if err != nil {
-	// 	return err
-	// }
+		if _, ok := emap[features[i]]; ok {
+			hasAdded = append(hasAdded, features[i])
+		}
+	}
 
-	// needAdded := []*service.Feature{}
-	// isAdded := []*service.Feature{}-
-	// for _, infid := range features {
-	// 	var inExist bool
-	// 	for _, efif := range exist {
-	// 		if efif.ID == infid {
-	// 			inExist = true
-	// 			isAdded = append(isAdded, efif)
-	// 		}
-	// 	}
-	// 	if !inExist {
-	// 		needAdded = append(needAdded, infid)
-	// 	}
-	// }
+	if len(notExist) > 0 {
+		return exception.NewBadRequest("the features: %s not exist", notExist)
+	}
+	if len(hasAdded) > 0 {
+		return exception.NewBadRequest("the features: %s has added", hasAdded)
+	}
+	if len(needAdded) == 0 {
+		return exception.NewBadRequest("no features need add")
+	}
 
-	// if len(isAdded) != 0 {
-	// 	return exception.NewBadRequest("the feature %v has added to role: %s", isAdded, id)
-	// }
-
-	// return s.dao.Service.AssociateFeaturesToRole(id, needAdded...)
-	return nil
+	return s.dao.Service.AssociateFeaturesToRole(id, needAdded...)
 }
 
 // RemoveFeaturesFromRole todo
-func (s *Store) RemoveFeaturesFromRole(name string, features ...int64) (bool, error) {
-	return true, nil
+func (s *Store) RemoveFeaturesFromRole(id string, features ...string) error {
+	// 获取当前角色
+	ro, err := s.GetRole(id)
+	if err != nil {
+		return err
+	}
+	emap := make(map[string]bool)
+	for i := range ro.Features {
+		emap[ro.Features[i].ID] = true
+	}
+
+	fmt.Println(emap)
+
+	// 获取系统所有功能列表
+	fmap := make(map[string]*service.Feature)
+	all, err := s.dao.Service.ListAllFeatures()
+	if err != nil {
+		return err
+	}
+	for i := range all {
+		fmap[all[i].ID] = all[i]
+	}
+
+	fmt.Println(fmap)
+
+	// 判断要移除的功能是否存在
+	notExist := []string{}
+	notAdded := []string{}
+	needRemove := []*service.Feature{}
+	for i := range features {
+		if v, ok := fmap[features[i]]; !ok {
+			notExist = append(notExist, features[i])
+		} else {
+			needRemove = append(needRemove, v)
+		}
+
+		if _, ok := emap[features[i]]; !ok {
+			notAdded = append(notAdded, features[i])
+		}
+	}
+
+	if len(notExist) > 0 {
+		return exception.NewBadRequest("the features: %s not exist", notExist)
+	}
+	if len(notAdded) > 0 {
+		return exception.NewBadRequest("the features: %s not added", notAdded)
+	}
+	if len(needRemove) == 0 {
+		return exception.NewBadRequest("no features need remove")
+	}
+
+	return s.dao.Service.UnlinkFeatureFromRole(id, needRemove...)
 }

@@ -107,6 +107,7 @@ type Reader interface {
 	GetServiceByName(name string) (*Service, error)
 	GetServiceByClientID(clientID string) (*Service, error)
 
+	ListAllFeatures() ([]*Feature, error)
 	ListServiceFeatures(serviceID string) ([]*Feature, error)
 	ListRoleFeatures(roleID string) ([]*Feature, error)
 }
