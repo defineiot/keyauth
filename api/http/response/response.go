@@ -19,36 +19,36 @@ type Response struct {
 func Failed(w http.ResponseWriter, err error) {
 	msg := err.Error()
 	httCode := http.StatusInternalServerError
-	customeCode := 0
+	customCode := 0
 
 	switch t := err.(type) {
 	case *exception.BadRequest:
 		httCode = t.Code()
-		customeCode = 4000
+		customCode = 4000
 	case *exception.NotFound:
 		httCode = t.Code()
-		customeCode = 4004
+		customCode = 4004
 	case *exception.InternalServerError:
 		httCode = t.Code()
-		customeCode = 5000
+		customCode = 5000
 	case *exception.Unauthorized:
 		httCode = t.Code()
-		customeCode = 4001
+		customCode = 4001
 	case *exception.MethodNotAllowed:
 		httCode = t.Code()
-		customeCode = 4005
+		customCode = 4005
 	case *exception.Forbidden:
 		httCode = t.Code()
-		customeCode = 4003
+		customCode = 4003
 	case *exception.Expired:
 		httCode = t.Code()
-		customeCode = 4100
+		customCode = 4100
 	default:
 		httCode = http.StatusInternalServerError
 	}
 
 	resp := Response{
-		Code:    customeCode,
+		Code:    customCode,
 		Message: msg,
 	}
 

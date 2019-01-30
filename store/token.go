@@ -209,8 +209,9 @@ func (s *Store) ValidateToken(accessToken string) (*token.Token, error) {
 		if s.cache.Get(cacheKey, tk) {
 			s.log.Debug("get token from cache key: %s", cacheKey)
 			cached = true
+		} else {
+			s.log.Debug("get token from cache failed, key: %s", cacheKey)
 		}
-		s.log.Debug("get token from cache failed, key: %s", cacheKey)
 	}
 
 	if !cached {
@@ -226,7 +227,12 @@ func (s *Store) ValidateToken(accessToken string) (*token.Token, error) {
 	if !ok {
 		return nil, exception.NewExpired("token has expired, access_token: %s", tk.AccessToken)
 	}
-	tk.ExpiresIn = delta
+	tk.ExpiresAt = delta
+
+	// 用户的项目和角色发生变化时需要 清除缓存的token
+	if cached {
+		return tk, nil
+	}
 
 	// 获取用户可以访问的项目列表
 	if tk.UserID != "" {
@@ -292,21 +298,44 @@ func (s *Store) issueTokenByImplicit(clientID, redirectURI string) (*token.Token
 // issueTokenByPassword implement Resource Owner Password Credentials Grant
 // https://tools.ietf.org/html/rfc6749#section-4.3
 func (s *Store) issueTokenByPassword(scope, appID, account, password string) (*token.Token, error) {
+	var tk *token.Token
+
 	// 查询用户是否存在
 	user, err := s.dao.User.GetUser(user.Account, account)
 	if err != nil {
 		return nil, err
 	}
 
-	// 检查用户的秘密是否正确
+	// 检查用户的密码是否正确
 	if s.hmacHash(password) != user.Password.Password {
 		return nil, exception.NewForbidden("username or password invalidate")
 	}
 
-	// 生成Token
-	tk, err := s.generateToken(scope, user.Domain.ID, user.ID, appID, token.Bearer, token.PASSWORD)
+	// 查看最新的, 还有至少一半时间可用的token, 如果有就使用老的token
+	ctk, err := s.dao.Token.GetUserCurrentToken(user.ID, appID, token.PASSWORD)
 	if err != nil {
-		return nil, err
+		if _, ok := err.(*exception.NotFound); !ok {
+			return nil, err
+		}
+	}
+
+	if ctk != nil {
+		if ok, delta := ctk.IsExpired(); ok && delta > ctk.ExpiresIn/2 {
+			tk = ctk
+		} else {
+			// 如果token所剩时间不足一半, 则清除该token
+			if err := s.dao.Token.DeleteToken(ctk.AccessToken); err != nil {
+				s.log.Warn("clean expired token error, %s", err)
+			}
+		}
+	}
+
+	// 生成新Token
+	if tk == nil {
+		tk, err = s.generateToken(scope, user.Domain.ID, user.ID, appID, token.Bearer, token.PASSWORD)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// 获取token的项目列表

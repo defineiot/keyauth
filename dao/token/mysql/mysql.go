@@ -16,6 +16,7 @@ const (
 	DeleteTokenByRefresh = "delete-token-by-refresh"
 	FindTokenByRefresh   = "find-token-by-refresh"
 	UpdateTokenScope     = "set-token-project"
+	FindUserCurrentToken = "find-user-current-token"
 )
 
 // NewTokenStore use to create domain storage service
@@ -29,6 +30,16 @@ func NewTokenStore(opt *dao.Options) (token.Store, error) {
 			SELECT access_token, refresh_token, grant_type, token_type, user_id, domain_id, project_id, service_id, application_id, name, scope, create_at, expire_at, description 
 			FROM tokens 
 			WHERE access_token = ?;
+		`,
+		FindUserCurrentToken: `
+			SELECT access_token, refresh_token, grant_type, token_type, user_id, domain_id, project_id, service_id, application_id, name, scope, create_at, expire_at, description 
+			FROM tokens 
+			WHERE user_id = ? 
+			AND application_id = ? 
+			AND grant_type = ? 
+			ORDER BY create_at 
+			DESC 
+			LIMIT 1;
 		`,
 		DeleteToken: `
 			DELETE FROM tokens 
