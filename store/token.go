@@ -195,16 +195,67 @@ func (s *Store) IssueToken(req *TokenRequest) (*token.Token, error) {
 	return t, nil
 }
 
+// ValidateTokenReq token校验
+type ValidateTokenReq struct {
+	UserID       string `json:"-"`
+	ClientID     string `json:"client_id,omitempty"`
+	ClientSecret string `json:"client_secret,omitempty"`
+	AccessToken  string `json:"access_token,omitempty"`
+	FeatureName  string `json:"feature_name,omitempty"`
+}
+
+func (v *ValidateTokenReq) validate() error {
+	if v.ClientID == "" || v.ClientSecret == "" {
+		return exception.NewForbidden("client credentials missed")
+	}
+
+	if v.AccessToken == "" {
+		return exception.NewBadRequest("access_token missed")
+	}
+
+	return nil
+}
+
 // ValidateToken use to validate token
-func (s *Store) ValidateToken(accessToken string) (*token.Token, error) {
+func (s *Store) ValidateToken(v *ValidateTokenReq) (*token.Token, error) {
 	var (
 		err    error
 		cached bool
 	)
 
+	// 校验请求的合法性
+	if err := v.validate(); err != nil {
+		return nil, err
+	}
+
+	// 校验后端服务调用的合法性(服务调用者可以校验其他人的token)
+	svr, err := s.dao.Service.GetServiceByClientID(v.ClientID)
+	if err != nil {
+		s.log.Debug("find service by client error, %s", err)
+	}
+	if svr != nil {
+		if v.ClientSecret != svr.ClientSecret {
+			return nil, exception.NewForbidden("unauthorized_client")
+		}
+	}
+
+	// 校验前段应用调用的合法性(应用调用者 只能校验自己的token)
+	app, err := s.dao.Application.GetApplicationByClientID(v.ClientID)
+	if err != nil {
+		s.log.Debug("find application by client error, %s", err)
+	}
+	if app != nil {
+		if v.ClientSecret != app.ClientSecret {
+			return nil, exception.NewForbidden("unauthorized_client")
+		}
+		if v.UserID != app.UserID {
+			return nil, exception.NewForbidden("this is not your token")
+		}
+	}
+
 	tk := new(token.Token)
 	// 尝试从缓存中获取Token
-	cacheKey := s.cachePrefix.token + accessToken
+	cacheKey := s.cachePrefix.token + v.AccessToken
 	if s.isCache {
 		if s.cache.Get(cacheKey, tk) {
 			s.log.Debug("get token from cache key: %s", cacheKey)
@@ -215,8 +266,8 @@ func (s *Store) ValidateToken(accessToken string) (*token.Token, error) {
 	}
 
 	if !cached {
-		// 如果没有从缓存中获取到, 则从到层获取
-		tk, err = s.dao.Token.GetToken(accessToken)
+		// 如果没有从缓存中获取到, 则从DAO层获取
+		tk, err = s.dao.Token.GetToken(v.AccessToken)
 		if err != nil {
 			return nil, err
 		}
@@ -228,6 +279,11 @@ func (s *Store) ValidateToken(accessToken string) (*token.Token, error) {
 		return nil, exception.NewExpired("token has expired, access_token: %s", tk.AccessToken)
 	}
 	tk.ExpiresAt = delta
+
+	// 校验用户是否有权限访问指定的功能
+	if v.FeatureName != "" {
+
+	}
 
 	// 用户的项目和角色发生变化时需要 清除缓存的token
 	if cached {
@@ -449,8 +505,17 @@ func (s *Store) issueTokenByUpScope(accessToken, scope string) (*token.Token, er
 		return nil, exception.NewBadRequest("scope project_id or domain_id missed")
 	}
 
+	oldTK, err := s.dao.Token.GetToken(accessToken)
+	if err != nil {
+		return nil, err
+	}
+
 	// 校验当前Token是否合法
-	t, err := s.ValidateToken(accessToken)
+	vreq := &ValidateTokenReq{
+		UserID: oldTK.UserID,
+	}
+
+	t, err := s.ValidateToken(vreq)
 	if err != nil {
 		return nil, err
 	}
