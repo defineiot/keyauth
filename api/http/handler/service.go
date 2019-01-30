@@ -26,14 +26,14 @@ func CreateService(w http.ResponseWriter, r *http.Request) {
 
 	var stype service.Type
 	switch val.Get("type").ToString() {
-	case "controlle_pannel":
+	case "controller_pannel":
 		stype = service.Public
 	case "data_pannel":
 		stype = service.Agent
 	case "internal_rpc":
 		stype = service.Internal
 	default:
-		response.Failed(w, exception.NewBadRequest("unknown service type, support type (controlle_pannel,data_pannel,internal_rpc)"))
+		response.Failed(w, exception.NewBadRequest("unknown service type, support type (controller_pannel,data_pannel,internal_rpc)"))
 		return
 	}
 

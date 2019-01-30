@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	Internal Type = "internal_rpc"     // 内部调用的控制面类型的服务, 提供了RPC能力,需要注册到API 网关对内提供服务
-	Public        = "controlle_pannel" // 需要对外发布的控制面类型的服务, 提供了RPC能力, 需要注册到API 网关对外提供服务
-	Agent         = "data_pannel"      // 数据面类型的服务, 不提供RPC能力
+	Internal Type = "internal_rpc"      // 内部调用的控制面类型的服务, 提供了RPC能力,需要注册到API 网关对内提供服务
+	Public        = "controller_pannel" // 需要对外发布的控制面类型的服务, 提供了RPC能力, 需要注册到API 网关对外提供服务
+	Agent         = "data_pannel"       // 数据面类型的服务, 不提供RPC能力
 
 	Unknown     Status = "unknown"     // 刚创建好服务, 并没有服务实例启动
 	Unavailable        = "unavailable" // 后端服务没有实例提供服务
