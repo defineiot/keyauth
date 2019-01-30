@@ -15,8 +15,8 @@ func RouteToV1(r *router.MyRouter) {
 
 	// Token
 	r.HandlerFunc("POST", "/oauth2/tokens/", "IssueToken", handler.IssueToken)
-	r.HandlerFunc("GET", "/oauth2/tokens/", "ValidateToken", handler.ValidateToken)
-	r.HandlerFunc("DELETE", "/oauth2/tokens/", "RevolkToken", handler.RevolkToken)
+	r.HandlerFunc("GET", "/oauth2/tokens/:tk/", "ValidateToken", handler.ValidateToken)
+	r.HandlerFunc("DELETE", "/oauth2/tokens/:tk/", "RevolkToken", handler.RevolkToken)
 
 	// Project
 	r.HandlerFunc("POST", "/projects/", "CreateProject", handler.CreateProject)
