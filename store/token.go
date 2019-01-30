@@ -256,6 +256,23 @@ func (s *Store) ValidateTokenWithClient(v *ValidateTokenReq) (*token.Token, erro
 		if err != nil {
 			return nil, err
 		}
+
+		// 获取用户可以访问的项目列表
+		if tk.UserID != "" {
+			projects, err := s.dao.Project.ListUserProjects(tk.DomainID, tk.UserID)
+			if err != nil {
+				return nil, exception.NewInternalServerError(err.Error())
+			}
+
+			tk.AvaliableProjects = projects
+		}
+
+		// 获取用户的角色列表
+		roles, err := s.dao.Role.ListUserRole(tk.DomainID, tk.UserID)
+		if err != nil {
+			return nil, err
+		}
+		tk.Roles = roles
 	}
 
 	// 计算token是否过期
@@ -273,31 +290,51 @@ func (s *Store) ValidateTokenWithClient(v *ValidateTokenReq) (*token.Token, erro
 	}
 
 	// 校验用户是否有权限访问指定的功能
-	if v.FeatureName != "" {
-
-	}
-
-	// 用户的项目和角色发生变化时需要 清除缓存的token
-	if cached {
-		return tk, nil
-	}
-
-	// 获取用户可以访问的项目列表
-	if tk.UserID != "" {
-		projects, err := s.dao.Project.ListUserProjects(tk.DomainID, tk.UserID)
-		if err != nil {
-			return nil, exception.NewInternalServerError(err.Error())
+	if v.FeatureName != "" || svr != nil {
+		switch tk.GrantType {
+		case token.CLIENT:
+			if v.FeatureName != "RegistryServiceFeatures" {
+				return nil, exception.NewForbidden("client_credentials only can acess RegistryServiceFeatures")
+			}
+		case token.PASSWORD, token.UPSCOPE, token.REFRESH:
+			if v.FeatureName == "RegistryServiceFeatures" {
+				return nil, exception.NewForbidden("client_credentials only can acess RegistryServiceFeatures")
+			}
+		default:
+			return nil, exception.NewBadRequest("other grant type not support")
 		}
 
-		tk.AvaliableProjects = projects
-	}
+		var hasPerm bool
+		for i := range tk.Roles {
+			rn := tk.Roles[i].Name
+			if rn == systemAdminRoleName {
+				hasPerm = true
+				tk.IsSystemAdmin = true
+				continue
+			}
 
-	// 获取用户的角色列表
-	roles, err := s.dao.Role.ListUserRole(tk.DomainID, tk.UserID)
-	if err != nil {
-		return nil, err
+			if rn == domainAdminRoleName {
+				hasPerm = true
+				tk.IsDomainAdmin = true
+				break
+			}
+
+			role, err := s.GetRole(rn)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, f := range role.Features {
+				if f.Name == v.FeatureName {
+					hasPerm = true
+				}
+			}
+		}
+
+		if !hasPerm {
+			return nil, exception.NewForbidden("user: %s has no permisson for access feature: %s", tk.UserID, v.FeatureName)
+		}
 	}
-	tk.Roles = roles
 
 	// 更新缓存
 	if s.isCache {
@@ -307,11 +344,12 @@ func (s *Store) ValidateTokenWithClient(v *ValidateTokenReq) (*token.Token, erro
 		s.log.Debug("set token cache ok, key: %s", cacheKey)
 	}
 
+	tk.RefreshToken = ""
 	return tk, nil
 }
 
 // ValidateToken use to validate token
-func (s *Store) ValidateToken(accessToken string) (*token.Token, error) {
+func (s *Store) ValidateToken(accessToken, featureName string) (*token.Token, error) {
 	var (
 		err    error
 		cached bool
@@ -335,6 +373,23 @@ func (s *Store) ValidateToken(accessToken string) (*token.Token, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		// 获取用户可以访问的项目列表
+		if tk.UserID != "" {
+			projects, err := s.dao.Project.ListUserProjects(tk.DomainID, tk.UserID)
+			if err != nil {
+				return nil, exception.NewInternalServerError(err.Error())
+			}
+
+			tk.AvaliableProjects = projects
+		}
+
+		// 获取用户的角色列表
+		roles, err := s.dao.Role.ListUserRole(tk.DomainID, tk.UserID)
+		if err != nil {
+			return nil, err
+		}
+		tk.Roles = roles
 	}
 
 	// 计算token是否过期
@@ -344,27 +399,50 @@ func (s *Store) ValidateToken(accessToken string) (*token.Token, error) {
 	}
 	tk.ExpiresAt = delta
 
-	// 用户的项目和角色发生变化时需要 清除缓存的token
-	if cached {
-		return tk, nil
+	// 校验用户是否有权限访问指定的功能
+	switch tk.GrantType {
+	case token.CLIENT:
+		if featureName != "RegistryServiceFeatures" {
+			return nil, exception.NewForbidden("client_credentials only can acess RegistryServiceFeatures")
+		}
+	case token.PASSWORD, token.UPSCOPE, token.REFRESH:
+		if featureName == "RegistryServiceFeatures" {
+			return nil, exception.NewForbidden("client_credentials only can acess RegistryServiceFeatures")
+		}
+	default:
+		return nil, exception.NewBadRequest("other grant type not support")
 	}
 
-	// 获取用户可以访问的项目列表
-	if tk.UserID != "" {
-		projects, err := s.dao.Project.ListUserProjects(tk.DomainID, tk.UserID)
-		if err != nil {
-			return nil, exception.NewInternalServerError(err.Error())
+	var hasPerm bool
+	for i := range tk.Roles {
+		rn := tk.Roles[i].Name
+		if rn == systemAdminRoleName {
+			hasPerm = true
+			tk.IsSystemAdmin = true
+			continue
 		}
 
-		tk.AvaliableProjects = projects
+		if rn == domainAdminRoleName {
+			hasPerm = true
+			tk.IsDomainAdmin = true
+			break
+		}
+
+		role, err := s.GetRole(rn)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, f := range role.Features {
+			if f.Name == featureName {
+				hasPerm = true
+			}
+		}
 	}
 
-	// 获取用户的角色列表
-	roles, err := s.dao.Role.ListUserRole(tk.DomainID, tk.UserID)
-	if err != nil {
-		return nil, err
+	if !hasPerm {
+		return nil, exception.NewForbidden("user: %s has no permisson for access feature: %s", tk.UserID, featureName)
 	}
-	tk.Roles = roles
 
 	// 更新缓存
 	if s.isCache {
