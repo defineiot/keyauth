@@ -62,14 +62,14 @@ type Password struct {
 
 // LoginStatus 用户登录信息统计, 记录标准: hash({user_id}.{applaction_id}.{grant_type}) 为一条记录
 type LoginStatus struct {
-	IP            string          `json:"ip"`         // 用户登录时的IP地址
-	Login         int64           `json:"login"`      // 用户最近一次退出系统的时间, 用于评估用户使用系统的时长
-	Logout        int64           `json:"logout"`     // 用户最近一次登录系统的时间
-	GrantType     token.GrantType `json:"grant_type"` // 用户通过哪种授权方式登录的
-	Success       int64           `json:"success"`    // 用户登录成功的次数, 及用户访问系统的次数
-	Failed        int             `json:"failed"`     // 用户连续登录失败的次数, 如果登录成功则清零, 用户实现用户多少
-	UserID        string          `json:"-"`          // 用户ID
-	ApplicationID string          `json:"-"`          // 用户应用ID
+	IP            string          `json:"ip,omitempty"`             // 用户登录时的IP地址
+	Login         int64           `json:"login,omitempty"`          // 用户最近一次退出系统的时间, 用于评估用户使用系统的时长
+	Logout        int64           `json:"logout,omitempty"`         // 用户最近一次登录系统的时间
+	GrantType     token.GrantType `json:"grant_type,omitempty"`     // 用户通过哪种授权方式登录的
+	Success       int64           `json:"success,omitempty"`        // 用户登录成功的次数, 及用户访问系统的次数
+	Failed        int             `json:"failed,omitempty"`         // 用户连续登录失败的次数, 如果登录成功则清零, 用户实现用户多少
+	UserID        string          `json:"user_id,omitempty"`        // 用户ID
+	ApplicationID string          `json:"application_id,omitempty"` // 用户应用ID
 }
 
 // Invitation code

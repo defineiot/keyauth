@@ -121,6 +121,26 @@ func (s *store) DeleteService(id string) error {
 	return nil
 }
 
+func (s *store) ListAllFeatures() ([]*service.Feature, error) {
+	rows, err := s.stmts[FindAllFeatures].Query()
+	if err != nil {
+		return nil, exception.NewInternalServerError("query all feature list error, %s", err)
+	}
+	defer rows.Close()
+
+	features := []*service.Feature{}
+	for rows.Next() {
+		f := new(service.Feature)
+		if err := rows.Scan(&f.ID, &f.Name, &f.Tag, &f.HTTPEndpoint, &f.Description, &f.IsDeleted,
+			&f.DeletedVersion, &f.DeleteAt, &f.IsAdded, &f.AddedVersion, &f.AddedAt, &f.ServiceID); err != nil {
+			return nil, exception.NewInternalServerError("scan service feature record error, %s", err)
+		}
+		features = append(features, f)
+	}
+
+	return features, nil
+}
+
 func (s *store) ListServiceFeatures(serviceID string) ([]*service.Feature, error) {
 	rows, err := s.stmts[FindServiceFeatures].Query(serviceID)
 	if err != nil {

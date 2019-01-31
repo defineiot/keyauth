@@ -61,7 +61,8 @@ type Token struct {
 	Description    string    `json:"description,omitempty"`     // 独立颁发给SDK使用时, 令牌的描述信息, 方便定位与取消
 	Scope          string    `json:"scope,omitempty"`           // 令牌的作用范围: detail https://tools.ietf.org/html/rfc6749#section-3.3
 	CreatedAt      int64     `json:"create_at,omitempty"`       // 凭证创建时间
-	ExpiresIn      int64     `json:"expires_in,omitempty"`      // 凭证过期的时间
+	ExpiresIn      int64     `json:"ttl,omitempty"`             // 凭证过期的时间
+	ExpiresAt      int64     `json:"expires_at,omitempty"`      // 还有多久过期
 
 	IsSystemAdmin     bool               `json:"is_system_admin,omitempty"`    // 是否是系统管理员
 	IsDomainAdmin     bool               `json:"is_domain_admin,omitempty"`    // 是否是域管理员
@@ -78,6 +79,7 @@ type Store interface {
 
 // StoreReader read information from store
 type StoreReader interface {
+	GetUserCurrentToken(userID, appID string, gt GrantType) (*Token, error)
 	GetToken(accessToken string) (*Token, error)
 	GetTokenByRefresh(refreshToken string) (*Token, error)
 }

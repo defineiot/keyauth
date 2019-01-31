@@ -9,11 +9,6 @@ func (s *Store) CreateService(svr *service.Service) error {
 	return s.dao.Service.CreateService(svr)
 }
 
-// CheckService todo
-// func (s *Store) CheckService(name string) (bool, error) {
-// 	return s.service.CheckServiceIsExist(name)
-// }
-
 // ListServices todo
 func (s *Store) ListServices() ([]*service.Service, error) {
 	return s.dao.Service.ListServices()

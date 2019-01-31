@@ -26,6 +26,7 @@ const (
 	UpdateService           = "update-service"
 
 	FindServiceFeatures = "find-service-features"
+	FindAllFeatures     = "find-all-features"
 	FindRoleFeatures    = "find-role-features"
 )
 
@@ -86,6 +87,12 @@ func NewServiceStore(opt *dao.Options) (service.Store, error) {
 			SELECT id, name, tag, endpoint, description, is_deleted, when_deleted_version, when_deleted_time, is_added, when_added_version, when_added_time, service_id
 			FROM features
 			WHERE service_id = ? 
+			ORDER BY tag
+			DESC;
+		`,
+		FindAllFeatures: `
+			SELECT id, name, tag, endpoint, description, is_deleted, when_deleted_version, when_deleted_time, is_added, when_added_version, when_added_time, service_id
+			FROM features
 			ORDER BY tag
 			DESC;
 		`,

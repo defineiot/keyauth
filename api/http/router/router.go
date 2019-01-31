@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -9,7 +10,6 @@ import (
 	"github.com/defineiot/keyauth/api/global"
 	"github.com/defineiot/keyauth/api/http/context"
 	"github.com/defineiot/keyauth/api/http/response"
-	"github.com/defineiot/keyauth/dao/token"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
@@ -63,20 +63,14 @@ func (r *MyRouter) Handler(method, path, featureName string, handler http.Handle
 
 				access := headerSlice[1]
 
-				t, err := global.Store.ValidateToken(access)
+				t, err := global.Store.ValidateToken(access, featureName)
 				if err != nil {
 					response.Failed(w, err)
 					return
 				}
 
-				if t.GrantType != token.CLIENT {
-					response.Failed(w, exception.NewForbidden("feature: RegistryServiceFeatures only for client grant"))
-					return
-				}
-
 				rctx.Token = t
 			default:
-				var hasPerm bool
 				authHeader := req.Header.Get("Authorization")
 				if authHeader == "" {
 					response.Failed(w, exception.NewUnauthorized("Authorization missed in header"))
@@ -91,55 +85,10 @@ func (r *MyRouter) Handler(method, path, featureName string, handler http.Handle
 
 				access := headerSlice[1]
 
-				t, err := global.Store.ValidateToken(access)
+				fmt.Println("xxx")
+				t, err := global.Store.ValidateToken(access, featureName)
 				if err != nil {
 					response.Failed(w, err)
-					return
-				}
-
-				if t.GrantType == token.CLIENT {
-					response.Failed(w, exception.NewForbidden("client grant token only for RegistryServiceFeatures"))
-					return
-				}
-
-				u, err := global.Store.GetUser(t.DomainID, t.UserID)
-				if err != nil {
-					response.Failed(w, exception.NewUnauthorized(err.Error()))
-					return
-				}
-
-				for i := range u.Roles {
-					switch u.Roles[i].Name {
-					case "system_admin":
-						t.IsSystemAdmin = true
-					case "domain_admin":
-						t.IsDomainAdmin = true
-					default:
-					}
-				}
-
-				for i := range u.Roles {
-					role := u.Roles[i]
-					if role.Name == "system_admin" {
-						hasPerm = true
-						break
-					}
-
-					role, err := global.Store.GetRole(role.ID)
-					if err != nil {
-						response.Failed(w, exception.NewUnauthorized(err.Error()))
-						return
-					}
-
-					for _, f := range role.Features {
-						if f.Name == featureName {
-							hasPerm = true
-						}
-					}
-				}
-
-				if !hasPerm {
-					response.Failed(w, exception.NewForbidden("your has no permission to access feature: %s", featureName))
 					return
 				}
 

@@ -53,10 +53,28 @@ func (s *store) GetTokenByRefresh(refreshToken string) (*token.Token, error) {
 		&t.UserID, &t.DomainID, &t.CurrentProject, &t.ServiceID, &t.ApplicationID,
 		&t.Name, &t.Scope, &t.CreatedAt, &t.ExpiresIn, &t.Description); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, exception.NewUnauthorized("refresh token %s not find", refreshToken)
+			return nil, exception.NewNotFound("refresh token %s not find", refreshToken)
 		}
 
 		return nil, exception.NewInternalServerError("query refresh token error, %s", err)
+	}
+
+	return t, nil
+}
+
+func (s *store) GetUserCurrentToken(userID, appID string, gt token.GrantType) (*token.Token, error) {
+	t := new(token.Token)
+
+	if err := s.stmts[FindUserCurrentToken].QueryRow(userID, appID, string(gt)).Scan(
+		&t.AccessToken, &t.RefreshToken, &t.GrantType, &t.TokenType,
+		&t.UserID, &t.DomainID, &t.CurrentProject, &t.ServiceID, &t.ApplicationID,
+		&t.Name, &t.Scope, &t.CreatedAt, &t.ExpiresIn, &t.Description); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, exception.NewNotFound("user:%s, app: %s, gt: %s token not find",
+				userID, appID, gt)
+		}
+
+		return nil, exception.NewInternalServerError("query user current token error, %s", err)
 	}
 
 	return t, nil
