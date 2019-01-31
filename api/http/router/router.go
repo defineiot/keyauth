@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -48,28 +47,6 @@ func (r *MyRouter) Handler(method, path, featureName string, handler http.Handle
 			rctx := new(context.ReqContext)
 			switch featureName {
 			case "IssueToken", "ValidateToken", "RevolkToken", "IssueVerifyCode", "RegistryUser":
-			case "RegistryServiceFeatures":
-				authHeader := req.Header.Get("Authorization")
-				if authHeader == "" {
-					response.Failed(w, exception.NewUnauthorized("Authorization missed in header"))
-					return
-				}
-
-				headerSlice := strings.Split(authHeader, " ")
-				if len(headerSlice) != 2 {
-					response.Failed(w, exception.NewUnauthorized("Authorization header value is not validated, must be: {token_type} {token}"))
-					return
-				}
-
-				access := headerSlice[1]
-
-				t, err := global.Store.ValidateToken(access, "")
-				if err != nil {
-					response.Failed(w, err)
-					return
-				}
-
-				rctx.Token = t
 			default:
 				authHeader := req.Header.Get("Authorization")
 				if authHeader == "" {
@@ -85,7 +62,6 @@ func (r *MyRouter) Handler(method, path, featureName string, handler http.Handle
 
 				access := headerSlice[1]
 
-				fmt.Println("xxx")
 				t, err := global.Store.ValidateToken(access, featureName)
 				if err != nil {
 					response.Failed(w, err)

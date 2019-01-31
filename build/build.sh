@@ -94,7 +94,7 @@ function main() {
 
     build $1 $2 $3
 
-    _info "构建完成 程序: $2"
+    _info "程序构建完成: $2"
 }
 
 main $1 $2 $3

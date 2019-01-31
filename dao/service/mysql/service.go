@@ -194,7 +194,7 @@ func (s *store) RegistryServiceFeatures(serviceID, version string, features ...*
 	for i := range features {
 		exist := false
 		for _, has := range hasF {
-			if features[i].Name == has.Name && features[i].ServiceID == has.ServiceID {
+			if features[i].Name == has.Name && serviceID == has.ServiceID {
 				exist = true
 				break
 			}
@@ -209,15 +209,18 @@ func (s *store) RegistryServiceFeatures(serviceID, version string, features ...*
 			newF.AddedVersion = version
 			newF.AddedAt = time.Now().Unix()
 			added = append(added, newF)
+		} else {
+
 		}
 	}
+	s.Debug("added features: %s", added)
 
 	// 找出需要删除的功能(之前存在, 而新注册的功能列表里面没有功能)
 	deleted := []*service.Feature{}
 	for _, has := range hasF {
 		exist := false
 		for i := range features {
-			if features[i].Name == has.Name && features[i].ServiceID == has.ServiceID {
+			if has.Name == features[i].Name && has.ServiceID == serviceID {
 				exist = true
 				break
 			}
@@ -231,6 +234,7 @@ func (s *store) RegistryServiceFeatures(serviceID, version string, features ...*
 			deleted = append(deleted, has)
 		}
 	}
+	s.Debug("deleted features: %s", deleted)
 
 	// 启动事物
 	tx, err := s.db.Begin()

@@ -40,6 +40,7 @@ type Feature struct {
 	AddedVersion   string `json:"when_added_version,omitempty"`   // 该功能在那个版本新增的
 	AddedAt        int64  `json:"when_added_time,omitempty"`      // 功能注册的时间
 	ServiceID      string `json:"service_id,omitempty"`           // 该功能属于那个服务
+	Version        string `json:"-"`                              // 服务那个版本的功能
 }
 
 // Validate 校验对象是否合法

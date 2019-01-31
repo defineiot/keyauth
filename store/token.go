@@ -399,11 +399,14 @@ func (s *Store) ValidateToken(accessToken, featureName string) (*token.Token, er
 
 	// 校验用户是否有权限访问指定的功能
 	if featureName != "" {
+		var hasPerm bool
+
 		switch tk.GrantType {
 		case token.CLIENT:
 			if featureName != "RegistryServiceFeatures" {
 				return nil, exception.NewForbidden("client_credentials only can acess RegistryServiceFeatures")
 			}
+			hasPerm = true
 		case token.PASSWORD, token.UPSCOPE, token.REFRESH:
 			if featureName == "RegistryServiceFeatures" {
 				return nil, exception.NewForbidden("client_credentials only can acess RegistryServiceFeatures")
@@ -412,7 +415,6 @@ func (s *Store) ValidateToken(accessToken, featureName string) (*token.Token, er
 			return nil, exception.NewBadRequest("other grant type not support")
 		}
 
-		var hasPerm bool
 		for i := range tk.Roles {
 			rn := tk.Roles[i].Name
 			if rn == systemAdminRoleName {
