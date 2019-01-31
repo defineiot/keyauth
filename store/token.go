@@ -2,6 +2,7 @@ package store
 
 import (
 	"encoding/base64"
+	"fmt"
 	"math/rand"
 	"regexp"
 	"strings"
@@ -159,21 +160,16 @@ func (s *Store) IssueToken(req *TokenRequest) (t *token.Token, err error) {
 		}
 
 	case token.REFRESH:
-		app, err := s.dao.Application.GetApplicationByClientID(req.ClientID)
-		if err != nil {
-			return nil, err
-		}
-		if req.ClientSecret != app.ClientSecret {
-			return nil, exception.NewUnauthorized("unauthorized_client")
-		}
-
-		t, err = s.issueTokenByRefresh(req.RefreshToken)
+		t, err = s.issueTokenByRefresh(req.ClientID, req.ClientSecret, req.RefreshToken)
 		if err != nil {
 			return nil, err
 		}
 
 	case token.UPSCOPE:
 		t, err = s.issueTokenByUpScope(req.ClientID, req.ClientSecret, req.AccessToken, req.Scope)
+		if err != nil {
+			return nil, err
+		}
 
 	default:
 		return nil, exception.NewBadRequest(`invalid_grant only support 
@@ -216,7 +212,7 @@ func (s *Store) ValidateTokenWithClient(v *ValidateTokenReq) (*token.Token, erro
 		return nil, err
 	}
 
-	// 校验后端服务调用的合法性(服务调用者可以校验其他人的token)
+	// 校验后端服务调用的合法性
 	svr, err := s.dao.Service.GetServiceByClientID(v.ClientID)
 	if err != nil {
 		s.log.Debug("find service by client error, %s", err)
@@ -227,7 +223,7 @@ func (s *Store) ValidateTokenWithClient(v *ValidateTokenReq) (*token.Token, erro
 		}
 	}
 
-	// 校验前段应用调用的合法性(应用调用者 只能校验自己的token)
+	// 校验前段应用调用的合法性
 	app, err := s.dao.Application.GetApplicationByClientID(v.ClientID)
 	if err != nil {
 		s.log.Debug("find application by client error, %s", err)
@@ -282,12 +278,14 @@ func (s *Store) ValidateTokenWithClient(v *ValidateTokenReq) (*token.Token, erro
 	}
 	tk.ExpiresAt = delta
 
-	// 校验token要属于该应用
+	// 应用调用者只能校验自己的token
 	if app != nil {
-		if tk.UserID != app.UserID {
+		if tk.ApplicationID != app.ID {
 			return nil, exception.NewForbidden("this is not your token")
 		}
 	}
+
+	// 服务调用者可以校验其他人的token
 
 	// 校验用户是否有权限访问指定的功能
 	if v.FeatureName != "" || svr != nil {
@@ -400,48 +398,50 @@ func (s *Store) ValidateToken(accessToken, featureName string) (*token.Token, er
 	tk.ExpiresAt = delta
 
 	// 校验用户是否有权限访问指定的功能
-	switch tk.GrantType {
-	case token.CLIENT:
-		if featureName != "RegistryServiceFeatures" {
-			return nil, exception.NewForbidden("client_credentials only can acess RegistryServiceFeatures")
-		}
-	case token.PASSWORD, token.UPSCOPE, token.REFRESH:
-		if featureName == "RegistryServiceFeatures" {
-			return nil, exception.NewForbidden("client_credentials only can acess RegistryServiceFeatures")
-		}
-	default:
-		return nil, exception.NewBadRequest("other grant type not support")
-	}
-
-	var hasPerm bool
-	for i := range tk.Roles {
-		rn := tk.Roles[i].Name
-		if rn == systemAdminRoleName {
-			hasPerm = true
-			tk.IsSystemAdmin = true
-			continue
+	if featureName != "" {
+		switch tk.GrantType {
+		case token.CLIENT:
+			if featureName != "RegistryServiceFeatures" {
+				return nil, exception.NewForbidden("client_credentials only can acess RegistryServiceFeatures")
+			}
+		case token.PASSWORD, token.UPSCOPE, token.REFRESH:
+			if featureName == "RegistryServiceFeatures" {
+				return nil, exception.NewForbidden("client_credentials only can acess RegistryServiceFeatures")
+			}
+		default:
+			return nil, exception.NewBadRequest("other grant type not support")
 		}
 
-		if rn == domainAdminRoleName {
-			hasPerm = true
-			tk.IsDomainAdmin = true
-			break
-		}
-
-		role, err := s.GetRole(rn)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, f := range role.Features {
-			if f.Name == featureName {
+		var hasPerm bool
+		for i := range tk.Roles {
+			rn := tk.Roles[i].Name
+			if rn == systemAdminRoleName {
 				hasPerm = true
+				tk.IsSystemAdmin = true
+				continue
+			}
+
+			if rn == domainAdminRoleName {
+				hasPerm = true
+				tk.IsDomainAdmin = true
+				break
+			}
+
+			role, err := s.GetRole(rn)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, f := range role.Features {
+				if f.Name == featureName {
+					hasPerm = true
+				}
 			}
 		}
-	}
 
-	if !hasPerm {
-		return nil, exception.NewForbidden("user: %s has no permisson for access feature: %s", tk.UserID, featureName)
+		if !hasPerm {
+			return nil, exception.NewForbidden("user: %s has no permisson for access feature: %s", tk.UserID, featureName)
+		}
 	}
 
 	// 更新缓存
@@ -497,6 +497,10 @@ func (s *Store) RevokeToken(req *RevokeReq) error {
 	if svr != nil {
 		if req.ClientSecret != svr.ClientSecret {
 			return exception.NewForbidden("unauthorized_client")
+		}
+
+		if tk.ServiceID != svr.ID {
+			return exception.NewForbidden("this is not your token")
 		}
 	}
 
@@ -643,13 +647,24 @@ func (s *Store) issueTokenByClient(serviceID string, scope string) (*token.Token
 
 // issueTokenByRefresh implement Refreshing an Access Token
 // https://tools.ietf.org/html/rfc6749#section-6
-func (s *Store) issueTokenByRefresh(refreshToken string) (*token.Token, error) {
+func (s *Store) issueTokenByRefresh(clientID, clientSecret, refreshToken string) (*token.Token, error) {
 	if refreshToken == "" {
 		return nil, exception.NewBadRequest("resfresh_token missed")
 	}
 
 	// 通过refresh_token找到用户的token
 	old, err := s.dao.Token.GetTokenByRefresh(refreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	vreq := &ValidateTokenReq{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		AccessToken:  old.AccessToken,
+	}
+
+	old, err = s.ValidateTokenWithClient(vreq)
 	if err != nil {
 		return nil, err
 	}
@@ -688,6 +703,8 @@ func (s *Store) issueTokenByUpScope(clientID, clientSecret, accessToken, scope s
 		return nil, exception.NewBadRequest("access_token missed")
 	}
 
+	fmt.Println(scope)
+
 	scopeSlice := strings.Split(scope, ",")
 	if len(scopeSlice) != 2 {
 		return nil, exception.NewBadRequest("scope format invalidate, format: <domain_id>,<project_id>")
@@ -711,6 +728,8 @@ func (s *Store) issueTokenByUpScope(clientID, clientSecret, accessToken, scope s
 		return nil, err
 	}
 
+	fmt.Println(t)
+
 	// 切换用户的域空间, 判断需要切换的域是否属于该用户
 	if domainID != "" && domainID != t.DomainID {
 		var validateD bool
@@ -730,15 +749,18 @@ func (s *Store) issueTokenByUpScope(clientID, clientSecret, accessToken, scope s
 	}
 
 	// 切换用户的项目空间, 判断需要切换的项目是否属于该用户
-	var projectOK bool
-	for i := range t.AvaliableProjects {
-		if t.AvaliableProjects[i].ID == projectID {
-			projectOK = true
-			break
+	if projectID != "" {
+		projectOK := false
+		for i := range t.AvaliableProjects {
+			if t.AvaliableProjects[i].ID == projectID {
+				projectOK = true
+				break
+			}
 		}
-	}
-	if !projectOK {
-		return nil, exception.NewBadRequest("the project: %s not belong user: %s", projectID, t.UserID)
+
+		if !projectOK {
+			return nil, exception.NewForbidden("the project: %s not belong user: %s", projectID, t.UserID)
+		}
 	}
 
 	// 更新Token的Scope

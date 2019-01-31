@@ -22,7 +22,8 @@ func IssueToken(w http.ResponseWriter, r *http.Request) {
 
 	contentT := strings.Split(r.Header.Get("content-type"), ";")
 	if len(contentT) == 0 {
-		response.Failed(w, exception.NewBadRequest("content-type missed, your must be choice one [application/json, application/x-www-form-urlencoded]"))
+		response.Failed(w,
+			exception.NewBadRequest("content-type missed, your must be choice one [application/json, application/x-www-form-urlencoded]"))
 		return
 	}
 
