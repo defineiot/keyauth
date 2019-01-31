@@ -47,6 +47,7 @@ func (s *Store) InitAdmin(username, password string) error {
 	}
 	fmt.Println("[INIT] 系统管理员初始化完成")
 
+	fmt.Println("")
 	return nil
 }
 
@@ -83,6 +84,7 @@ func (s *Store) initRoles() error {
 	}
 	fmt.Printf("[INIT] 创建普通成员角色成功: %s\n", common.Name)
 
+	fmt.Println("")
 	return nil
 }
 
@@ -149,6 +151,7 @@ func (s *Store) initAdminUser(username, password string) error {
 	}
 	fmt.Println("[INIT] 绑定租户管理员角色成功")
 
+	fmt.Println("")
 	return nil
 }
 
@@ -203,5 +206,6 @@ func (s *Store) initAdminAPPs(account string) error {
 	fmt.Printf("[INIT] 创建SDK端应用应用成功: client_id -> %s, client_secret -> %s\n",
 		sdk.ClientID, sdk.ClientSecret)
 
+	fmt.Println("")
 	return nil
 }

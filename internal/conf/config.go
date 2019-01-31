@@ -21,14 +21,11 @@ type Configer interface {
 
 // Config is service conf
 type Config struct {
-	APP        *AppConf       `toml:"app"`
-	Log        *LogConf       `toml:"log"`
-	MySQL      *MySQLConf     `toml:"mysql"`
-	Etcd       *ETCDConf      `toml:"etcd"`
-	Token      *TokenConf     `toml:"token"`
-	Admin      *AdminCount    `toml:"admin"`
-	Mail       *MailConf      `toml:"mail"`
-	SMS        *AliYunSMSConf `toml:"sms"`
+	APP        *AppConf   `toml:"app"`
+	Log        *LogConf   `toml:"log"`
+	MySQL      *MySQLConf `toml:"mysql"`
+	Etcd       *ETCDConf  `toml:"etcd"`
+	Token      *TokenConf `toml:"token"`
 	logger     logger.Logger
 	loggerOnce sync.Once
 
@@ -76,14 +73,6 @@ type ETCDConf struct {
 type TokenConf struct {
 	Type      string `toml:"type"`
 	ExpiresIn int64  `toml:"expires_in"`
-}
-
-// AdminCount superadmin
-type AdminCount struct {
-	Domain        string `toml:"domain"`
-	DomainDisplay string `toml:"domain_display"`
-	UserName      string `toml:"username"`
-	Password      string `toml:"password"`
 }
 
 // Validate use to check the service config
@@ -139,27 +128,6 @@ func (c *Config) Validate() error {
 		c.Token.ExpiresIn = 86400
 	}
 
-	if c.Admin.Domain == "" {
-		c.Admin.Domain = "SuperAdmin"
-	}
-	if c.Admin.UserName == "" {
-		c.Admin.UserName = "admin"
-	}
-	if c.Admin.Password == "" {
-		c.Admin.Password = "123456"
-	}
-	if c.Admin.DomainDisplay == "" {
-		c.Admin.DomainDisplay = c.Admin.Domain
-	}
-
-	if c.Mail.Host == "" || c.Mail.Port == 0 || c.Mail.Email == "" || c.Mail.Password == "" {
-		return errors.New("mail host,port,email,password all required")
-	}
-
-	if c.SMS.AccessKey == "" || c.SMS.AccessSecret == "" || c.SMS.SignName == "" || c.SMS.TemplateCode == "" {
-		return errors.New("sms access_key,access_secret,sign_name,templat_code all required")
-	}
-
 	return nil
 }
 
@@ -177,21 +145,6 @@ func (c *Config) GetLogger() (logger.Logger, error) {
 	}
 
 	return c.logger, nil
-}
-
-// GetMailer use to get logger instanc
-func (c *Config) GetMailer() (*MailConf, error) {
-	var err error
-
-	c.mailOnce.Do(func() {
-		err = c.Mail.Init()
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return c.Mail, nil
 }
 
 // GetDBConn use to get db connection pool

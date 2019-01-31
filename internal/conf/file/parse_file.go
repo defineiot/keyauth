@@ -67,9 +67,6 @@ func initConfig(configpath string) error {
 	config.MySQL = new(conf.MySQLConf)
 	config.Etcd = new(conf.ETCDConf)
 	config.Token = new(conf.TokenConf)
-	config.Admin = new(conf.AdminCount)
-	config.Mail = new(conf.MailConf)
-	config.SMS = new(conf.AliYunSMSConf)
 
 	if err := toml.Unmarshal(fd, config); err != nil {
 		return fmt.Errorf("load config file to json error, %s", err.Error())
