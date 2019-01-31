@@ -63,7 +63,7 @@ func (r *MyRouter) Handler(method, path, featureName string, handler http.Handle
 
 				access := headerSlice[1]
 
-				t, err := global.Store.ValidateToken(access, featureName)
+				t, err := global.Store.ValidateToken(access, "")
 				if err != nil {
 					response.Failed(w, err)
 					return
