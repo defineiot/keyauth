@@ -165,12 +165,9 @@ func (s *Store) GetUser(domainID, userID string) (*user.User, error) {
 
 // DeleteUser delete an user by id
 func (s *Store) DeleteUser(domainID, userID string) error {
-	var err error
-
 	cacheKey := s.cachePrefix.user + userID
 
-	err = s.dao.User.DeleteUser(domainID, userID)
-	if err != nil {
+	if err := s.dao.User.DeleteUser(domainID, userID); err != nil {
 		return err
 	}
 

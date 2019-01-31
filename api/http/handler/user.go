@@ -91,23 +91,6 @@ func DeleteMemberUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := global.Store.GetUser(tk.DomainID, uid)
-	if err != nil {
-		response.Failed(w, err)
-		return
-	}
-	// 1. check user is in your domain
-	if u.Domain.ID != tk.DomainID {
-		response.Failed(w, exception.NewForbidden("this user: %s not in your domain", uid))
-		return
-	}
-
-	// 2. the initial system admin can't delete
-	if u.Account == global.Conf.Admin.UserName && tk.IsSystemAdmin {
-		response.Failed(w, exception.NewForbidden("can't delete system initial admin user"))
-		return
-	}
-
 	if err := global.Store.DeleteUser(tk.DomainID, uid); err != nil {
 		response.Failed(w, err)
 		return
