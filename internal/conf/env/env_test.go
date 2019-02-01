@@ -22,4 +22,9 @@ func TestNewEnvConf(t *testing.T) {
 
 func fakeEnv() {
 	os.Setenv("APP_KEY", "default")
+	os.Setenv("MYSQL_HOST", "127.0.0.1")
+	os.Setenv("MYSQL_PORT", "3306")
+	os.Setenv("MYSQL_DB", "keyauth")
+	os.Setenv("MYSQL_USER", "root")
+	os.Setenv("MYSQL_PASS", "passwd")
 }

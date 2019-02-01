@@ -18,18 +18,18 @@ clean:
 test:
 		go test -v ./...
 
-build: local_build
+build: local
 
-linux_build:
+linux:
 		@sh ./build/build.sh linux ${BINARY_NAME} ${MAIN_FILE_PAHT}
 
-local_build:
+local:
 		@sh ./build/build.sh local ${BINARY_NAME} ${MAIN_FILE_PAHT}
 
-docker_build:
+docker:
 		@sh ./build/build.sh docker ${BINARY_NAME} ${MAIN_FILE_PAHT}
 
-docker_image:
+image:
 		@sh ./build/build.sh image ${BINARY_NAME} ${MAIN_FILE_PAHT}
 
 

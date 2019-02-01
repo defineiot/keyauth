@@ -21,11 +21,12 @@ type Configer interface {
 
 // Config is service conf
 type Config struct {
-	APP        *AppConf   `toml:"app"`
-	Log        *LogConf   `toml:"log"`
-	MySQL      *MySQLConf `toml:"mysql"`
-	Etcd       *ETCDConf  `toml:"etcd"`
-	Token      *TokenConf `toml:"token"`
+	APP   *AppConf   `toml:"app"`
+	Log   *LogConf   `toml:"log"`
+	MySQL *MySQLConf `toml:"mysql"`
+	Etcd  *ETCDConf  `toml:"etcd"`
+	Token *TokenConf `toml:"token"`
+
 	logger     logger.Logger
 	loggerOnce sync.Once
 

@@ -14,7 +14,7 @@ function _version(){
     echo "\033[1;46;30m[INFO]\033[0m ${now} ${msg}"
 }
 
-function get_tag () {
+function get_tag() {
     local tag=$(git describe --tags)
 
     if ! [ $? -eq 0 ]; then
@@ -26,7 +26,7 @@ function get_tag () {
     echo ${tag}
 }
 
-function get_branch () {
+function get_branch() {
     local branch=$(git rev-parse --abbrev-ref HEAD)
 
     if ! [ $? -eq 0 ]; then
@@ -36,7 +36,7 @@ function get_branch () {
     echo ${branch}
 }
 
-function get_commit () {
+function get_commit() {
     local commit=$(git rev-parse HEAD)
 
     if ! [ $? -eq 0 ]; then
@@ -44,6 +44,15 @@ function get_commit () {
     fi
 
     echo ${commit}
+}
+
+function build_in_docker() {
+    echo ""
+        docker run --rm -e 'CGO_ENABLED=0' -e 'GOOS=linux' -e 'GOARCH=amd64' \
+        -v "$PWD":/go/src/github.com/defineiot/keyauth \
+        -w /go/src/github.com/defineiot/keyauth golang:1.11.4 \
+        go build -a -o ${bin_name} -ldflags "-X '${Path}.GIT_TAG=${TAG}' -X '${Path}.GIT_BRANCH=${BRANCH}' -X '${Path}.GIT_COMMIT=${COMMIT}' -X '${Path}.BUILD_TIME=${DATE}' -X '${Path}.GO_VERSION=${version}'" ${main_file}
+    echo ""
 }
 
 function build () {
@@ -58,7 +67,7 @@ function build () {
     _info "开始本地构建 ..."
     echo ""
     CGO_ENABLED=0 go build -a -o ${bin_name} -ldflags "-X '${Path}.GIT_TAG=${TAG}' -X '${Path}.GIT_BRANCH=${BRANCH}' -X '${Path}.GIT_COMMIT=${COMMIT}' -X '${Path}.BUILD_TIME=${DATE}' -X '${Path}.GO_VERSION=${version}'" ${main_file}
-    echo -e ""
+    echo ""
   elif [ ${platform} == "linux" ]; then
      _info "开始构建Linux平台版本 ..."
     echo ""
@@ -67,22 +76,25 @@ function build () {
     echo ""
   elif [ ${platform} == "docker" ]; then
     _info "开始基于Docker ..."
-    echo ""
-        docker run --rm -e 'CGO_ENABLED=0' -e 'GOOS=linux' -e 'GOARCH=amd64' \
-        -v "$PWD":/go/src/github.com/defineiot/keyauth \
-        -w /go/src/github.com/defineiot/keyauth golang:1.10.1 \
-        go build -v -a -o ${bin_name} -ldflags "-X '${Path}.GIT_TAG=${TAG}' -X '${Path}.GIT_BRANCH=${BRANCH}' -X '${Path}.GIT_COMMIT=${COMMIT}' -X '${Path}.BUILD_TIME=${DATE}' -X '${Path}.GO_VERSION=${version}'" ${main_file}
-    echo -e ""
+    build_in_docker
   elif [ ${platform} == "image" ]; then
-     _info "开始构建Docker镜像 ..."
-     echo ""
-     docker build . -t ${bin_name}:${TAG}
-     
-     echo ""
-     _info "清除中间镜像 ..."
-     docker ps -a | grep "Exited" | awk '{print $1 }'|xargs docker stop
-     docker ps -a | grep "Exited" | awk '{print $1 }'|xargs docker rm
-     docker images|grep none|awk '{print $3 }'|xargs docker rmi
+    _info "开始基于Docker ..."
+    build_in_docker
+
+    _info "开始构建Docker镜像 ..."
+    echo ""
+    docker build . -t ${bin_name}:${TAG}
+
+    echo ""
+    _info "运行构成成功的镜像 ..."
+    source cmd/etc/env.conf
+    docker run -it -p 8080:8080 -e "APP_HOST=${APP_HOST}" -e "MYSQL_HOST=${MYSQL_HOST}" -e "MYSQL_PORT=${MYSQL_PORT}" -e "MYSQL_DB=${MYSQL_DB}" -e "MYSQL_USER=${MYSQL_USER}" -e "MYSQL_PASS=${MYSQL_PASS}" ${bin_name}:${TAG}
+
+    echo ""
+    _info "清除中间镜像 ..."
+    docker ps -a | grep "Exited" | awk '{print $1 }'|xargs docker stop
+    docker ps -a | grep "Exited" | awk '{print $1 }'|xargs docker rm
+    docker rmi $(docker  images -qf dangling=true)
   else
     echo "Please make sure the positon variable is local, docker or linux."
   fi
