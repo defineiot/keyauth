@@ -47,12 +47,10 @@ function get_commit() {
 }
 
 function build_in_docker() {
-    echo ""
         docker run --rm -e 'CGO_ENABLED=0' -e 'GOOS=linux' -e 'GOARCH=amd64' \
         -v "$PWD":/go/src/github.com/defineiot/keyauth \
         -w /go/src/github.com/defineiot/keyauth golang:1.11.4 \
         go build -a -o ${bin_name} -ldflags "-X '${Path}.GIT_TAG=${TAG}' -X '${Path}.GIT_BRANCH=${BRANCH}' -X '${Path}.GIT_COMMIT=${COMMIT}' -X '${Path}.BUILD_TIME=${DATE}' -X '${Path}.GO_VERSION=${version}'" ${main_file}
-    echo ""
 }
 
 function build () {
@@ -68,33 +66,38 @@ function build () {
     echo ""
     CGO_ENABLED=0 go build -a -o ${bin_name} -ldflags "-X '${Path}.GIT_TAG=${TAG}' -X '${Path}.GIT_BRANCH=${BRANCH}' -X '${Path}.GIT_COMMIT=${COMMIT}' -X '${Path}.BUILD_TIME=${DATE}' -X '${Path}.GO_VERSION=${version}'" ${main_file}
     echo ""
+    _info "程序构建完成: $2"
+
   elif [ ${platform} == "linux" ]; then
      _info "开始构建Linux平台版本 ..."
     echo ""
     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
         go build -a -o ${bin_name} -ldflags "-X '${Path}.GIT_TAG=${TAG}' -X '${Path}.GIT_BRANCH=${BRANCH}' -X '${Path}.GIT_COMMIT=${COMMIT}' -X '${Path}.BUILD_TIME=${DATE}' -X '${Path}.GO_VERSION=${version}'" ${main_file}
     echo ""
+    _info "程序构建完成: $2"
+
   elif [ ${platform} == "docker" ]; then
     _info "开始基于Docker ..."
     build_in_docker
+    _info "程序构建完成: $2"
+
   elif [ ${platform} == "image" ]; then
     _info "开始基于Docker ..."
     build_in_docker
+    _info "程序构建完成: $2"
 
+    echo ""
     _info "开始构建Docker镜像 ..."
-    echo ""
     docker build . -t ${bin_name}:${TAG}
-
-    echo ""
-    _info "运行构成成功的镜像 ..."
-    source cmd/etc/env.conf
-    docker run -it -p 8080:8080 -e "APP_HOST=${APP_HOST}" -e "MYSQL_HOST=${MYSQL_HOST}" -e "MYSQL_PORT=${MYSQL_PORT}" -e "MYSQL_DB=${MYSQL_DB}" -e "MYSQL_USER=${MYSQL_USER}" -e "MYSQL_PASS=${MYSQL_PASS}" ${bin_name}:${TAG}
 
     echo ""
     _info "清除中间镜像 ..."
     docker ps -a | grep "Exited" | awk '{print $1 }'|xargs docker stop
     docker ps -a | grep "Exited" | awk '{print $1 }'|xargs docker rm
     docker rmi $(docker  images -qf dangling=true)
+
+    echo ""
+    _info "Docker镜像构建完成: ${bin_name}:${TAG}"
   else
     echo "Please make sure the positon variable is local, docker or linux."
   fi
@@ -115,8 +118,6 @@ function main() {
     _version "当前构建的提交(Git Commit): $COMMIT"
 
     build $1 $2 $3
-
-    _info "程序构建完成: $2"
 }
 
 main $1 $2 $3
