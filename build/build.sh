@@ -5,13 +5,13 @@ BINARY_NAME=$2
 function _info(){
     local msg=$1
     local now=`date '+%Y-%m-%d %H:%M:%S'`
-    echo -e "\033[1;46;30m[INFO]\033[0m ${now} ${msg}"
+    echo "\033[1;46;30m[INFO]\033[0m ${now} ${msg}"
 }
 
 function _version(){
     local msg=$1
     local now=`date '+%Y-%m-%d %H:%M:%S'`
-    echo -e "\033[1;46;30m[INFO]\033[0m ${now} ${msg}"
+    echo "\033[1;46;30m[INFO]\033[0m ${now} ${msg}"
 }
 
 function get_tag () {
@@ -56,23 +56,33 @@ function build () {
 
   if [ ${platform} == "local" ]; then
     _info "开始本地构建 ..."
-    echo -e ""
-    go build -a -o ${bin_name} -ldflags "-X '${Path}.GIT_TAG=${TAG}' -X '${Path}.GIT_BRANCH=${BRANCH}' -X '${Path}.GIT_COMMIT=${COMMIT}' -X '${Path}.BUILD_TIME=${DATE}' -X '${Path}.GO_VERSION=${version}'" ${main_file}
+    echo ""
+    CGO_ENABLED=0 go build -a -o ${bin_name} -ldflags "-X '${Path}.GIT_TAG=${TAG}' -X '${Path}.GIT_BRANCH=${BRANCH}' -X '${Path}.GIT_COMMIT=${COMMIT}' -X '${Path}.BUILD_TIME=${DATE}' -X '${Path}.GO_VERSION=${version}'" ${main_file}
     echo -e ""
   elif [ ${platform} == "linux" ]; then
      _info "开始构建Linux平台版本 ..."
-    echo -e ""
-    GOOS=linux GOARCH=amd64 \
+    echo ""
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
         go build -a -o ${bin_name} -ldflags "-X '${Path}.GIT_TAG=${TAG}' -X '${Path}.GIT_BRANCH=${BRANCH}' -X '${Path}.GIT_COMMIT=${COMMIT}' -X '${Path}.BUILD_TIME=${DATE}' -X '${Path}.GO_VERSION=${version}'" ${main_file}
-    echo -e ""
+    echo ""
   elif [ ${platform} == "docker" ]; then
     _info "开始基于Docker ..."
-    echo -e ""
+    echo ""
         docker run --rm -e 'CGO_ENABLED=0' -e 'GOOS=linux' -e 'GOARCH=amd64' \
         -v "$PWD":/go/src/github.com/defineiot/keyauth \
         -w /go/src/github.com/defineiot/keyauth golang:1.10.1 \
         go build -v -a -o ${bin_name} -ldflags "-X '${Path}.GIT_TAG=${TAG}' -X '${Path}.GIT_BRANCH=${BRANCH}' -X '${Path}.GIT_COMMIT=${COMMIT}' -X '${Path}.BUILD_TIME=${DATE}' -X '${Path}.GO_VERSION=${version}'" ${main_file}
     echo -e ""
+  elif [ ${platform} == "image" ]; then
+     _info "开始构建Docker镜像 ..."
+     echo ""
+     docker build . -t ${bin_name}:${TAG}
+     
+     echo ""
+     _info "清除中间镜像 ..."
+     docker ps -a | grep "Exited" | awk '{print $1 }'|xargs docker stop
+     docker ps -a | grep "Exited" | awk '{print $1 }'|xargs docker rm
+     docker images|grep none|awk '{print $3 }'|xargs docker rmi
   else
     echo "Please make sure the positon variable is local, docker or linux."
   fi

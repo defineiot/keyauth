@@ -21,12 +21,16 @@ test:
 build: local_build
 
 linux_build:
-		@bash ./build/build.sh linux ${BINARY_NAME} ${MAIN_FILE_PAHT}
+		@sh ./build/build.sh linux ${BINARY_NAME} ${MAIN_FILE_PAHT}
 
 local_build:
-		@bash ./build/build.sh local ${BINARY_NAME} ${MAIN_FILE_PAHT}
+		@sh ./build/build.sh local ${BINARY_NAME} ${MAIN_FILE_PAHT}
 
 docker_build:
-		@bash ./build/build.sh docker ${BINARY_NAME} ${MAIN_FILE_PAHT}
+		@sh ./build/build.sh docker ${BINARY_NAME} ${MAIN_FILE_PAHT}
+
+docker_image:
+		@sh ./build/build.sh image ${BINARY_NAME} ${MAIN_FILE_PAHT}
+
 
 

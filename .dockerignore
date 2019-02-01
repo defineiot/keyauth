@@ -3,8 +3,10 @@ npm-debug.log
 Dockerfile*
 docker-compose*
 .dockerignore
-.git
 .gitignore
+.env
+*/bin
+*/obj
 README.md
 LICENSE
 .vscode
