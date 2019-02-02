@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -15,10 +16,13 @@ import (
 
 	"github.com/defineiot/keyauth/api/global"
 	"github.com/defineiot/keyauth/api/http/router"
+	"github.com/defineiot/keyauth/dao/service"
 	"github.com/defineiot/keyauth/internal/cache"
 	"github.com/defineiot/keyauth/internal/conf"
+	"github.com/defineiot/keyauth/internal/exception"
 	"github.com/defineiot/keyauth/internal/logger"
 	"github.com/defineiot/keyauth/store"
+	"github.com/defineiot/keyauth/version"
 )
 
 var stopSignal = make(chan bool, 1)
@@ -98,9 +102,10 @@ func (s *Service) Start() error {
 	// registe service
 	if s.conf.Etcd.EnableRegisteFeatures {
 		if err := s.registryService(); err != nil {
-			return err
+			s.log.Error("registe keyauth service failed, %s", err)
+		} else {
+			s.log.Debug("registe keyauth service features success")
 		}
-		s.log.Debug("registry github.com/defineiot/keyauth service features success")
 	}
 
 	// start http service
@@ -110,17 +115,6 @@ func (s *Service) Start() error {
 
 	return nil
 }
-
-// // InitAdmin 初始化系统管理员相关信息
-// func (s *Service) InitAdmin(config *conf.Config) error {
-// 	// 初始化全局变量
-// 	store, err := store.NewStore(config)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	s.store = store
-// }
 
 func (s *Service) init() error {
 	// 初始化全局变量
@@ -143,28 +137,50 @@ func (s *Service) registryService() error {
 		return errors.New("there is no feature to registry")
 	}
 
-	// name := s.conf.APP.Name
-	// ok, err := global.Store.CheckService(name)
-	// if err != nil {
-	// 	return err
-	// }
-	// if !ok {
-	// 	if _, err := global.Store.CreateService(name, s.description); err != nil {
-	// 		return err
-	// 	}
-	// }
+	var (
+		keysvr *service.Service
+		err    error
+	)
 
-	// features := []service.Feature{}
-	// for method, v := range s.v1endpoints {
-	// 	for feature, ep := range v {
-	// 		f := service.Feature{Name: feature, Endpoint: ep, Method: method}
-	// 		features = append(features, f)
-	// 	}
-	// }
+	name := s.conf.APP.Name
+	keysvr, err = global.Store.GetServiceByName(name)
+	if err != nil {
+		if _, ok := err.(*exception.NotFound); ok {
+			keysvr = &service.Service{
+				Name:        name,
+				Description: "微服务权限管理中心",
+				Type:        service.Public,
+				Enabled:     true,
+			}
+			if err = global.Store.CreateService(keysvr); err != nil {
+				return err
+			}
+		}
+	}
 
-	// if err := global.Store.RegistryServiceFeatures(name, features...); err != nil {
-	// 	return err
-	// }
+	if keysvr == nil || keysvr.ID == "" {
+		return exception.NewInternalServerError("服务自创建异常, 创建失败")
+	}
+
+	features := []*service.Feature{}
+	for method, v := range s.v1endpoints {
+		for feature, ep := range v {
+			f := &service.Feature{Name: feature, HTTPEndpoint: ep, Tag: method}
+			features = append(features, f)
+		}
+	}
+
+	if err := global.Store.RegistryServiceFeatures(keysvr.ID, version.GIT_TAG,
+		features...); err != nil {
+		return err
+	}
+
+	byteF, err := json.Marshal(features)
+	if err != nil {
+		global.Log.Info("marshal features to bytes error, %s", err)
+	}
+	global.Log.Info("registry keyauth service features success, version: %s, features: %s",
+		version.GIT_TAG, string(byteF))
 
 	return nil
 }

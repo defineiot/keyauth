@@ -79,7 +79,7 @@ type TokenConf struct {
 // Validate use to check the service config
 func (c *Config) Validate() error {
 	if c.APP.Name == "" {
-		c.APP.Name = "github.com/defineiot/keyauth"
+		c.APP.Name = "keyauth"
 	}
 	if c.APP.Host == "" {
 		c.APP.Host = "127.0.0.1"
@@ -95,7 +95,7 @@ func (c *Config) Validate() error {
 		c.Log.Level = "debug"
 	}
 	if c.Log.FilePath == "" {
-		c.Log.FilePath = "./log/data-gateway.log"
+		c.Log.FilePath = "./log/keyauth.log"
 	}
 
 	if c.MySQL.MaxIdleConn == 0 {

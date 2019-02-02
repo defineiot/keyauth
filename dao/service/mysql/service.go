@@ -182,8 +182,6 @@ func (s *store) ListRoleFeatures(roleID string) ([]*service.Feature, error) {
 }
 
 func (s *store) RegistryServiceFeatures(serviceID, version string, features ...*service.Feature) error {
-	s.Debug("registry service :%s features: %v", serviceID, features)
-
 	hasF, err := s.ListServiceFeatures(serviceID)
 	if err != nil {
 		return err

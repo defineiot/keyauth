@@ -2,6 +2,7 @@ package store
 
 import (
 	"github.com/defineiot/keyauth/dao/service"
+	"github.com/defineiot/keyauth/internal/exception"
 )
 
 // CreateService todo
@@ -19,6 +20,11 @@ func (s *Store) GetService(id string) (*service.Service, error) {
 	return s.dao.Service.GetServiceByID(id)
 }
 
+// GetServiceByName todo
+func (s *Store) GetServiceByName(name string) (*service.Service, error) {
+	return s.dao.Service.GetServiceByName(name)
+}
+
 // DeleteService todo
 func (s *Store) DeleteService(id string) error {
 	return s.dao.Service.DeleteService(id)
@@ -26,6 +32,10 @@ func (s *Store) DeleteService(id string) error {
 
 // RegistryServiceFeatures todo
 func (s *Store) RegistryServiceFeatures(id, version string, features ...*service.Feature) error {
+	if version == "" {
+		return exception.NewBadRequest("service version is \"\"")
+	}
+
 	for i := range features {
 		if err := features[i].Validate(); err != nil {
 			return err
