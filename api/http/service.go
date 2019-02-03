@@ -12,10 +12,13 @@ import (
 	"time"
 
 	"github.com/rs/cors"
+	uuid "github.com/satori/go.uuid"
 	"github.com/urfave/negroni"
 
 	"github.com/defineiot/keyauth/api/global"
 	"github.com/defineiot/keyauth/api/http/router"
+	"github.com/defineiot/keyauth/api/register"
+	"github.com/defineiot/keyauth/api/register/etcd"
 	"github.com/defineiot/keyauth/dao/service"
 	"github.com/defineiot/keyauth/internal/cache"
 	"github.com/defineiot/keyauth/internal/conf"
@@ -29,10 +32,11 @@ var stopSignal = make(chan bool, 1)
 
 // Service is auth service
 type Service struct {
-	http  *http.Server
-	conf  *conf.Config
-	log   logger.Logger
-	store *store.Store
+	http     *http.Server
+	conf     *conf.Config
+	log      logger.Logger
+	store    *store.Store
+	register register.Register
 
 	v1endpoints map[string]map[string]string
 	description string
@@ -105,6 +109,15 @@ func (s *Service) Start() error {
 			s.log.Error("registe keyauth service failed, %s", err)
 		} else {
 			s.log.Debug("registe keyauth service features success")
+		}
+	}
+
+	// 检查是否需要服务实例注册
+	if s.conf.Etcd.EnableRegisteInstance {
+		if err := s.registeInstance(); err != nil {
+			s.log.Error("registe keyauth service instance failed, %s", err)
+		} else {
+			s.log.Debug("registe keyauth service instance success")
 		}
 	}
 
@@ -198,9 +211,19 @@ func (s *Service) start() error {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
+		// 注销服务实例
+		if s.conf.Etcd.EnableRegisteInstance && s.register != nil {
+			if err := s.register.UnRegiste(); err != nil {
+				s.log.Error("unregistry service instance error, %s", err)
+			}
+		}
+
+		// 优雅关闭HTTP服务
 		if err := s.http.Shutdown(ctx); err != nil {
 			s.log.Error("graceful shutdown timeout, force exit")
 		}
+
+		s.log.Info("service stoped complate")
 		os.Exit(1)
 	}()
 
@@ -208,5 +231,35 @@ func (s *Service) start() error {
 	if err := s.http.ListenAndServe(); err != nil {
 		return fmt.Errorf("start keyauth error, %s", err.Error())
 	}
+	return nil
+}
+
+func (s *Service) registeInstance() error {
+	r, err := etcd.NewEtcdRegister(s.conf.Etcd.Endpoints)
+	if err != nil {
+		return err
+	}
+
+	instance := &register.ServiceInstance{
+		Name:        s.conf.APP.Name + "-" + uuid.NewV4().String()[:8],
+		ServiceName: s.conf.APP.Name,
+		Type:        service.Public,
+		Address:     s.conf.APP.Host,
+		Version:     version.GIT_TAG,
+		GitBranch:   version.GIT_BRANCH,
+		GitCommit:   version.GIT_COMMIT,
+		BuildEnv:    version.GO_VERSION,
+		BuildAt:     version.BUILD_TIME,
+
+		Prefix:   s.conf.Etcd.InstanceRegistryPrefix,
+		TTL:      s.conf.Etcd.InstanceTTL,
+		Interval: time.Duration(s.conf.Etcd.InstanceTTL/3) * time.Second,
+	}
+
+	if err := r.Registe(instance); err != nil {
+		return err
+	}
+
+	s.register = r
 	return nil
 }
