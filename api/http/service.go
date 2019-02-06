@@ -16,6 +16,7 @@ import (
 	"github.com/urfave/negroni"
 
 	"github.com/defineiot/keyauth/api/global"
+	"github.com/defineiot/keyauth/api/http/middleware"
 	"github.com/defineiot/keyauth/api/http/router"
 	"github.com/defineiot/keyauth/api/register"
 	"github.com/defineiot/keyauth/api/register/etcd"
@@ -62,7 +63,7 @@ func NewService(config *conf.Config) (*Service, error) {
 	// 设置路由中间件
 	corsM := cors.AllowAll()
 	recoverM := negroni.NewRecovery()
-	accessL := negroni.NewLogger()
+	accessL := middleware.NewLogger()
 	n.Use(corsM)
 	n.Use(accessL)
 	n.Use(recoverM)
