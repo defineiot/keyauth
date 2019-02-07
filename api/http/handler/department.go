@@ -11,7 +11,7 @@ import (
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
-// CreateDepartment use to create user's application
+// CreateDepartment use to create domain department
 func CreateDepartment(w http.ResponseWriter, r *http.Request) {
 	tk := context.GetTokenFromContext(r)
 	uid := tk.UserID
@@ -27,7 +27,7 @@ func CreateDepartment(w http.ResponseWriter, r *http.Request) {
 	parentID := val.Get("parent_id").ToString()
 
 	if name == "" {
-		response.Failed(w, exception.NewBadRequest("name  missed"))
+		response.Failed(w, exception.NewBadRequest("department name missed"))
 		return
 	}
 
@@ -48,33 +48,70 @@ func CreateDepartment(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-// DeleteDepartment delete an application
+// DeleteDepartment delete an department
 func DeleteDepartment(w http.ResponseWriter, r *http.Request) {
 	ps := context.GetParamsFromContext(r)
 	did := ps.ByName("did")
 
 	tk := context.GetTokenFromContext(r)
-	app, err := global.Store.GetUserApp(did)
+	dep, err := global.Store.GetDepartment(did)
 	if err != nil {
 		response.Failed(w, err)
 		return
 	}
-	if app.UserID != tk.UserID {
-		response.Failed(w, exception.NewForbidden("application: %s is not belone to you", did))
-		return
-	}
-
-	if app.ID == tk.ApplicationID {
-		response.Failed(w, exception.NewForbidden("the application: %s your has used now, can't be deleted", did))
+	if dep.DomainID != tk.DomainID {
+		response.Failed(w, exception.NewForbidden("department: %s is not belone to you domain", did))
 		return
 	}
 
 	// TODO: get token from context, and check permission
-	if err := global.Store.DeleteApplication(did); err != nil {
+	if err := global.Store.DeleteDepartment(did); err != nil {
 		response.Failed(w, err)
 		return
 	}
 
 	response.Success(w, http.StatusNoContent, "")
+	return
+}
+
+// ListSubDepartments list sub department
+func ListSubDepartments(w http.ResponseWriter, r *http.Request) {
+	tk := context.GetTokenFromContext(r)
+
+	qs := r.URL.Query()
+	parentID := qs.Get("parent_id")
+
+	if parentID == "" {
+		parentID = "/"
+	}
+
+	deps, err := global.Store.ListSubDepartments(tk.DomainID, parentID)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusOK, deps)
+	return
+}
+
+// GetDepartment get  department
+func GetDepartment(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	did := ps.ByName("did")
+
+	tk := context.GetTokenFromContext(r)
+	dep, err := global.Store.GetDepartment(did)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	if dep.DomainID != tk.DomainID {
+		response.Failed(w, exception.NewForbidden("department: %s is not belone to you", did))
+		return
+	}
+
+	response.Success(w, http.StatusOK, dep)
 	return
 }

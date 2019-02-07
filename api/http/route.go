@@ -9,6 +9,9 @@ import (
 func RouteToV1(r *router.MyRouter) {
 	// Department
 	r.HandlerFunc("POST", "/departments/", "CreateDepartment", handler.CreateDepartment)
+	r.HandlerFunc("GET", "/departments/", "ListSubDepartments", handler.ListSubDepartments)
+	r.HandlerFunc("GET", "/departments/:did/", "GetDepartment", handler.GetDepartment)
+	r.HandlerFunc("DELETE", "/departments/:did/", "DeleteDepartment", handler.DeleteDepartment)
 
 	// User
 	r.HandlerFunc("POST", "/members/", "CreateMemberUser", handler.CreateMemberUser)

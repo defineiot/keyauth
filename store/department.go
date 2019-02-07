@@ -1,7 +1,6 @@
 package store
 
 import (
-	"github.com/defineiot/keyauth/dao/application"
 	"github.com/defineiot/keyauth/dao/department"
 	"github.com/defineiot/keyauth/internal/exception"
 )
@@ -59,34 +58,34 @@ func (s *Store) ListSubDepartments(domainID, parentID string) ([]*department.Dep
 }
 
 // GetDepartment todo
-func (s *Store) GetDepartment(appid string) (*application.Application, error) {
+func (s *Store) GetDepartment(depID string) (*department.Department, error) {
 	var err error
 
-	app := new(application.Application)
-	cacheKey := s.cachePrefix.dep + appid
+	dep := new(department.Department)
+	cacheKey := s.cachePrefix.dep + depID
 
 	if s.isCache {
-		if s.cache.Get(cacheKey, app) {
-			s.log.Debug("get app from cache key: %s", cacheKey)
-			return app, nil
+		if s.cache.Get(cacheKey, dep) {
+			s.log.Debug("get department from cache key: %s", cacheKey)
+			return dep, nil
 		}
-		s.log.Debug("get app from cache failed, key: %s", cacheKey)
+		s.log.Debug("get department from cache failed, key: %s", cacheKey)
 	}
 
-	app, err = s.dao.Application.GetApplication(appid)
+	dep, err = s.dao.Department.GetDepartment(depID)
 	if err != nil {
 		return nil, err
 	}
-	if app == nil {
-		return nil, exception.NewBadRequest("app %s not found", appid)
+	if dep == nil {
+		return nil, exception.NewBadRequest("department %s not found", depID)
 	}
 
 	if s.isCache {
-		if !s.cache.Set(cacheKey, app, s.ttl) {
+		if !s.cache.Set(cacheKey, dep, s.ttl) {
 			s.log.Debug("set app cache failed, key: %s", cacheKey)
 		}
 		s.log.Debug("set app cache ok, key: %s", cacheKey)
 	}
 
-	return app, nil
+	return dep, nil
 }
