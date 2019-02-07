@@ -60,7 +60,7 @@ type Store interface {
 type Reader interface {
 	GetDepartment(depID string) (*Department, error)
 	GetDepartmentByName(domainID, departmentName string) (*Department, error)
-	ListSubDepartments(parentDepID string) ([]*Department, error)
+	ListSubDepartments(domainID, parentDepID string) ([]*Department, error)
 }
 
 // Writer use to write department information to store

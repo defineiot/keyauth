@@ -44,7 +44,7 @@ func testCreateDepartmentOK(s *departmentSuit) func(t *testing.T) {
 func testListSubDepartmentOK(s *departmentSuit) func(t *testing.T) {
 	return func(t *testing.T) {
 		should := require.New(t)
-		deps, err := s.store.ListSubDepartments(s.l2.ID)
+		deps, err := s.store.ListSubDepartments(s.l2.DomainID, s.l2.ID)
 		should.NoError(err)
 
 		should.Equal(1, len(deps))

@@ -47,7 +47,8 @@ func NewDepartmentStore(opt *dao.Options) (department.Store, error) {
 		FindSubDepartments: `
 			SELECT id, number, name, parent, grade, path, manager, domain_id, create_at 
 			FROM departments 
-			WHERE parent = ?;
+			WHERE parent = ? 
+			AND domain_id = ?;
 		`,
 		CountSubDepartments: `
 			SELECT count(*) 

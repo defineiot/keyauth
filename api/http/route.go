@@ -7,6 +7,9 @@ import (
 
 // RouteToV1 use to route to ep
 func RouteToV1(r *router.MyRouter) {
+	// Department
+	r.HandlerFunc("POST", "/departments/", "CreateDepartment", handler.CreateDepartment)
+
 	// User
 	r.HandlerFunc("POST", "/members/", "CreateMemberUser", handler.CreateMemberUser)
 	r.HandlerFunc("GET", "/members/", "ListMemberUsers", handler.ListMemberUsers)

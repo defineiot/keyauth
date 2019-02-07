@@ -29,6 +29,7 @@ type Store struct {
 		project string
 		user    string
 		app     string
+		dep     string
 	}
 }
 
@@ -59,6 +60,7 @@ func NewStore(conf *conf.Config) (*Store, error) {
 	s.cachePrefix.project = "project_"
 	s.cachePrefix.user = "user_"
 	s.cachePrefix.app = "app_"
+	s.cachePrefix.dep = "dep_"
 
 	return s, nil
 }

@@ -66,8 +66,8 @@ func (s *store) GetDepartment(depID string) (*department.Department, error) {
 	return d, nil
 }
 
-func (s *store) ListSubDepartments(parentDepID string) ([]*department.Department, error) {
-	rows, err := s.stmts[FindSubDepartments].Query(parentDepID)
+func (s *store) ListSubDepartments(domainID, parentDepID string) ([]*department.Department, error) {
+	rows, err := s.stmts[FindSubDepartments].Query(parentDepID, domainID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query user's invitation records error, %s", err)
 	}
