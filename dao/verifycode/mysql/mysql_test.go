@@ -2,6 +2,7 @@ package mysql_test
 
 import (
 	"github.com/defineiot/keyauth/dao"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/dao/verifycode"
 	"github.com/defineiot/keyauth/dao/verifycode/mysql"
 	"github.com/defineiot/keyauth/internal/conf/mock"
@@ -25,7 +26,7 @@ func newTestStore() verifycode.Store {
 
 type verifyCodeSuit struct {
 	store  verifycode.Store
-	code   *verifycode.VerifyCode
+	code   *models.VerifyCode
 	target string
 }
 
@@ -36,9 +37,9 @@ func (s *verifyCodeSuit) TearDown() {
 func (s *verifyCodeSuit) SetUp() {
 	s.target = "18108053819"
 
-	s.code = &verifycode.VerifyCode{
-		Purpose:    verifycode.Registry,
-		SendMode:   verifycode.Mobile,
+	s.code = &models.VerifyCode{
+		Purpose:    models.RegistryCode,
+		SendMode:   models.SendByMobile,
 		SendTarget: s.target,
 	}
 

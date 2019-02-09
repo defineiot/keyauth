@@ -4,12 +4,12 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/defineiot/keyauth/dao/project"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
 // CreateProject use to create an project
-func (s *Store) CreateProject(p *project.Project) error {
+func (s *Store) CreateProject(p *models.Project) error {
 	if p.DomainID == "" {
 		return exception.NewBadRequest("domainID or domainName required one")
 	}
@@ -23,7 +23,7 @@ func (s *Store) CreateProject(p *project.Project) error {
 }
 
 // ListDomainProjects list domain projects
-func (s *Store) ListDomainProjects(domainID string) ([]*project.Project, error) {
+func (s *Store) ListDomainProjects(domainID string) ([]*models.Project, error) {
 	// check domain exist
 	if _, err := s.dao.Domain.GetDomainByID(domainID); err != nil {
 		return nil, err
@@ -33,15 +33,15 @@ func (s *Store) ListDomainProjects(domainID string) ([]*project.Project, error) 
 }
 
 // ListUserProjects todo
-func (s *Store) ListUserProjects(domainID, userID string) ([]*project.Project, error) {
+func (s *Store) ListUserProjects(domainID, userID string) ([]*models.Project, error) {
 	return s.dao.Project.ListUserProjects(domainID, userID)
 }
 
 // GetProject get one project
-func (s *Store) GetProject(id string) (*project.Project, error) {
+func (s *Store) GetProject(id string) (*models.Project, error) {
 	var err error
 
-	pro := new(project.Project)
+	pro := new(models.Project)
 	cacheKey := s.cachePrefix.project + id
 
 	if s.isCache {

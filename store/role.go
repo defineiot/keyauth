@@ -3,18 +3,17 @@ package store
 import (
 	"fmt"
 
-	"github.com/defineiot/keyauth/dao/role"
-	"github.com/defineiot/keyauth/dao/service"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
 // CreateRole todo
-func (s *Store) CreateRole(r *role.Role) error {
+func (s *Store) CreateRole(r *models.Role) error {
 	return s.dao.Role.CreateRole(r)
 }
 
 // ListRoles todo
-func (s *Store) ListRoles() ([]*role.Role, error) {
+func (s *Store) ListRoles() ([]*models.Role, error) {
 	roles, err := s.dao.Role.ListRole()
 	if err != nil {
 		return nil, err
@@ -32,7 +31,7 @@ func (s *Store) ListRoles() ([]*role.Role, error) {
 }
 
 // GetRole todo
-func (s *Store) GetRole(id string) (*role.Role, error) {
+func (s *Store) GetRole(id string) (*models.Role, error) {
 	r, err := s.dao.Role.GetRole(id)
 	if err != nil {
 		return nil, err
@@ -76,7 +75,7 @@ func (s *Store) AddFeaturesToRole(id string, features ...string) error {
 	}
 
 	// 获取系统所有功能列表
-	fmap := make(map[string]*service.Feature)
+	fmap := make(map[string]*models.Feature)
 	all, err := s.dao.Service.ListAllFeatures()
 	if err != nil {
 		return err
@@ -88,7 +87,7 @@ func (s *Store) AddFeaturesToRole(id string, features ...string) error {
 	// 判断要添加的功能是否存在, 是否已经添加
 	notExist := []string{}
 	hasAdded := []string{}
-	needAdded := []*service.Feature{}
+	needAdded := []*models.Feature{}
 	for i := range features {
 		if v, ok := fmap[features[i]]; !ok {
 			notExist = append(notExist, features[i])
@@ -129,7 +128,7 @@ func (s *Store) RemoveFeaturesFromRole(id string, features ...string) error {
 	fmt.Println(emap)
 
 	// 获取系统所有功能列表
-	fmap := make(map[string]*service.Feature)
+	fmap := make(map[string]*models.Feature)
 	all, err := s.dao.Service.ListAllFeatures()
 	if err != nil {
 		return err
@@ -143,7 +142,7 @@ func (s *Store) RemoveFeaturesFromRole(id string, features ...string) error {
 	// 判断要移除的功能是否存在
 	notExist := []string{}
 	notAdded := []string{}
-	needRemove := []*service.Feature{}
+	needRemove := []*models.Feature{}
 	for i := range features {
 		if v, ok := fmap[features[i]]; !ok {
 			notExist = append(notExist, features[i])

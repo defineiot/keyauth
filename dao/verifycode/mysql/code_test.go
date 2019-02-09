@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/defineiot/keyauth/dao/verifycode"
+	"github.com/defineiot/keyauth/dao/models"
 )
 
 func TestVerifyCodeSuit(t *testing.T) {
@@ -32,7 +32,7 @@ func testCreateVerifyCodeOK(s *verifyCodeSuit) func(t *testing.T) {
 func testGetVerifyCodeOK(s *verifyCodeSuit) func(t *testing.T) {
 	return func(t *testing.T) {
 		should := require.New(t)
-		code, err := s.store.GetVerifyCode(verifycode.Registry, s.target)
+		code, err := s.store.GetVerifyCode(models.RegistryCode, s.target)
 		should.NoError(err)
 
 		t.Logf("get verifycode(%s) success: %s", code.Code, code)
@@ -42,7 +42,7 @@ func testGetVerifyCodeOK(s *verifyCodeSuit) func(t *testing.T) {
 func testDeleteVerifyCodeOK(s *verifyCodeSuit) func(t *testing.T) {
 	return func(t *testing.T) {
 		should := require.New(t)
-		err := s.store.DeleteVerifyCode(verifycode.Registry, s.target, s.code.Code)
+		err := s.store.DeleteVerifyCode(models.RegistryCode, s.target, s.code.Code)
 		should.NoError(err)
 
 		t.Logf("delete verifycode(%s) success: %s", s.code.Code, s.code)

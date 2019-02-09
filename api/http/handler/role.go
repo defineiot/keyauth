@@ -7,7 +7,7 @@ import (
 	"github.com/defineiot/keyauth/api/http/context"
 	"github.com/defineiot/keyauth/api/http/request"
 	"github.com/defineiot/keyauth/api/http/response"
-	"github.com/defineiot/keyauth/dao/role"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
@@ -27,7 +27,7 @@ func CreateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ro := &role.Role{
+	ro := &models.Role{
 		Name:        name,
 		Description: desc,
 	}

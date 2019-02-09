@@ -19,7 +19,7 @@ import (
 	"github.com/defineiot/keyauth/api/http/router"
 	"github.com/defineiot/keyauth/api/register"
 	"github.com/defineiot/keyauth/api/register/etcd"
-	"github.com/defineiot/keyauth/dao/service"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/cache"
 	"github.com/defineiot/keyauth/internal/conf"
 	"github.com/defineiot/keyauth/internal/exception"
@@ -151,7 +151,7 @@ func (s *Service) registryService() error {
 	}
 
 	var (
-		keysvr *service.Service
+		keysvr *models.Service
 		err    error
 	)
 
@@ -159,10 +159,10 @@ func (s *Service) registryService() error {
 	keysvr, err = global.Store.GetServiceByName(name)
 	if err != nil {
 		if _, ok := err.(*exception.NotFound); ok {
-			keysvr = &service.Service{
+			keysvr = &models.Service{
 				Name:        name,
 				Description: "微服务权限管理中心",
-				Type:        service.Public,
+				Type:        models.Public,
 				Enabled:     true,
 			}
 			if err = global.Store.CreateService(keysvr); err != nil {
@@ -175,10 +175,10 @@ func (s *Service) registryService() error {
 		return exception.NewInternalServerError("服务自创建异常, 创建失败")
 	}
 
-	features := []*service.Feature{}
+	features := []*models.Feature{}
 	for method, v := range s.v1endpoints {
 		for feature, ep := range v {
-			f := &service.Feature{Name: feature, HTTPEndpoint: ep, Tag: method}
+			f := &models.Feature{Name: feature, HTTPEndpoint: ep, Tag: method}
 			features = append(features, f)
 		}
 	}
@@ -243,7 +243,7 @@ func (s *Service) registeInstance() error {
 	instance := &register.ServiceInstance{
 		Name:        s.conf.APP.Name + "-" + uuid.NewV4().String()[:8],
 		ServiceName: s.conf.APP.Name,
-		Type:        service.Public,
+		Type:        models.Public,
 		Address:     s.conf.APP.Host,
 		Version:     version.GIT_TAG,
 		GitBranch:   version.GIT_BRANCH,

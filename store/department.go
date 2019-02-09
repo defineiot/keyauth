@@ -1,12 +1,12 @@
 package store
 
 import (
-	"github.com/defineiot/keyauth/dao/department"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
 // CreateDepartment todo
-func (s *Store) CreateDepartment(dep *department.Department) error {
+func (s *Store) CreateDepartment(dep *models.Department) error {
 	has, err := s.dao.Department.GetDepartmentByName(dep.DomainID, dep.Name)
 	if _, ok := err.(*exception.NotFound); !ok {
 		return err
@@ -48,7 +48,7 @@ func (s *Store) DeleteDepartment(id string) error {
 }
 
 // ListSubDepartments todo
-func (s *Store) ListSubDepartments(domainID, parentID string) ([]*department.Department, error) {
+func (s *Store) ListSubDepartments(domainID, parentID string) ([]*models.Department, error) {
 	depts, err := s.dao.Department.ListSubDepartments(domainID, parentID)
 	if err != nil {
 		return nil, err
@@ -58,10 +58,10 @@ func (s *Store) ListSubDepartments(domainID, parentID string) ([]*department.Dep
 }
 
 // GetDepartment todo
-func (s *Store) GetDepartment(depID string) (*department.Department, error) {
+func (s *Store) GetDepartment(depID string) (*models.Department, error) {
 	var err error
 
-	dep := new(department.Department)
+	dep := new(models.Department)
 	cacheKey := s.cachePrefix.dep + depID
 
 	if s.isCache {
@@ -88,4 +88,14 @@ func (s *Store) GetDepartment(depID string) (*department.Department, error) {
 	}
 
 	return dep, nil
+}
+
+// ListDepartmentUsers todo
+func (s *Store) ListDepartmentUsers(depID string) ([]*models.User, error) {
+	users, err := s.dao.User.ListDepartmentUsers(depID)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }

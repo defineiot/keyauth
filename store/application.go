@@ -1,14 +1,13 @@
 package store
 
 import (
-	"github.com/defineiot/keyauth/dao/application"
-	"github.com/defineiot/keyauth/dao/user"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
 // CreateApplication todo
-func (s *Store) CreateApplication(app *application.Application) error {
-	_, err := s.dao.User.GetUser(user.UserID, app.UserID)
+func (s *Store) CreateApplication(app *models.Application) error {
+	_, err := s.dao.User.GetUser(models.UserIDIndex, app.UserID)
 	if err != nil {
 		return err
 	}
@@ -46,8 +45,8 @@ func (s *Store) DeleteApplication(id string) error {
 }
 
 // ListUserApps todo
-func (s *Store) ListUserApps(userID string) ([]*application.Application, error) {
-	_, err := s.dao.User.GetUser(user.UserID, userID)
+func (s *Store) ListUserApps(userID string) ([]*models.Application, error) {
+	_, err := s.dao.User.GetUser(models.UserIDIndex, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -61,10 +60,10 @@ func (s *Store) ListUserApps(userID string) ([]*application.Application, error) 
 }
 
 // GetUserApp todo
-func (s *Store) GetUserApp(appid string) (*application.Application, error) {
+func (s *Store) GetUserApp(appid string) (*models.Application, error) {
 	var err error
 
-	app := new(application.Application)
+	app := new(models.Application)
 	cacheKey := s.cachePrefix.app + appid
 
 	if s.isCache {

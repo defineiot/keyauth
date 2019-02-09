@@ -5,15 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/defineiot/keyauth/dao/department"
-	"github.com/defineiot/keyauth/dao/domain"
-	"github.com/defineiot/keyauth/dao/project"
-	"github.com/defineiot/keyauth/dao/user"
-	"github.com/defineiot/keyauth/internal/exception"
 	uuid "github.com/satori/go.uuid"
+
+	"github.com/defineiot/keyauth/dao/models"
+	"github.com/defineiot/keyauth/internal/exception"
 )
 
-func (s *store) CreateUser(u *user.User) error {
+func (s *store) CreateUser(u *models.User) error {
 	if err := u.Validate(); err != nil {
 		return err
 	}
@@ -58,7 +56,7 @@ func (s *store) CreateUser(u *user.User) error {
 			return exception.NewInternalServerError("prepare insert user password error, user: %s, %s", u.Account, err)
 		}
 
-		pass := user.Password{
+		pass := models.Password{
 			CreateAt: time.Now().Unix(),
 			ExpireAt: u.Password.ExpireAt,
 			Password: u.Password.Password,
@@ -116,21 +114,21 @@ func (s *store) CheckUserIsExistByID(userID string) (bool, error) {
 	return true, nil
 }
 
-func (s *store) ListDomainUsers(domainID string) ([]*user.User, error) {
+func (s *store) ListDomainUsers(domainID string) ([]*models.User, error) {
 	rows, err := s.stmts[FindDomainUsers].Query(domainID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query user list error, %s", err)
 	}
 	defer rows.Close()
 
-	users := []*user.User{}
+	users := []*models.User{}
 	for rows.Next() {
-		u := new(user.User)
-		pass := new(user.Password)
+		u := new(models.User)
+		pass := new(models.Password)
 		u.Password = pass
-		u.DefaultProject = new(project.Project)
-		u.Domain = new(domain.Domain)
-		u.Department = new(department.Department)
+		u.DefaultProject = new(models.Project)
+		u.Domain = new(models.Domain)
+		u.Department = new(models.Department)
 		if err := rows.Scan(&u.ID, &u.Department.ID, &u.Account, &u.Mobile, &u.Email, &u.Phone, &u.Address,
 			&u.RealName, &u.NickName, &u.Gender, &u.Avatar, &u.Language, &u.City, &u.Province,
 			&u.Locked, &u.Domain.ID, &u.CreateAt, &u.ExpiresActiveDays, &u.DefaultProject.ID,
@@ -144,21 +142,49 @@ func (s *store) ListDomainUsers(domainID string) ([]*user.User, error) {
 	return users, nil
 }
 
-func (s *store) ListProjectUsers(projectID string) ([]*user.User, error) {
+func (s *store) ListDepartmentUsers(departmentID string) ([]*models.User, error) {
+	rows, err := s.stmts[FindDomainUsers].Query(departmentID)
+	if err != nil {
+		return nil, exception.NewInternalServerError("query user list error, %s", err)
+	}
+	defer rows.Close()
+
+	users := []*models.User{}
+	for rows.Next() {
+		u := new(models.User)
+		pass := new(models.Password)
+		u.Password = pass
+		u.DefaultProject = new(models.Project)
+		u.Domain = new(models.Domain)
+		u.Department = new(models.Department)
+		if err := rows.Scan(&u.ID, &u.Department.ID, &u.Account, &u.Mobile, &u.Email, &u.Phone, &u.Address,
+			&u.RealName, &u.NickName, &u.Gender, &u.Avatar, &u.Language, &u.City, &u.Province,
+			&u.Locked, &u.Domain.ID, &u.CreateAt, &u.ExpiresActiveDays, &u.DefaultProject.ID,
+			&pass.Password, &pass.ExpireAt, &pass.CreateAt, &pass.UpdateAt); err != nil {
+			return nil, exception.NewInternalServerError("scan project's user id error, %s", err)
+		}
+
+		users = append(users, u)
+	}
+
+	return users, nil
+}
+
+func (s *store) ListProjectUsers(projectID string) ([]*models.User, error) {
 	rows, err := s.stmts[FindProjectUsers].Query(projectID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query project user list error, %s", err)
 	}
 	defer rows.Close()
 
-	users := []*user.User{}
+	users := []*models.User{}
 	for rows.Next() {
-		u := new(user.User)
-		pass := new(user.Password)
+		u := new(models.User)
+		pass := new(models.Password)
 		u.Password = pass
-		u.DefaultProject = new(project.Project)
-		u.Domain = new(domain.Domain)
-		u.Department = new(department.Department)
+		u.DefaultProject = new(models.Project)
+		u.Domain = new(models.Domain)
+		u.Department = new(models.Department)
 		if err := rows.Scan(&u.ID, &u.Department.ID, &u.Account, &u.Mobile, &u.Email, &u.Phone, &u.Address,
 			&u.RealName, &u.NickName, &u.Gender, &u.Avatar, &u.Language, &u.City, &u.Province,
 			&u.Locked, &u.Domain.ID, &u.CreateAt, &u.ExpiresActiveDays, &u.DefaultProject.ID,
@@ -172,23 +198,23 @@ func (s *store) ListProjectUsers(projectID string) ([]*user.User, error) {
 	return users, nil
 }
 
-func (s *store) GetUser(index user.FoundIndex, value string) (*user.User, error) {
+func (s *store) GetUser(index models.FoundUserIndex, value string) (*models.User, error) {
 	var row *sql.Row
 
-	u := new(user.User)
-	pass := new(user.Password)
+	u := new(models.User)
+	pass := new(models.Password)
 	u.Password = pass
-	u.DefaultProject = new(project.Project)
-	u.Domain = new(domain.Domain)
-	u.Department = new(department.Department)
+	u.DefaultProject = new(models.Project)
+	u.Domain = new(models.Domain)
+	u.Department = new(models.Department)
 	switch index {
-	case user.UserID:
+	case models.UserIDIndex:
 		row = s.stmts[FindUserByID].QueryRow(value)
-	case user.Account:
+	case models.AccountIndex:
 		row = s.stmts[FindUserByAccount].QueryRow(value)
-	case user.Mobile:
+	case models.MobileIndex:
 		row = s.stmts[FindUserByMobile].QueryRow(value)
-	case user.Email:
+	case models.EmailIndex:
 		row = s.stmts[FindUserByEmail].QueryRow(value)
 	default:
 		return nil, exception.NewBadRequest("the user's %s index not found", index)

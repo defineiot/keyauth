@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/defineiot/keyauth/dao/user"
+	"github.com/defineiot/keyauth/dao/models"
 )
 
 func TestProjectSuit(t *testing.T) {
@@ -43,7 +43,7 @@ func testListDomainUsersOK(s *userSuit) func(t *testing.T) {
 func testGetUserByIDOK(s *userSuit) func(t *testing.T) {
 	return func(t *testing.T) {
 		should := require.New(t)
-		u, err := s.store.GetUser(user.UserID, s.u.ID)
+		u, err := s.store.GetUser(models.UserIDIndex, s.u.ID)
 		should.NoError(err)
 
 		t.Logf("get user(%s) by id success: %s", s.u.ID, u)
@@ -53,7 +53,7 @@ func testGetUserByIDOK(s *userSuit) func(t *testing.T) {
 func testGetUserByAccountOK(s *userSuit) func(t *testing.T) {
 	return func(t *testing.T) {
 		should := require.New(t)
-		u, err := s.store.GetUser(user.Account, s.u.Account)
+		u, err := s.store.GetUser(models.AccountIndex, s.u.Account)
 		should.NoError(err)
 
 		t.Logf("get user(%s) by account success: %s", s.u.Account, u)

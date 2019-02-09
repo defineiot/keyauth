@@ -6,11 +6,11 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/defineiot/keyauth/dao/role"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
-func (s *store) CreateRole(r *role.Role) error {
+func (s *store) CreateRole(r *models.Role) error {
 	if err := r.Validate(); err != nil {
 		return err
 	}
@@ -46,16 +46,16 @@ func (s *store) CheckRoleExist(name string) (bool, error) {
 	return true, nil
 }
 
-func (s *store) ListRole() ([]*role.Role, error) {
+func (s *store) ListRole() ([]*models.Role, error) {
 	rows, err := s.stmts[FindAllRole].Query()
 	if err != nil {
 		return nil, exception.NewInternalServerError("query role list error, %s", err)
 	}
 	defer rows.Close()
 
-	roles := []*role.Role{}
+	roles := []*models.Role{}
 	for rows.Next() {
-		r := new(role.Role)
+		r := new(models.Role)
 		if err := rows.Scan(&r.ID, &r.Name, &r.Description, &r.CreateAt, &r.UpdateAt); err != nil {
 			return nil, exception.NewInternalServerError("scan project record error, %s", err)
 		}
@@ -66,8 +66,8 @@ func (s *store) ListRole() ([]*role.Role, error) {
 	return roles, nil
 }
 
-func (s *store) GetRole(id string) (*role.Role, error) {
-	r := new(role.Role)
+func (s *store) GetRole(id string) (*models.Role, error) {
+	r := new(models.Role)
 	err := s.stmts[FindRoleByID].QueryRow(id).Scan(&r.ID, &r.Name, &r.Description, &r.CreateAt, &r.UpdateAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -80,8 +80,8 @@ func (s *store) GetRole(id string) (*role.Role, error) {
 	return r, nil
 }
 
-func (s *store) GetRoleByName(name string) (*role.Role, error) {
-	r := new(role.Role)
+func (s *store) GetRoleByName(name string) (*models.Role, error) {
+	r := new(models.Role)
 	err := s.stmts[FindRoleByName].QueryRow(name).Scan(&r.ID, &r.Name, &r.Description, &r.CreateAt, &r.UpdateAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -94,7 +94,7 @@ func (s *store) GetRoleByName(name string) (*role.Role, error) {
 	return r, nil
 }
 
-func (s *store) UpdateRole(name, description string) (*role.Role, error) {
+func (s *store) UpdateRole(name, description string) (*models.Role, error) {
 	return nil, nil
 }
 
@@ -114,16 +114,16 @@ func (s *store) DeleteRole(id string) error {
 	return nil
 }
 
-func (s *store) ListUserRole(domainID, userID string) ([]*role.Role, error) {
+func (s *store) ListUserRole(domainID, userID string) ([]*models.Role, error) {
 	rows, err := s.stmts[FindRoleByUser].Query(domainID, userID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query role list error, %s", err)
 	}
 	defer rows.Close()
 
-	roles := []*role.Role{}
+	roles := []*models.Role{}
 	for rows.Next() {
-		r := new(role.Role)
+		r := new(models.Role)
 		if err := rows.Scan(&r.ID, &r.Name, &r.Description, &r.CreateAt, &r.UpdateAt); err != nil {
 			return nil, exception.NewInternalServerError("scan project record error, %s", err)
 		}

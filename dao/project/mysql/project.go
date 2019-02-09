@@ -7,11 +7,11 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/defineiot/keyauth/dao/project"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
-func (s *store) CreateProject(p *project.Project) error {
+func (s *store) CreateProject(p *models.Project) error {
 	if err := p.Validate(); err != nil {
 		return err
 	}
@@ -37,8 +37,8 @@ func (s *store) CreateProject(p *project.Project) error {
 }
 
 // Notice: if project not exits return nil
-func (s *store) GetProjectByID(id string) (*project.Project, error) {
-	p := new(project.Project)
+func (s *store) GetProjectByID(id string) (*models.Project, error) {
+	p := new(models.Project)
 	err := s.stmts[FindProjectByID].QueryRow(id).Scan(
 		&p.ID, &p.Name, &p.Picture, &p.Latitude, &p.Longitude, &p.Enabled,
 		&p.Owner, &p.Description, &p.DomainID, &p.CreateAt, &p.UpdateAt)
@@ -53,16 +53,16 @@ func (s *store) GetProjectByID(id string) (*project.Project, error) {
 	return p, nil
 }
 
-func (s *store) ListDomainProjects(domainID string) ([]*project.Project, error) {
+func (s *store) ListDomainProjects(domainID string) ([]*models.Project, error) {
 	rows, err := s.stmts[FindDomainPorjects].Query(domainID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query project list error, %s", err)
 	}
 	defer rows.Close()
 
-	projects := []*project.Project{}
+	projects := []*models.Project{}
 	for rows.Next() {
-		p := new(project.Project)
+		p := new(models.Project)
 		if err := rows.Scan(&p.ID, &p.Name, &p.Picture, &p.Latitude, &p.Longitude, &p.Enabled,
 			&p.Owner, &p.Description, &p.DomainID, &p.CreateAt, &p.UpdateAt); err != nil {
 			return nil, exception.NewInternalServerError("scan project record error, %s", err)
@@ -73,16 +73,16 @@ func (s *store) ListDomainProjects(domainID string) ([]*project.Project, error) 
 	return projects, nil
 }
 
-func (s *store) ListUserProjects(domainID, userID string) ([]*project.Project, error) {
+func (s *store) ListUserProjects(domainID, userID string) ([]*models.Project, error) {
 	rows, err := s.stmts[FindUserProjects].Query(domainID, userID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query project list error, %s", err)
 	}
 	defer rows.Close()
 
-	projects := []*project.Project{}
+	projects := []*models.Project{}
 	for rows.Next() {
-		p := new(project.Project)
+		p := new(models.Project)
 		if err := rows.Scan(&p.ID, &p.Name, &p.Picture, &p.Latitude, &p.Longitude, &p.Enabled,
 			&p.Owner, &p.Description, &p.DomainID, &p.CreateAt, &p.UpdateAt); err != nil {
 			return nil, exception.NewInternalServerError("scan project record error, %s", err)
@@ -93,7 +93,7 @@ func (s *store) ListUserProjects(domainID, userID string) ([]*project.Project, e
 	return projects, nil
 }
 
-func (s *store) UpdateProject(id, name, description string) (*project.Project, error) {
+func (s *store) UpdateProject(id, name, description string) (*models.Project, error) {
 	return nil, nil
 }
 

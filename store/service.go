@@ -1,27 +1,27 @@
 package store
 
 import (
-	"github.com/defineiot/keyauth/dao/service"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
 // CreateService todo
-func (s *Store) CreateService(svr *service.Service) error {
+func (s *Store) CreateService(svr *models.Service) error {
 	return s.dao.Service.CreateService(svr)
 }
 
 // ListServices todo
-func (s *Store) ListServices() ([]*service.Service, error) {
+func (s *Store) ListServices() ([]*models.Service, error) {
 	return s.dao.Service.ListServices()
 }
 
 // GetService todo
-func (s *Store) GetService(id string) (*service.Service, error) {
+func (s *Store) GetService(id string) (*models.Service, error) {
 	return s.dao.Service.GetServiceByID(id)
 }
 
 // GetServiceByName todo
-func (s *Store) GetServiceByName(name string) (*service.Service, error) {
+func (s *Store) GetServiceByName(name string) (*models.Service, error) {
 	return s.dao.Service.GetServiceByName(name)
 }
 
@@ -31,7 +31,7 @@ func (s *Store) DeleteService(id string) error {
 }
 
 // RegistryServiceFeatures todo
-func (s *Store) RegistryServiceFeatures(id, version string, features ...*service.Feature) error {
+func (s *Store) RegistryServiceFeatures(id, version string, features ...*models.Feature) error {
 	if version == "" {
 		return exception.NewBadRequest("service version is \"\"")
 	}
@@ -46,7 +46,7 @@ func (s *Store) RegistryServiceFeatures(id, version string, features ...*service
 }
 
 // ListServiceFeatures todo
-func (s *Store) ListServiceFeatures(name string) ([]*service.Feature, error) {
+func (s *Store) ListServiceFeatures(name string) ([]*models.Feature, error) {
 	return s.dao.Service.ListServiceFeatures(name)
 }
 

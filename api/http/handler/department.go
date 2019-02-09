@@ -7,7 +7,7 @@ import (
 	"github.com/defineiot/keyauth/api/http/context"
 	"github.com/defineiot/keyauth/api/http/request"
 	"github.com/defineiot/keyauth/api/http/response"
-	"github.com/defineiot/keyauth/dao/department"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
@@ -31,7 +31,7 @@ func CreateDepartment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dep := &department.Department{
+	dep := &models.Department{
 		Name:      name,
 		DomainID:  tk.DomainID,
 		ParentID:  parentID,

@@ -2,8 +2,7 @@ package mysql_test
 
 import (
 	"github.com/defineiot/keyauth/dao"
-	"github.com/defineiot/keyauth/dao/department"
-	"github.com/defineiot/keyauth/dao/domain"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/dao/user"
 	"github.com/defineiot/keyauth/dao/user/mysql"
 	"github.com/defineiot/keyauth/internal/conf/mock"
@@ -31,7 +30,7 @@ func newTestStore() user.Store {
 }
 
 type userSuit struct {
-	u     *user.User
+	u     *models.User
 	store user.Store
 }
 
@@ -40,7 +39,7 @@ func (s *userSuit) TearDown() {
 }
 
 func (s *userSuit) SetUp() {
-	s.u = &user.User{
+	s.u = &models.User{
 		Account:           "unit-test-for-user01",
 		Mobile:            "18108054577",
 		Email:             "18108054577@163.com",
@@ -54,9 +53,9 @@ func (s *userSuit) SetUp() {
 		City:              "成都",
 		Province:          "四川",
 		ExpiresActiveDays: 90,
-		Password:          &user.Password{Password: "123456", ExpireAt: 365},
-		Domain:            &domain.Domain{ID: "unit-test-for-domain"},
-		Department:        &department.Department{ID: "unit-test-for-department"},
+		Password:          &models.Password{Password: "123456", ExpireAt: 365},
+		Domain:            &models.Domain{ID: "unit-test-for-domain"},
+		Department:        &models.Department{ID: "unit-test-for-department"},
 	}
 
 	s.store = newTestStore()

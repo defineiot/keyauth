@@ -4,6 +4,7 @@ import (
 	"github.com/defineiot/keyauth/dao"
 	"github.com/defineiot/keyauth/dao/application"
 	"github.com/defineiot/keyauth/dao/application/mysql"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/conf/mock"
 )
 
@@ -25,7 +26,7 @@ func newTestStore() application.Store {
 
 type applicationSuit struct {
 	store  application.Store
-	app    *application.Application
+	app    *models.Application
 	userID string
 }
 
@@ -36,7 +37,7 @@ func (s *applicationSuit) TearDown() {
 func (s *applicationSuit) SetUp() {
 	s.store = newTestStore()
 	s.userID = "unit-test-01"
-	s.app = &application.Application{
+	s.app = &models.Application{
 		Name:   "application01",
 		UserID: s.userID,
 	}

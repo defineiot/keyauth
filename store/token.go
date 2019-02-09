@@ -8,8 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/defineiot/keyauth/dao/token"
-	"github.com/defineiot/keyauth/dao/user"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
@@ -24,18 +23,18 @@ var (
 
 // TokenRequest use to request access token
 type TokenRequest struct {
-	GrantType           token.GrantType `json:"grant_type,omitempty"`
-	ClientID            string          `json:"client_id,omitempty"`
-	ClientSecret        string          `json:"client_secret,omitempty"`
-	AuthorizationHeader string          `json:"authorization_header,omitempty"`
-	DomainID            string          `json:"domain_id,omitempty"`
-	Username            string          `json:"username,omitempty"`
-	Password            string          `json:"password,omitempty"`
-	Code                string          `json:"code,omitempty"`
-	RedirectURI         string          `json:"redirect_uri,omitempty"`
-	RefreshToken        string          `json:"refresh_token,omitempty"`
-	AccessToken         string          `json:"access_token,omitempty"`
-	Scope               string          `json:"scope,omitempty"`
+	GrantType           models.GrantType `json:"grant_type,omitempty"`
+	ClientID            string           `json:"client_id,omitempty"`
+	ClientSecret        string           `json:"client_secret,omitempty"`
+	AuthorizationHeader string           `json:"authorization_header,omitempty"`
+	DomainID            string           `json:"domain_id,omitempty"`
+	Username            string           `json:"username,omitempty"`
+	Password            string           `json:"password,omitempty"`
+	Code                string           `json:"code,omitempty"`
+	RedirectURI         string           `json:"redirect_uri,omitempty"`
+	RefreshToken        string           `json:"refresh_token,omitempty"`
+	AccessToken         string           `json:"access_token,omitempty"`
+	Scope               string           `json:"scope,omitempty"`
 
 	isCheckClient bool
 }
@@ -43,7 +42,7 @@ type TokenRequest struct {
 //  validate the request
 func (t *TokenRequest) validate() error {
 	switch t.GrantType {
-	case token.AUTHCODE:
+	case models.AUTHCODE:
 		if t.Code == "" {
 			return exception.NewBadRequest("if use %s grant type, code is needed", t.GrantType)
 		}
@@ -52,7 +51,7 @@ func (t *TokenRequest) validate() error {
 		}
 		t.isCheckClient = true
 
-	case token.IMPLICIT:
+	case models.IMPLICIT:
 		if t.ClientID == "" {
 			return exception.NewBadRequest("if use %s grant type, client id is needed", t.GrantType)
 		}
@@ -60,22 +59,22 @@ func (t *TokenRequest) validate() error {
 			return exception.NewBadRequest("if use %s grant type, redirect uri is need", t.GrantType)
 		}
 
-	case token.PASSWORD:
+	case models.PASSWORD:
 		if t.Username == "" || t.Password == "" {
 			return exception.NewBadRequest("if use %s grant type, username, password is needed", t.GrantType)
 		}
 		t.isCheckClient = true
 
-	case token.CLIENT:
+	case models.CLIENT:
 		t.isCheckClient = true
 
-	case token.REFRESH:
+	case models.REFRESH:
 		if t.RefreshToken == "" {
 			return exception.NewBadRequest("if use %s grant type, refresh token is needed", t.GrantType)
 		}
 		t.isCheckClient = true
 
-	case token.UPSCOPE:
+	case models.UPSCOPE:
 		if t.AccessToken == "" {
 			return exception.NewBadRequest("if use %s grant type, access_token is needed", t.GrantType)
 		}
@@ -100,13 +99,13 @@ func (t *TokenRequest) validate() error {
 }
 
 // IssueToken use to issue access token
-func (s *Store) IssueToken(req *TokenRequest) (t *token.Token, err error) {
+func (s *Store) IssueToken(req *TokenRequest) (t *models.Token, err error) {
 	if err := req.validate(); err != nil {
 		return nil, err
 	}
 
 	switch req.GrantType {
-	case token.AUTHCODE:
+	case models.AUTHCODE:
 		app, err := s.dao.Application.GetApplicationByClientID(req.ClientID)
 		if err != nil {
 			return nil, err
@@ -120,7 +119,7 @@ func (s *Store) IssueToken(req *TokenRequest) (t *token.Token, err error) {
 			return nil, err
 		}
 
-	case token.IMPLICIT:
+	case models.IMPLICIT:
 		app, err := s.dao.Application.GetApplicationByClientID(req.ClientID)
 		if err != nil {
 			return nil, err
@@ -131,7 +130,7 @@ func (s *Store) IssueToken(req *TokenRequest) (t *token.Token, err error) {
 			return nil, err
 		}
 
-	case token.PASSWORD:
+	case models.PASSWORD:
 		app, err := s.dao.Application.GetApplicationByClientID(req.ClientID)
 		if err != nil {
 			return nil, err
@@ -145,7 +144,7 @@ func (s *Store) IssueToken(req *TokenRequest) (t *token.Token, err error) {
 			return nil, err
 		}
 
-	case token.CLIENT:
+	case models.CLIENT:
 		svr, err := s.dao.Service.GetServiceByClientID(req.ClientID)
 		if err != nil {
 			return nil, err
@@ -159,13 +158,13 @@ func (s *Store) IssueToken(req *TokenRequest) (t *token.Token, err error) {
 			return nil, err
 		}
 
-	case token.REFRESH:
+	case models.REFRESH:
 		t, err = s.issueTokenByRefresh(req.ClientID, req.ClientSecret, req.RefreshToken)
 		if err != nil {
 			return nil, err
 		}
 
-	case token.UPSCOPE:
+	case models.UPSCOPE:
 		t, err = s.issueTokenByUpScope(req.ClientID, req.ClientSecret, req.AccessToken, req.Scope)
 		if err != nil {
 			return nil, err
@@ -201,7 +200,7 @@ func (v *ValidateTokenReq) validate() error {
 }
 
 // ValidateTokenWithClient use to validate token
-func (s *Store) ValidateTokenWithClient(v *ValidateTokenReq) (*token.Token, error) {
+func (s *Store) ValidateTokenWithClient(v *ValidateTokenReq) (*models.Token, error) {
 	var (
 		err    error
 		cached bool
@@ -234,7 +233,7 @@ func (s *Store) ValidateTokenWithClient(v *ValidateTokenReq) (*token.Token, erro
 		}
 	}
 
-	tk := new(token.Token)
+	tk := new(models.Token)
 	// 尝试从缓存中获取Token
 	cacheKey := s.cachePrefix.token + v.AccessToken
 	if s.isCache {
@@ -290,11 +289,11 @@ func (s *Store) ValidateTokenWithClient(v *ValidateTokenReq) (*token.Token, erro
 	// 校验用户是否有权限访问指定的功能
 	if v.FeatureName != "" || svr != nil {
 		switch tk.GrantType {
-		case token.CLIENT:
+		case models.CLIENT:
 			if v.FeatureName != "RegistryServiceFeatures" {
 				return nil, exception.NewForbidden("client_credentials only can acess RegistryServiceFeatures")
 			}
-		case token.PASSWORD, token.UPSCOPE, token.REFRESH:
+		case models.PASSWORD, models.UPSCOPE, models.REFRESH:
 			if v.FeatureName == "RegistryServiceFeatures" {
 				return nil, exception.NewForbidden("client_credentials only can acess RegistryServiceFeatures")
 			}
@@ -347,13 +346,13 @@ func (s *Store) ValidateTokenWithClient(v *ValidateTokenReq) (*token.Token, erro
 }
 
 // ValidateToken use to validate token
-func (s *Store) ValidateToken(accessToken, featureName string) (*token.Token, error) {
+func (s *Store) ValidateToken(accessToken, featureName string) (*models.Token, error) {
 	var (
 		err    error
 		cached bool
 	)
 
-	tk := new(token.Token)
+	tk := new(models.Token)
 	// 尝试从缓存中获取Token
 	cacheKey := s.cachePrefix.token + accessToken
 	if s.isCache {
@@ -402,12 +401,12 @@ func (s *Store) ValidateToken(accessToken, featureName string) (*token.Token, er
 		var hasPerm bool
 
 		switch tk.GrantType {
-		case token.CLIENT:
+		case models.CLIENT:
 			if featureName != "RegistryServiceFeatures" {
 				return nil, exception.NewForbidden("client_credentials only can acess RegistryServiceFeatures")
 			}
 			hasPerm = true
-		case token.PASSWORD, token.UPSCOPE, token.REFRESH:
+		case models.PASSWORD, models.UPSCOPE, models.REFRESH:
 			if featureName == "RegistryServiceFeatures" {
 				return nil, exception.NewForbidden("client_credentials only can acess RegistryServiceFeatures")
 			}
@@ -540,23 +539,23 @@ func (s *Store) RevokeToken(req *RevokeReq) error {
 
 // issueTokenByAuthCode implement Authorization Code Grant
 // https://tools.ietf.org/html/rfc6749#section-4.1.3
-func (s *Store) issueTokenByAuthCode(clientID, code, redirectURI string) (*token.Token, error) {
+func (s *Store) issueTokenByAuthCode(clientID, code, redirectURI string) (*models.Token, error) {
 	return nil, nil
 }
 
 // issueTokenByImplicit implement Implicit Grant
 // https://tools.ietf.org/html/rfc6749#section-4.2
-func (s *Store) issueTokenByImplicit(clientID, redirectURI string) (*token.Token, error) {
+func (s *Store) issueTokenByImplicit(clientID, redirectURI string) (*models.Token, error) {
 	return nil, nil
 }
 
 // issueTokenByPassword implement Resource Owner Password Credentials Grant
 // https://tools.ietf.org/html/rfc6749#section-4.3
-func (s *Store) issueTokenByPassword(scope, appID, account, password string) (*token.Token, error) {
-	var tk *token.Token
+func (s *Store) issueTokenByPassword(scope, appID, account, password string) (*models.Token, error) {
+	var tk *models.Token
 
 	// 查询用户是否存在
-	user, err := s.dao.User.GetUser(user.Account, account)
+	user, err := s.dao.User.GetUser(models.AccountIndex, account)
 	if err != nil {
 		return nil, err
 	}
@@ -567,7 +566,7 @@ func (s *Store) issueTokenByPassword(scope, appID, account, password string) (*t
 	}
 
 	// 查看最新的, 还有至少一半时间可用的token, 如果有就使用老的token
-	ctk, err := s.dao.Token.GetUserCurrentToken(user.ID, appID, token.PASSWORD)
+	ctk, err := s.dao.Token.GetUserCurrentToken(user.ID, appID, models.PASSWORD)
 	if err != nil {
 		if _, ok := err.(*exception.NotFound); !ok {
 			return nil, err
@@ -587,7 +586,7 @@ func (s *Store) issueTokenByPassword(scope, appID, account, password string) (*t
 
 	// 生成新Token
 	if tk == nil {
-		tk, err = s.generateToken(scope, user.Domain.ID, user.ID, appID, token.Bearer, token.PASSWORD)
+		tk, err = s.generateToken(scope, user.Domain.ID, user.ID, appID, models.Bearer, models.PASSWORD)
 		if err != nil {
 			return nil, err
 		}
@@ -621,21 +620,21 @@ func (s *Store) issueTokenByPassword(scope, appID, account, password string) (*t
 
 // issueTokenByClient implement Client Credentials Grant
 // https://tools.ietf.org/html/rfc6749#section-4.4.2
-func (s *Store) issueTokenByClient(serviceID string, scope string) (*token.Token, error) {
-	t := new(token.Token)
+func (s *Store) issueTokenByClient(serviceID string, scope string) (*models.Token, error) {
+	t := new(models.Token)
 	t.Scope = scope
 	t.CreatedAt = time.Now().Unix()
 	t.ExpiresIn = s.conf.Token.ExpiresIn
-	t.GrantType = token.CLIENT
+	t.GrantType = models.CLIENT
 	t.ServiceID = serviceID
 
 	switch t.TokenType {
 	case "bearer", "":
-		t.TokenType = token.Bearer
+		t.TokenType = models.Bearer
 		t.AccessToken = makeBearerToken(24)
 		t.RefreshToken = makeBearerToken(32)
 	case "jwt":
-		t.TokenType = token.JWT
+		t.TokenType = models.JWT
 	default:
 		return nil, exception.NewInternalServerError("unknown token type, %s", t.TokenType)
 	}
@@ -649,7 +648,7 @@ func (s *Store) issueTokenByClient(serviceID string, scope string) (*token.Token
 
 // issueTokenByRefresh implement Refreshing an Access Token
 // https://tools.ietf.org/html/rfc6749#section-6
-func (s *Store) issueTokenByRefresh(clientID, clientSecret, refreshToken string) (*token.Token, error) {
+func (s *Store) issueTokenByRefresh(clientID, clientSecret, refreshToken string) (*models.Token, error) {
 	if refreshToken == "" {
 		return nil, exception.NewBadRequest("resfresh_token missed")
 	}
@@ -686,7 +685,7 @@ func (s *Store) issueTokenByRefresh(clientID, clientSecret, refreshToken string)
 	}
 
 	// 生成新token
-	tk, err := s.generateToken(old.Scope, old.DomainID, old.UserID, old.ApplicationID, token.Bearer, token.REFRESH)
+	tk, err := s.generateToken(old.Scope, old.DomainID, old.UserID, old.ApplicationID, models.Bearer, models.REFRESH)
 	if err != nil {
 		return nil, err
 	}
@@ -700,7 +699,7 @@ func (s *Store) issueTokenByRefresh(clientID, clientSecret, refreshToken string)
 	return tk, nil
 }
 
-func (s *Store) issueTokenByUpScope(clientID, clientSecret, accessToken, scope string) (*token.Token, error) {
+func (s *Store) issueTokenByUpScope(clientID, clientSecret, accessToken, scope string) (*models.Token, error) {
 	if accessToken == "" {
 		return nil, exception.NewBadRequest("access_token missed")
 	}
@@ -790,8 +789,8 @@ func makeBearerToken(lenth int) string {
 	return base64.RawURLEncoding.EncodeToString([]byte(token))
 }
 
-func (s *Store) generateToken(scope, domainID, userID, appID string, tp token.Type, gt token.GrantType) (*token.Token, error) {
-	t := &token.Token{
+func (s *Store) generateToken(scope, domainID, userID, appID string, tp models.TokenType, gt models.GrantType) (*models.Token, error) {
+	t := &models.Token{
 		Scope:         scope,
 		DomainID:      domainID,
 		CreatedAt:     time.Now().Unix(),
@@ -803,10 +802,10 @@ func (s *Store) generateToken(scope, domainID, userID, appID string, tp token.Ty
 	}
 
 	switch tp {
-	case token.Bearer:
+	case models.Bearer:
 		t.AccessToken = makeBearerToken(24)
 		t.RefreshToken = makeBearerToken(32)
-	case token.JWT:
+	case models.JWT:
 	default:
 		return nil, exception.NewInternalServerError("unknown token type, %s, only support bearer", tp)
 	}

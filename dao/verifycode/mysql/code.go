@@ -6,11 +6,11 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/defineiot/keyauth/dao/verifycode"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
-func (s *store) CreateVerifyCode(v *verifycode.VerifyCode) error {
+func (s *store) CreateVerifyCode(v *models.VerifyCode) error {
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
 	v.Code = fmt.Sprintf("%06v", rnd.Int31n(1000000))
 	v.CreateAt = time.Now().Unix()
@@ -23,8 +23,8 @@ func (s *store) CreateVerifyCode(v *verifycode.VerifyCode) error {
 	return nil
 }
 
-func (s *store) GetVerifyCode(purpose verifycode.CodePurpose, target string) (*verifycode.VerifyCode, error) {
-	v := new(verifycode.VerifyCode)
+func (s *store) GetVerifyCode(purpose models.CodePurpose, target string) (*models.VerifyCode, error) {
+	v := new(models.VerifyCode)
 	v.Purpose = purpose
 	v.SendTarget = target
 
@@ -40,7 +40,7 @@ func (s *store) GetVerifyCode(purpose verifycode.CodePurpose, target string) (*v
 	return v, nil
 }
 
-func (s *store) DeleteVerifyCode(purpose verifycode.CodePurpose, target string, code string) error {
+func (s *store) DeleteVerifyCode(purpose models.CodePurpose, target string, code string) error {
 	ret, err := s.stmts[DeleteVerifyCode].Exec(int(purpose), target, code)
 	if err != nil {
 		return exception.NewInternalServerError("delete verify code exec sql error, %s", err)

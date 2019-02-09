@@ -8,7 +8,7 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/defineiot/keyauth/dao/department"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
@@ -17,7 +17,7 @@ const (
 	MaxDepartmentDeep = 10
 )
 
-func (s *store) CreateDepartment(d *department.Department) error {
+func (s *store) CreateDepartment(d *models.Department) error {
 	if err := d.Validate(); err != nil {
 		return err
 	}
@@ -50,8 +50,8 @@ func (s *store) CreateDepartment(d *department.Department) error {
 	return nil
 }
 
-func (s *store) GetDepartment(depID string) (*department.Department, error) {
-	d := new(department.Department)
+func (s *store) GetDepartment(depID string) (*models.Department, error) {
+	d := new(models.Department)
 
 	err := s.stmts[FindDepartment].QueryRow(depID).Scan(
 		&d.ID, &d.Number, &d.Name, &d.ParentID, &d.Grade, &d.Path, &d.ManagerID, &d.DomainID, &d.CreateAt)
@@ -66,16 +66,16 @@ func (s *store) GetDepartment(depID string) (*department.Department, error) {
 	return d, nil
 }
 
-func (s *store) ListSubDepartments(domainID, parentDepID string) ([]*department.Department, error) {
+func (s *store) ListSubDepartments(domainID, parentDepID string) ([]*models.Department, error) {
 	rows, err := s.stmts[FindSubDepartments].Query(parentDepID, domainID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query user's invitation records error, %s", err)
 	}
 	defer rows.Close()
 
-	deps := []*department.Department{}
+	deps := []*models.Department{}
 	for rows.Next() {
-		d := new(department.Department)
+		d := new(models.Department)
 		if err := rows.Scan(&d.ID, &d.Number, &d.Name, &d.ParentID, &d.Grade, &d.Path, &d.ManagerID, &d.DomainID, &d.CreateAt); err != nil {
 			return nil, exception.NewInternalServerError("scan user's project id error, %s", err)
 		}
@@ -109,8 +109,8 @@ func (s *store) DelDepartment(depID string) error {
 	return nil
 }
 
-func (s *store) GetDepartmentByName(domainID, departmentName string) (*department.Department, error) {
-	d := new(department.Department)
+func (s *store) GetDepartmentByName(domainID, departmentName string) (*models.Department, error) {
+	d := new(models.Department)
 
 	err := s.stmts[FindDepartmentByName].QueryRow(departmentName, domainID).Scan(
 		&d.ID, &d.Number, &d.Name, &d.ParentID, &d.Grade, &d.Path, &d.ManagerID, &d.DomainID, &d.CreateAt)

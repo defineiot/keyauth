@@ -4,12 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/defineiot/keyauth/dao/service"
-
 	"github.com/defineiot/keyauth/api/global"
 	"github.com/defineiot/keyauth/api/http/context"
 	"github.com/defineiot/keyauth/api/http/request"
 	"github.com/defineiot/keyauth/api/http/response"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
@@ -24,14 +23,14 @@ func CreateService(w http.ResponseWriter, r *http.Request) {
 	name := val.Get("name").ToString()
 	desc := val.Get("description").ToString()
 
-	var stype service.Type
+	var stype models.ServiceType
 	switch val.Get("type").ToString() {
 	case "controller_pannel":
-		stype = service.Public
+		stype = models.Public
 	case "data_pannel":
-		stype = service.Agent
+		stype = models.Agent
 	case "internal_rpc":
-		stype = service.Internal
+		stype = models.Internal
 	default:
 		response.Failed(w, exception.NewBadRequest("unknown service type, support type (controller_pannel,data_pannel,internal_rpc)"))
 		return
@@ -42,7 +41,7 @@ func CreateService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	svr := &service.Service{
+	svr := &models.Service{
 		Name:        name,
 		Description: desc,
 		Type:        stype,
@@ -118,8 +117,8 @@ func ListServiceFeatures(w http.ResponseWriter, r *http.Request) {
 
 // FeatureRegistryReq 服务功能注册接口
 type FeatureRegistryReq struct {
-	Version  string             `json:"version"`
-	Features []*service.Feature `json:"features"`
+	Version  string            `json:"version"`
+	Features []*models.Feature `json:"features"`
 }
 
 // RegistryServiceFeatures todo

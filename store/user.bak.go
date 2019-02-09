@@ -5,11 +5,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/defineiot/keyauth/dao/verifycode"
+	"github.com/defineiot/keyauth/dao/models"
 )
 
 // IssueVerifyCode todo
-func (s *Store) IssueVerifyCode(vf *verifycode.VerifyCode) error {
+func (s *Store) IssueVerifyCode(vf *models.VerifyCode) error {
 	rand.Seed(time.Now().UnixNano())
 	code := rand.Intn(8000) + rand.Intn(1000) + 1000
 	vf.Code = strconv.Itoa(code)
@@ -17,12 +17,12 @@ func (s *Store) IssueVerifyCode(vf *verifycode.VerifyCode) error {
 }
 
 // GetVerifyCode todo
-func (s *Store) GetVerifyCode(purpose verifycode.CodePurpose, target string) (*verifycode.VerifyCode, error) {
+func (s *Store) GetVerifyCode(purpose models.CodePurpose, target string) (*models.VerifyCode, error) {
 	return s.dao.VerifyCode.GetVerifyCode(purpose, target)
 }
 
 // RevolkCode todo
-func (s *Store) RevolkCode(purpose verifycode.CodePurpose, target string, code string) error {
+func (s *Store) RevolkCode(purpose models.CodePurpose, target string, code string) error {
 	return s.dao.VerifyCode.DeleteVerifyCode(purpose, target, code)
 }
 

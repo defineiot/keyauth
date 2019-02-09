@@ -6,12 +6,12 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/defineiot/keyauth/dao/application"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 	"github.com/defineiot/keyauth/internal/tools"
 )
 
-func (s *store) CreateApplication(app *application.Application) error {
+func (s *store) CreateApplication(app *models.Application) error {
 	if err := app.Validate(); err != nil {
 		return err
 	}
@@ -89,16 +89,16 @@ func (s *store) DeleteApplication(appID string) error {
 	return nil
 }
 
-func (s *store) ListUserApplications(userID string) ([]*application.Application, error) {
+func (s *store) ListUserApplications(userID string) ([]*models.Application, error) {
 	rows, err := s.stmts[ListUserAPPS].Query(userID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query domain list error, %s", err)
 	}
 	defer rows.Close()
 
-	applications := []*application.Application{}
+	applications := []*models.Application{}
 	for rows.Next() {
-		app := new(application.Application)
+		app := new(models.Application)
 		if err := rows.Scan(&app.ID, &app.Name, &app.UserID, &app.Website, &app.LogoImage,
 			&app.Description, &app.CreateAt, &app.RedirectURI, &app.ClientID, &app.ClientSecret,
 			&app.Locked, &app.LastLoginTime, &app.LastLoginIP, &app.LoginFailedTimes,
@@ -110,8 +110,8 @@ func (s *store) ListUserApplications(userID string) ([]*application.Application,
 	return applications, nil
 }
 
-func (s *store) GetApplication(appid string) (*application.Application, error) {
-	app := application.Application{}
+func (s *store) GetApplication(appid string) (*models.Application, error) {
+	app := models.Application{}
 	err := s.stmts[GetUserAPP].QueryRow(appid).Scan(&app.ID, &app.Name, &app.UserID, &app.Website,
 		&app.LogoImage, &app.Description, &app.CreateAt, &app.RedirectURI, &app.ClientID,
 		&app.ClientSecret, &app.Locked, &app.LastLoginTime, &app.LastLoginIP, &app.LoginFailedTimes,
@@ -127,8 +127,8 @@ func (s *store) GetApplication(appid string) (*application.Application, error) {
 	return &app, nil
 }
 
-func (s *store) GetApplicationByClientID(clientID string) (*application.Application, error) {
-	app := application.Application{}
+func (s *store) GetApplicationByClientID(clientID string) (*models.Application, error) {
+	app := models.Application{}
 	err := s.stmts[GetUserAPPByClientID].QueryRow(clientID).Scan(&app.ID, &app.Name, &app.UserID,
 		&app.Website, &app.LogoImage, &app.Description, &app.CreateAt, &app.RedirectURI,
 		&app.ClientID, &app.ClientSecret, &app.Locked, &app.LastLoginTime, &app.LastLoginIP,

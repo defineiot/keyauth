@@ -7,9 +7,7 @@ import (
 	"github.com/defineiot/keyauth/api/http/context"
 	"github.com/defineiot/keyauth/api/http/request"
 	"github.com/defineiot/keyauth/api/http/response"
-	"github.com/defineiot/keyauth/dao/department"
-	"github.com/defineiot/keyauth/dao/domain"
-	"github.com/defineiot/keyauth/dao/user"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
@@ -23,11 +21,11 @@ func CreateMemberUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u := new(user.User)
-	u.Domain = &domain.Domain{ID: tk.DomainID}
-	u.Department = &department.Department{ID: val.Get("deparment_id").ToString()}
+	u := new(models.User)
+	u.Domain = &models.Domain{ID: tk.DomainID}
+	u.Department = &models.Department{ID: val.Get("deparment_id").ToString()}
 	u.Account = val.Get("account").ToString()
-	u.Password = &user.Password{Password: val.Get("password").ToString()}
+	u.Password = &models.Password{Password: val.Get("password").ToString()}
 
 	// 交给业务控制层处理
 	if err := global.Store.CreateMemberUser(u); err != nil {
@@ -46,7 +44,7 @@ func ListMemberUsers(w http.ResponseWriter, r *http.Request) {
 	tk := context.GetTokenFromContext(r)
 	did := tk.DomainID
 
-	users := []*user.User{}
+	users := []*models.User{}
 
 	users, err = global.Store.ListMemberUsers(did)
 	if err != nil {
@@ -108,7 +106,7 @@ func ListProjectUser(w http.ResponseWriter, r *http.Request) {
 	tk := context.GetTokenFromContext(r)
 	pid := ps.ByName("pid")
 
-	users := []*user.User{}
+	users := []*models.User{}
 
 	proj, err := global.Store.GetProject(pid)
 	if err != nil {

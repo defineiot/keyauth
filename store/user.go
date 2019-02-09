@@ -1,14 +1,14 @@
 package store
 
 import (
-	"github.com/defineiot/keyauth/dao/user"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
 // CreateMemberUser use to create user
-func (s *Store) CreateMemberUser(u *user.User) error {
+func (s *Store) CreateMemberUser(u *models.User) error {
 	// 判断用户名是否存在
-	if _, err := s.dao.User.GetUser(user.Account, u.Account); err != nil {
+	if _, err := s.dao.User.GetUser(models.AccountIndex, u.Account); err != nil {
 		if _, ok := err.(*exception.NotFound); !ok {
 			return err
 		}
@@ -68,7 +68,7 @@ func (s *Store) CreateMemberUser(u *user.User) error {
 }
 
 // ListMemberUsers list all user
-func (s *Store) ListMemberUsers(domainID string) ([]*user.User, error) {
+func (s *Store) ListMemberUsers(domainID string) ([]*models.User, error) {
 	users, err := s.dao.User.ListDomainUsers(domainID)
 	if err != nil {
 		return nil, err
@@ -102,10 +102,10 @@ func (s *Store) ListMemberUsers(domainID string) ([]*user.User, error) {
 }
 
 // GetUser get an user
-func (s *Store) GetUser(domainID, userID string) (*user.User, error) {
+func (s *Store) GetUser(domainID, userID string) (*models.User, error) {
 	var err error
 
-	u := new(user.User)
+	u := new(models.User)
 	cacheKey := s.cachePrefix.user + userID
 
 	if s.isCache {
@@ -116,7 +116,7 @@ func (s *Store) GetUser(domainID, userID string) (*user.User, error) {
 		s.log.Debug("get project from cache failed, key: %s", cacheKey)
 	}
 
-	u, err = s.dao.User.GetUser(user.UserID, userID)
+	u, err = s.dao.User.GetUser(models.UserIDIndex, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +182,7 @@ func (s *Store) DeleteUser(domainID, userID string) error {
 }
 
 // ListProjectUser list all user
-func (s *Store) ListProjectUser(projectID string) ([]*user.User, error) {
+func (s *Store) ListProjectUser(projectID string) ([]*models.User, error) {
 	users, err := s.dao.User.ListProjectUsers(projectID)
 	if err != nil {
 		return nil, err

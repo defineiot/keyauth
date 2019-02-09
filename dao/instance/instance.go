@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
-
-	"github.com/defineiot/keyauth/dao/service"
 )
 
 // Instance 服务实例
@@ -24,7 +23,7 @@ type Instance struct {
 	OnlineAt  int64  `json:"online_at"`            // 实例注册上线的时间
 	OfflineAt int64  `json:"offline_at"`           // 实例下线的时间
 
-	Features []*service.Feature `json:"features"` // 实例提供的功能列表
+	Features []*models.Feature `json:"features"` // 实例提供的功能列表
 }
 
 func (i *Instance) String() string {

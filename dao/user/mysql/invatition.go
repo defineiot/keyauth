@@ -8,11 +8,11 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/defineiot/keyauth/dao/user"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
-func (s *store) SaveInvitationsRecord(inviterID string, invitedRoles, accessProjects []string) (*user.Invitation, error) {
+func (s *store) SaveInvitationsRecord(inviterID string, invitedRoles, accessProjects []string) (*models.Invitation, error) {
 	after, err := time.ParseDuration("1h")
 	if err != nil {
 		return nil, err
@@ -21,7 +21,7 @@ func (s *store) SaveInvitationsRecord(inviterID string, invitedRoles, accessProj
 
 	code := hex.EncodeToString(uuid.NewV4().Bytes())
 
-	ir := &user.Invitation{Code: code, Inviter: inviterID, InviteeRoles: invitedRoles, AccessProjects: accessProjects, InvitedTime: time.Now().Unix(), ExpireTime: expire.Unix()}
+	ir := &models.Invitation{Code: code, Inviter: inviterID, InviteeRoles: invitedRoles, AccessProjects: accessProjects, InvitedTime: time.Now().Unix(), ExpireTime: expire.Unix()}
 	_, err = s.stmts[SaveInvitationsRecord].Exec(ir.Inviter, strings.Join(invitedRoles, ","), strings.Join(accessProjects, ","), ir.InvitedTime, ir.ExpireTime, code)
 	if err != nil {
 		return nil, exception.NewInternalServerError("insert verify code exec sql err, %s", err)
@@ -30,7 +30,7 @@ func (s *store) SaveInvitationsRecord(inviterID string, invitedRoles, accessProj
 	return ir, nil
 }
 
-func (s *store) ListInvitationRecord(inviterID string) ([]*user.Invitation, error) {
+func (s *store) ListInvitationRecord(inviterID string) ([]*models.Invitation, error) {
 	ok, err := s.CheckUserIsExistByID(inviterID)
 	if err != nil {
 		return nil, err
@@ -45,9 +45,9 @@ func (s *store) ListInvitationRecord(inviterID string) ([]*user.Invitation, erro
 	}
 	defer rows.Close()
 
-	irs := []*user.Invitation{}
+	irs := []*models.Invitation{}
 	for rows.Next() {
-		ir := new(user.Invitation)
+		ir := new(models.Invitation)
 		if err := rows.Scan(ir.Inviter, ir.Invitee, ir.InviteeDomain, ir.InviteeRoles, ir.InvitedTime, ir.AcceptTime, ir.ExpireTime, ir.Code, ir.AccessProjects); err != nil {
 			return nil, exception.NewInternalServerError("scan user's project id error, %s", err)
 		}
@@ -56,9 +56,9 @@ func (s *store) ListInvitationRecord(inviterID string) ([]*user.Invitation, erro
 	return irs, nil
 }
 
-func (s *store) GetInvitationRecord(inviterID, code string) (*user.Invitation, error) {
+func (s *store) GetInvitationRecord(inviterID, code string) (*models.Invitation, error) {
 	s.log.Debug("Get Invitation Record SQL: %s Params: inviter: %s, code: %s", s.unprepared[FindOneInvitationRecord], inviterID, code)
-	ir := new(user.Invitation)
+	ir := new(models.Invitation)
 	roles := ""
 	projects := ""
 	err := s.stmts[FindOneInvitationRecord].QueryRow(inviterID, code).Scan(&ir.Inviter, &ir.Invitee, &ir.InviteeDomain, &roles, &ir.InvitedTime, &ir.AcceptTime, &ir.ExpireTime, &ir.Code, &projects)
@@ -96,7 +96,7 @@ func (s *store) DeleteInvitationRecord(id string) error {
 	return nil
 }
 
-func (s *store) UpdateInvitationsRecord(ir *user.Invitation) error {
+func (s *store) UpdateInvitationsRecord(ir *models.Invitation) error {
 	ir.AcceptTime = time.Now().Unix()
 	_, err := s.stmts[UpdateInvitationsRecord].Exec(ir.Invitee, ir.InviteeDomain, ir.AcceptTime, ir.Inviter, ir.Code)
 	if err != nil {

@@ -4,20 +4,20 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/defineiot/keyauth/dao/domain"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
 // CreateDomain use to create an domain
-func (s *Store) CreateDomain(d *domain.Domain) error {
+func (s *Store) CreateDomain(d *models.Domain) error {
 	return s.dao.Domain.CreateDomain(d)
 }
 
 // GetDomain use to get domain by id or name
-func (s *Store) GetDomain(bywhat string, valule string) (*domain.Domain, error) {
+func (s *Store) GetDomain(bywhat string, valule string) (*models.Domain, error) {
 	var err error
 
-	dom := new(domain.Domain)
+	dom := new(models.Domain)
 	cacheKey := "domain_" + valule
 
 	if s.isCache {
@@ -55,7 +55,7 @@ func (s *Store) GetDomain(bywhat string, valule string) (*domain.Domain, error) 
 }
 
 // ListDomain all domain
-func (s *Store) ListDomain(pageNumber, pageSize int64) (domains []*domain.Domain, totalPage int64, err error) {
+func (s *Store) ListDomain(pageNumber, pageSize int64) (domains []*models.Domain, totalPage int64, err error) {
 	return s.dao.Domain.ListDomain(pageNumber, pageSize)
 }
 

@@ -7,12 +7,12 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/defineiot/keyauth/dao/service"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 	"github.com/defineiot/keyauth/internal/tools"
 )
 
-func (s *store) CreateService(svr *service.Service) error {
+func (s *store) CreateService(svr *models.Service) error {
 	if err := svr.Validate(); err != nil {
 		return err
 	}
@@ -29,16 +29,16 @@ func (s *store) CreateService(svr *service.Service) error {
 
 	return nil
 }
-func (s *store) ListServices() ([]*service.Service, error) {
+func (s *store) ListServices() ([]*models.Service, error) {
 	rows, err := s.stmts[FindAllServices].Query()
 	if err != nil {
 		return nil, exception.NewInternalServerError("query service list error, %s", err)
 	}
 	defer rows.Close()
 
-	svrs := []*service.Service{}
+	svrs := []*models.Service{}
 	for rows.Next() {
-		svr := new(service.Service)
+		svr := new(models.Service)
 		if err := rows.Scan(&svr.ID, &svr.Type, &svr.Name, &svr.Description, &svr.Enabled, &svr.Status,
 			&svr.StatusUpdateAt, &svr.CurrentVersion, &svr.UpgradeVersion, &svr.DowngradeVersion,
 			&svr.CreateAt, &svr.UpdateAt, &svr.ClientID, &svr.ClientSecret, &svr.TokenExpireTime); err != nil {
@@ -50,8 +50,8 @@ func (s *store) ListServices() ([]*service.Service, error) {
 	return svrs, nil
 }
 
-func (s *store) GetServiceByID(id string) (*service.Service, error) {
-	svr := service.Service{}
+func (s *store) GetServiceByID(id string) (*models.Service, error) {
+	svr := models.Service{}
 	if err := s.stmts[FindServiceByID].QueryRow(id).Scan(&svr.ID, &svr.Type, &svr.Name, &svr.Description,
 		&svr.Enabled, &svr.Status, &svr.StatusUpdateAt, &svr.CurrentVersion, &svr.UpgradeVersion,
 		&svr.DowngradeVersion, &svr.CreateAt, &svr.UpdateAt, &svr.ClientID, &svr.ClientSecret,
@@ -66,8 +66,8 @@ func (s *store) GetServiceByID(id string) (*service.Service, error) {
 	return &svr, nil
 }
 
-func (s *store) GetServiceByName(name string) (*service.Service, error) {
-	svr := service.Service{}
+func (s *store) GetServiceByName(name string) (*models.Service, error) {
+	svr := models.Service{}
 	if err := s.stmts[FindServiceByName].QueryRow(name).Scan(&svr.ID, &svr.Type, &svr.Name, &svr.Description,
 		&svr.Enabled, &svr.Status, &svr.StatusUpdateAt, &svr.CurrentVersion, &svr.UpgradeVersion,
 		&svr.DowngradeVersion, &svr.CreateAt, &svr.UpdateAt, &svr.ClientID, &svr.ClientSecret,
@@ -82,8 +82,8 @@ func (s *store) GetServiceByName(name string) (*service.Service, error) {
 	return &svr, nil
 }
 
-func (s *store) GetServiceByClientID(clientID string) (*service.Service, error) {
-	svr := new(service.Service)
+func (s *store) GetServiceByClientID(clientID string) (*models.Service, error) {
+	svr := new(models.Service)
 	if err := s.stmts[FindServiceByClient].QueryRow(clientID).Scan(&svr.ID, &svr.Type, &svr.Name, &svr.Description,
 		&svr.Enabled, &svr.Status, &svr.StatusUpdateAt, &svr.CurrentVersion, &svr.UpgradeVersion,
 		&svr.DowngradeVersion, &svr.CreateAt, &svr.UpdateAt, &svr.ClientID, &svr.ClientSecret,
@@ -121,16 +121,16 @@ func (s *store) DeleteService(id string) error {
 	return nil
 }
 
-func (s *store) ListAllFeatures() ([]*service.Feature, error) {
+func (s *store) ListAllFeatures() ([]*models.Feature, error) {
 	rows, err := s.stmts[FindAllFeatures].Query()
 	if err != nil {
 		return nil, exception.NewInternalServerError("query all feature list error, %s", err)
 	}
 	defer rows.Close()
 
-	features := []*service.Feature{}
+	features := []*models.Feature{}
 	for rows.Next() {
-		f := new(service.Feature)
+		f := new(models.Feature)
 		if err := rows.Scan(&f.ID, &f.Name, &f.Tag, &f.HTTPEndpoint, &f.Description, &f.IsDeleted,
 			&f.DeletedVersion, &f.DeleteAt, &f.IsAdded, &f.AddedVersion, &f.AddedAt, &f.ServiceID); err != nil {
 			return nil, exception.NewInternalServerError("scan service feature record error, %s", err)
@@ -141,16 +141,16 @@ func (s *store) ListAllFeatures() ([]*service.Feature, error) {
 	return features, nil
 }
 
-func (s *store) ListServiceFeatures(serviceID string) ([]*service.Feature, error) {
+func (s *store) ListServiceFeatures(serviceID string) ([]*models.Feature, error) {
 	rows, err := s.stmts[FindServiceFeatures].Query(serviceID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query service feature list error, %s", err)
 	}
 	defer rows.Close()
 
-	features := []*service.Feature{}
+	features := []*models.Feature{}
 	for rows.Next() {
-		f := new(service.Feature)
+		f := new(models.Feature)
 		if err := rows.Scan(&f.ID, &f.Name, &f.Tag, &f.HTTPEndpoint, &f.Description, &f.IsDeleted,
 			&f.DeletedVersion, &f.DeleteAt, &f.IsAdded, &f.AddedVersion, &f.AddedAt, &f.ServiceID); err != nil {
 			return nil, exception.NewInternalServerError("scan service feature record error, %s", err)
@@ -161,16 +161,16 @@ func (s *store) ListServiceFeatures(serviceID string) ([]*service.Feature, error
 	return features, nil
 }
 
-func (s *store) ListRoleFeatures(roleID string) ([]*service.Feature, error) {
+func (s *store) ListRoleFeatures(roleID string) ([]*models.Feature, error) {
 	rows, err := s.stmts[FindRoleFeatures].Query(roleID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query role features error, %s", err)
 	}
 	defer rows.Close()
 
-	features := []*service.Feature{}
+	features := []*models.Feature{}
 	for rows.Next() {
-		f := new(service.Feature)
+		f := new(models.Feature)
 		if err := rows.Scan(&f.ID, &f.Name, &f.Tag, &f.HTTPEndpoint, &f.Description, &f.IsDeleted,
 			&f.DeletedVersion, &f.DeleteAt, &f.IsAdded, &f.AddedVersion, &f.AddedAt, &f.ServiceID); err != nil {
 			return nil, exception.NewInternalServerError("scan role feature mapping record error, %s", err)
@@ -181,14 +181,14 @@ func (s *store) ListRoleFeatures(roleID string) ([]*service.Feature, error) {
 	return features, nil
 }
 
-func (s *store) RegistryServiceFeatures(serviceID, version string, features ...*service.Feature) error {
+func (s *store) RegistryServiceFeatures(serviceID, version string, features ...*models.Feature) error {
 	hasF, err := s.ListServiceFeatures(serviceID)
 	if err != nil {
 		return err
 	}
 
 	// 找出需要新增的功能(同一个服务下, 名称相同的功能)
-	added := []*service.Feature{}
+	added := []*models.Feature{}
 	for i := range features {
 		exist := false
 		for _, has := range hasF {
@@ -214,7 +214,7 @@ func (s *store) RegistryServiceFeatures(serviceID, version string, features ...*
 	s.Debug("added features: %s", added)
 
 	// 找出需要删除的功能(之前存在, 而新注册的功能列表里面没有功能)
-	deleted := []*service.Feature{}
+	deleted := []*models.Feature{}
 	for _, has := range hasF {
 		exist := false
 		for i := range features {
@@ -285,7 +285,7 @@ func (s *store) RegistryServiceFeatures(serviceID, version string, features ...*
 	return nil
 }
 
-func (s *store) AssociateFeaturesToRole(roleID string, features ...*service.Feature) error {
+func (s *store) AssociateFeaturesToRole(roleID string, features ...*models.Feature) error {
 	// start transaction
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -319,7 +319,7 @@ func (s *store) AssociateFeaturesToRole(roleID string, features ...*service.Feat
 	return nil
 }
 
-func (s *store) UnlinkFeatureFromRole(roleID string, features ...*service.Feature) error {
+func (s *store) UnlinkFeatureFromRole(roleID string, features ...*models.Feature) error {
 	// start transaction
 	tx, err := s.db.Begin()
 	if err != nil {

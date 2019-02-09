@@ -6,12 +6,12 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/defineiot/keyauth/dao/domain"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
 // CreateDomain use to create an domain
-func (s *store) CreateDomain(d *domain.Domain) error {
+func (s *store) CreateDomain(d *models.Domain) error {
 	if err := d.Validate(); err != nil {
 		return err
 	}
@@ -39,8 +39,8 @@ func (s *store) CreateDomain(d *domain.Domain) error {
 }
 
 // GetDomain use to get domain detail
-func (s *store) GetDomainByID(domainID string) (*domain.Domain, error) {
-	d := new(domain.Domain)
+func (s *store) GetDomainByID(domainID string) (*models.Domain, error) {
+	d := new(models.Domain)
 	err := s.stmts[FindDomainByID].QueryRow(domainID).Scan(
 		&d.ID, &d.Name, &d.DisplayName, &d.LogoPath, &d.Description, &d.Enabled,
 		&d.Type, &d.CreateAt, &d.UpdateAt, &d.Size, &d.Location, &d.Industry,
@@ -57,15 +57,15 @@ func (s *store) GetDomainByID(domainID string) (*domain.Domain, error) {
 	return d, nil
 }
 
-func (s *store) ListUserThirdDomains(userID string) ([]*domain.Domain, error) {
+func (s *store) ListUserThirdDomains(userID string) ([]*models.Domain, error) {
 	rows, err := s.stmts[FindUserThirdDomains].Query(userID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query user third domains error, %s", err)
 	}
 
-	domains := []*domain.Domain{}
+	domains := []*models.Domain{}
 	for rows.Next() {
-		d := new(domain.Domain)
+		d := new(models.Domain)
 		err := rows.Scan(
 			&d.ID, &d.Name, &d.DisplayName, &d.LogoPath, &d.Description, &d.Enabled,
 			&d.Type, &d.CreateAt, &d.UpdateAt, &d.Size, &d.Location, &d.Industry,
@@ -80,8 +80,8 @@ func (s *store) ListUserThirdDomains(userID string) ([]*domain.Domain, error) {
 	return domains, nil
 }
 
-func (s *store) GetDomainByName(name string) (*domain.Domain, error) {
-	d := new(domain.Domain)
+func (s *store) GetDomainByName(name string) (*models.Domain, error) {
+	d := new(models.Domain)
 	err := s.stmts[FindDomainByName].QueryRow(name).Scan(
 		&d.ID, &d.Name, &d.DisplayName, &d.LogoPath, &d.Description, &d.Enabled,
 		&d.Type, &d.CreateAt, &d.UpdateAt, &d.Size, &d.Location, &d.Industry,
@@ -99,7 +99,7 @@ func (s *store) GetDomainByName(name string) (*domain.Domain, error) {
 }
 
 // ListDomain use to list all domains
-func (s *store) ListDomain(pageNumber, pageSize int64) ([]*domain.Domain, int64, error) {
+func (s *store) ListDomain(pageNumber, pageSize int64) ([]*models.Domain, int64, error) {
 	var (
 		rows   *sql.Rows
 		err    error
@@ -119,9 +119,9 @@ func (s *store) ListDomain(pageNumber, pageSize int64) ([]*domain.Domain, int64,
 	}
 	defer rows.Close()
 
-	domains := []*domain.Domain{}
+	domains := []*models.Domain{}
 	for rows.Next() {
-		d := new(domain.Domain)
+		d := new(models.Domain)
 		err := rows.Scan(
 			&d.ID, &d.Name, &d.DisplayName, &d.LogoPath, &d.Description, &d.Enabled,
 			&d.Type, &d.CreateAt, &d.UpdateAt, &d.Size, &d.Location, &d.Industry,
@@ -165,7 +165,7 @@ func (s *store) domainCount() (int64, error) {
 }
 
 // UpdateDomain use to update an domain
-func (s *store) UpdateDomain(id, name, description string) (*domain.Domain, error) {
+func (s *store) UpdateDomain(id, name, description string) (*models.Domain, error) {
 	return nil, nil
 }
 

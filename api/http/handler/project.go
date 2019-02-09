@@ -7,7 +7,7 @@ import (
 	"github.com/defineiot/keyauth/api/http/context"
 	"github.com/defineiot/keyauth/api/http/request"
 	"github.com/defineiot/keyauth/api/http/response"
-	"github.com/defineiot/keyauth/dao/project"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
@@ -21,7 +21,7 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 
 	tk := context.GetTokenFromContext(r)
 
-	p := new(project.Project)
+	p := new(models.Project)
 	p.Name = val.Get("name").ToString()
 	p.Description = val.Get("description").ToString()
 	p.DomainID = tk.DomainID
@@ -49,7 +49,7 @@ func ListDomainProjects(w http.ResponseWriter, r *http.Request) {
 	tk := context.GetTokenFromContext(r)
 	did := tk.DomainID
 
-	projects := []*project.Project{}
+	projects := []*models.Project{}
 
 	projects, err = global.Store.ListDomainProjects(did)
 	if err != nil {

@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/defineiot/keyauth/dao/token"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
-func (s *store) SaveToken(t *token.Token) error {
+func (s *store) SaveToken(t *models.Token) error {
 	if err := t.ValidateSave(); err != nil {
 		return err
 	}
@@ -45,8 +45,8 @@ func (s *store) DeleteTokenByRefresh(refreshToken string) error {
 	return nil
 }
 
-func (s *store) GetTokenByRefresh(refreshToken string) (*token.Token, error) {
-	t := new(token.Token)
+func (s *store) GetTokenByRefresh(refreshToken string) (*models.Token, error) {
+	t := new(models.Token)
 
 	if err := s.stmts[FindTokenByRefresh].QueryRow(refreshToken).Scan(
 		&t.AccessToken, &t.RefreshToken, &t.GrantType, &t.TokenType,
@@ -62,8 +62,8 @@ func (s *store) GetTokenByRefresh(refreshToken string) (*token.Token, error) {
 	return t, nil
 }
 
-func (s *store) GetUserCurrentToken(userID, appID string, gt token.GrantType) (*token.Token, error) {
-	t := new(token.Token)
+func (s *store) GetUserCurrentToken(userID, appID string, gt models.GrantType) (*models.Token, error) {
+	t := new(models.Token)
 
 	if err := s.stmts[FindUserCurrentToken].QueryRow(userID, appID, string(gt)).Scan(
 		&t.AccessToken, &t.RefreshToken, &t.GrantType, &t.TokenType,
@@ -96,8 +96,8 @@ func (s *store) UpdateTokenScope(accessToken, scope string) error {
 	return nil
 }
 
-func (s *store) GetToken(accessToken string) (*token.Token, error) {
-	t := new(token.Token)
+func (s *store) GetToken(accessToken string) (*models.Token, error) {
+	t := new(models.Token)
 
 	if err := s.stmts[FindToken].QueryRow(accessToken).Scan(
 		&t.AccessToken, &t.RefreshToken, &t.GrantType, &t.TokenType,

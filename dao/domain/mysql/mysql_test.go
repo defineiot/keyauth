@@ -4,6 +4,7 @@ import (
 	"github.com/defineiot/keyauth/dao"
 	"github.com/defineiot/keyauth/dao/domain"
 	"github.com/defineiot/keyauth/dao/domain/mysql"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/conf/mock"
 )
 
@@ -25,8 +26,8 @@ func newTestStore() domain.Store {
 
 type domainSuit struct {
 	store domain.Store
-	d1    *domain.Domain
-	d2    *domain.Domain
+	d1    *models.Domain
+	d2    *models.Domain
 }
 
 func (d *domainSuit) TearDown() {
@@ -42,12 +43,12 @@ func (d *domainSuit) TearDown() {
 }
 
 func (d *domainSuit) SetUp() {
-	d.d1 = &domain.Domain{
+	d.d1 = &models.Domain{
 		Name:           "unit_test_domain_name1",
 		DisplayName:    "unit_test_domain_display_name1",
 		LogoPath:       "/logo/to/path/unit_test_domain_logo1.png",
 		Enabled:        true,
-		Type:           domain.Personal,
+		Type:           models.Personal,
 		Size:           "2000人以上",
 		Location:       "中国,四川,成都",
 		Address:        "环球中心 10F 1034",
@@ -61,12 +62,12 @@ func (d *domainSuit) SetUp() {
 		Owner:          "test_owner_01",
 	}
 
-	d.d2 = &domain.Domain{
+	d.d2 = &models.Domain{
 		Name:           "unit_test_domain_name2",
 		DisplayName:    "unit_test_domain_display_name2",
 		LogoPath:       "/logo/to/path/unit_test_domain_logo2.png",
 		Enabled:        true,
-		Type:           domain.Personal,
+		Type:           models.Personal,
 		Size:           "2000人以上",
 		Location:       "中国,四川,成都",
 		Address:        "环球中心 10F 1034",

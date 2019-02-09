@@ -6,7 +6,7 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"github.com/defineiot/keyauth/dao/token"
+	"github.com/defineiot/keyauth/dao/models"
 )
 
 // ReqContextKey req context key
@@ -15,7 +15,7 @@ const ReqContextKey = "request-context-key"
 // ReqContext context
 type ReqContext struct {
 	PS    httprouter.Params
-	Token *token.Token
+	Token *models.Token
 }
 
 // SetReqContext use to get context
@@ -31,6 +31,6 @@ func GetParamsFromContext(req *http.Request) httprouter.Params {
 }
 
 // GetTokenFromContext use to get httprouter ps from context
-func GetTokenFromContext(req *http.Request) *token.Token {
+func GetTokenFromContext(req *http.Request) *models.Token {
 	return req.Context().Value(ReqContextKey).(*ReqContext).Token
 }

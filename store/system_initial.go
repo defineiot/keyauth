@@ -4,11 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/defineiot/keyauth/dao/application"
-	"github.com/defineiot/keyauth/dao/department"
-	"github.com/defineiot/keyauth/dao/domain"
-	"github.com/defineiot/keyauth/dao/role"
-	"github.com/defineiot/keyauth/dao/user"
+	"github.com/defineiot/keyauth/dao/models"
 )
 
 const (
@@ -56,15 +52,15 @@ func (s *Store) InitAdmin(username, password string) error {
 // 域管理员:   domain_admin
 // 普通用户:   member
 func (s *Store) initRoles() error {
-	systemAdmin := &role.Role{
+	systemAdmin := &models.Role{
 		Name:        systemAdminRoleName,
 		Description: "系统管理员",
 	}
-	domainAdmin := &role.Role{
+	domainAdmin := &models.Role{
 		Name:        domainAdminRoleName,
 		Description: "域管理员/公司管理员/组织管理员",
 	}
-	common := &role.Role{
+	common := &models.Role{
 		Name:        memberUserRoleName,
 		Description: "成员用户",
 	}
@@ -90,8 +86,8 @@ func (s *Store) initRoles() error {
 
 // 创建管理员的账号和域
 func (s *Store) initAdminUser(username, password string) error {
-	adminDomain := &domain.Domain{
-		Type:        domain.Enterprise,
+	adminDomain := &models.Domain{
+		Type:        models.Enterprise,
 		Name:        adminDomainName,
 		DisplayName: "系统管理员域空间",
 		Description: "系统管理员域空间",
@@ -101,12 +97,12 @@ func (s *Store) initAdminUser(username, password string) error {
 		return err
 	}
 
-	adminDep := &department.Department{
+	adminDep := &models.Department{
 		Name:     adminDepartmentName,
 		DomainID: adminDomain.ID,
 	}
 
-	defaultDep := &department.Department{
+	defaultDep := &models.Department{
 		Name:     defaultDepartmentName,
 		DomainID: adminDomain.ID,
 	}
@@ -121,9 +117,9 @@ func (s *Store) initAdminUser(username, password string) error {
 	}
 	fmt.Printf("[INIT] 创建系统管理员默认部门成功: %s\n", defaultDep.Name)
 
-	adminUser := &user.User{
+	adminUser := &models.User{
 		Account:    username,
-		Password:   &user.Password{Password: s.hmacHash(password)},
+		Password:   &models.Password{Password: s.hmacHash(password)},
 		Domain:     adminDomain,
 		Department: adminDep,
 	}
@@ -156,27 +152,27 @@ func (s *Store) initAdminUser(username, password string) error {
 }
 
 func (s *Store) initAdminAPPs(account string) error {
-	u, err := s.dao.User.GetUser(user.Account, account)
+	u, err := s.dao.User.GetUser(models.AccountIndex, account)
 	if err != nil {
 		return err
 	}
 
-	web := &application.Application{
+	web := &models.Application{
 		Name:        "web_app",
 		UserID:      u.ID,
 		Description: "用于web端服务使用",
 	}
-	android := &application.Application{
+	android := &models.Application{
 		Name:        "android_app",
 		UserID:      u.ID,
 		Description: "用于构建安卓应用时使用",
 	}
-	ios := &application.Application{
+	ios := &models.Application{
 		Name:        "ios_app",
 		UserID:      u.ID,
 		Description: "用于构建IOS应用时使用",
 	}
-	sdk := &application.Application{
+	sdk := &models.Application{
 		Name:        "sdk_app",
 		UserID:      u.ID,
 		Description: "用户构建SDK端时使用",

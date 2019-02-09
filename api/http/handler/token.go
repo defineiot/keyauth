@@ -4,12 +4,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/defineiot/keyauth/api/http/context"
-
 	"github.com/defineiot/keyauth/api/global"
+	"github.com/defineiot/keyauth/api/http/context"
 	"github.com/defineiot/keyauth/api/http/request"
 	"github.com/defineiot/keyauth/api/http/response"
-	"github.com/defineiot/keyauth/dao/token"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 	"github.com/defineiot/keyauth/store"
 )
@@ -69,17 +68,17 @@ func IssueToken(w http.ResponseWriter, r *http.Request) {
 
 	switch grantType {
 	case "authorization_code":
-		tokenReq.GrantType = token.AUTHCODE
+		tokenReq.GrantType = models.AUTHCODE
 	case "implicit":
-		tokenReq.GrantType = token.IMPLICIT
+		tokenReq.GrantType = models.IMPLICIT
 	case "password":
-		tokenReq.GrantType = token.PASSWORD
+		tokenReq.GrantType = models.PASSWORD
 	case "client_credentials":
-		tokenReq.GrantType = token.CLIENT
+		tokenReq.GrantType = models.CLIENT
 	case "refresh_token":
-		tokenReq.GrantType = token.REFRESH
+		tokenReq.GrantType = models.REFRESH
 	case "upgrade_scope":
-		tokenReq.GrantType = token.UPSCOPE
+		tokenReq.GrantType = models.UPSCOPE
 	case "":
 		response.Failed(w, exception.NewBadRequest("grant_type missed"))
 		return

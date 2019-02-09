@@ -3,12 +3,11 @@ package handler
 import (
 	"net/http"
 
-	"github.com/defineiot/keyauth/dao/application"
-
 	"github.com/defineiot/keyauth/api/global"
 	"github.com/defineiot/keyauth/api/http/context"
 	"github.com/defineiot/keyauth/api/http/request"
 	"github.com/defineiot/keyauth/api/http/response"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
@@ -34,7 +33,7 @@ func CreateApplication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app := &application.Application{
+	app := &models.Application{
 		UserID:      uid,
 		Name:        name,
 		RedirectURI: redirectURI,

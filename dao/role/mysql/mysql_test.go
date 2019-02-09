@@ -2,6 +2,7 @@ package mysql_test
 
 import (
 	"github.com/defineiot/keyauth/dao"
+	"github.com/defineiot/keyauth/dao/models"
 	"github.com/defineiot/keyauth/dao/role"
 	"github.com/defineiot/keyauth/dao/role/mysql"
 	"github.com/defineiot/keyauth/internal/conf/mock"
@@ -30,7 +31,7 @@ func newTestStore() role.Store {
 
 type roleSuit struct {
 	store role.Store
-	r     *role.Role
+	r     *models.Role
 	name  string
 }
 
@@ -41,7 +42,7 @@ func (s *roleSuit) TearDown() {
 func (s *roleSuit) SetUp() {
 	s.name = "role-unit-test-01"
 
-	s.r = &role.Role{
+	s.r = &models.Role{
 		Name:        s.name,
 		Description: "unit-test",
 	}
