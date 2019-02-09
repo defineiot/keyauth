@@ -39,7 +39,6 @@ func RouteToV1(r *router.MyRouter) {
 	r.HandlerFunc("GET", "/applications/", "ListUserApplications", handler.ListUserApplications)
 	r.HandlerFunc("GET", "/applications/:aid/", "GetApplication", handler.GetApplication)
 	r.HandlerFunc("DELETE", "/applications/:aid/", "DeleteApplication", handler.DeleteApplication)
-	// // r.HandlerFunc("PUT", "/v1/users/:uid/applications/:aid/", handler.UpdateApplication)
 
 	// Service
 	r.HandlerFunc("POST", "/services/", "CreateService", handler.CreateService)
@@ -74,6 +73,5 @@ func RouteToV1(r *router.MyRouter) {
 	// r.HandlerFunc("POST", "/v1/invitations/users/:uid/code/:code/", "AcceptInvitation", handler.AcceptInvitation)
 	//  r.HandlerFunc("PUT", "/v1/users/:uid/", handler.UpdateUser)
 	// r.HandlerFunc("POST", "/v1/default/projects/:pid/", "SetUserDefaultProject", handler.SetUserDefaultProject)
-
 	r.AddV1Root()
 }

@@ -143,7 +143,7 @@ func (s *store) ListDomainUsers(domainID string) ([]*models.User, error) {
 }
 
 func (s *store) ListDepartmentUsers(departmentID string) ([]*models.User, error) {
-	rows, err := s.stmts[FindDomainUsers].Query(departmentID)
+	rows, err := s.stmts[FindDepartmentUsers].Query(departmentID)
 	if err != nil {
 		return nil, exception.NewInternalServerError("query user list error, %s", err)
 	}

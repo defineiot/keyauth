@@ -80,6 +80,24 @@ func (s *Store) GetDepartment(depID string) (*models.Department, error) {
 		return nil, exception.NewBadRequest("department %s not found", depID)
 	}
 
+	// 填充部门关联的用户相关数据
+	users, err := s.dao.User.ListDepartmentUsers(depID)
+	if err != nil {
+		return nil, err
+	}
+	for _, u := range users {
+		u.Domain = nil
+		u.DefaultProject = nil
+		u.Department = nil
+
+		roles, err := s.dao.Role.ListUserRole(dep.DomainID, u.ID)
+		if err != nil {
+			return nil, err
+		}
+		u.Roles = roles
+	}
+	dep.Users = users
+
 	if s.isCache {
 		if !s.cache.Set(cacheKey, dep, s.ttl) {
 			s.log.Debug("set app cache failed, key: %s", cacheKey)
@@ -88,14 +106,4 @@ func (s *Store) GetDepartment(depID string) (*models.Department, error) {
 	}
 
 	return dep, nil
-}
-
-// ListDepartmentUsers todo
-func (s *Store) ListDepartmentUsers(depID string) ([]*models.User, error) {
-	users, err := s.dao.User.ListDepartmentUsers(depID)
-	if err != nil {
-		return nil, err
-	}
-
-	return users, nil
 }
