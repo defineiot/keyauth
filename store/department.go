@@ -15,6 +15,10 @@ func (s *Store) CreateDepartment(dep *models.Department) error {
 		return exception.NewBadRequest("the department %s has exist", dep.Name)
 	}
 
+	// 检查项目是否合法
+
+	// 检查角色是否存在
+
 	if err := s.dao.Department.CreateDepartment(dep); err != nil {
 		return err
 	}

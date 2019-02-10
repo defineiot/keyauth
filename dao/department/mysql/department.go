@@ -42,7 +42,8 @@ func (s *store) CreateDepartment(d *models.Department) error {
 		d.Path = parentDep.Path + "/" + d.Number
 	}
 
-	_, err := s.stmts[SaveDepartment].Exec(d.ID, d.Number, d.Name, d.ParentID, d.Grade, d.Path, d.ManagerID, d.DomainID, d.CreateAt)
+	_, err := s.stmts[SaveDepartment].Exec(d.ID, d.Number, d.Name, d.ParentID, d.Grade,
+		d.Path, d.ManagerID, d.DomainID, d.CreateAt)
 	if err != nil {
 		return exception.NewInternalServerError("insert save department exec sql err, %s", err)
 	}
@@ -53,8 +54,8 @@ func (s *store) CreateDepartment(d *models.Department) error {
 func (s *store) GetDepartment(depID string) (*models.Department, error) {
 	d := new(models.Department)
 
-	err := s.stmts[FindDepartment].QueryRow(depID).Scan(
-		&d.ID, &d.Number, &d.Name, &d.ParentID, &d.Grade, &d.Path, &d.ManagerID, &d.DomainID, &d.CreateAt)
+	err := s.stmts[FindDepartment].QueryRow(depID).Scan(&d.ID, &d.Number, &d.Name,
+		&d.ParentID, &d.Grade, &d.Path, &d.ManagerID, &d.DomainID, &d.CreateAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewNotFound("department %s not find", depID)
@@ -76,7 +77,8 @@ func (s *store) ListSubDepartments(domainID, parentDepID string) ([]*models.Depa
 	deps := []*models.Department{}
 	for rows.Next() {
 		d := new(models.Department)
-		if err := rows.Scan(&d.ID, &d.Number, &d.Name, &d.ParentID, &d.Grade, &d.Path, &d.ManagerID, &d.DomainID, &d.CreateAt); err != nil {
+		if err := rows.Scan(&d.ID, &d.Number, &d.Name, &d.ParentID, &d.Grade, &d.Path,
+			&d.ManagerID, &d.DomainID, &d.CreateAt); err != nil {
 			return nil, exception.NewInternalServerError("scan user's project id error, %s", err)
 		}
 		deps = append(deps, d)

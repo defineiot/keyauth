@@ -400,3 +400,22 @@ COLLATE = utf8_general_ci
 COMMENT = '用户部门'
 ROW_FORMAT = dynamic;
 
+CREATE TABLE `department_role_mappings` (
+`department_id` char(64) NOT NULL,
+`role_id` char(64) NOT NULL
+)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8
+COLLATE = utf8_general_ci
+COMMENT = '部门和角色映射'
+ROW_FORMAT = dynamic;
+
+CREATE TABLE `department_project_mappings` (
+`department_id` char(64) NOT NULL,
+`project_id` char(64) NOT NULL
+)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8
+COLLATE = utf8_general_ci
+COMMENT = '部门和项目映射'
+ROW_FORMAT = dynamic;

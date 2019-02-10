@@ -55,6 +55,10 @@ func (s *Store) CreateMemberUser(u *models.User) error {
 		return err
 	}
 
+	// 如果有相关角色则绑定角色
+
+	// 如果有相关项目这加入项目
+
 	roles, err := s.dao.Role.ListUserRole(u.Domain.ID, u.ID)
 	if err != nil {
 		return err

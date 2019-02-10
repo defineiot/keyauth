@@ -21,7 +21,9 @@ type Department struct {
 	ParentID  string `json:"parent_id,omitempty"`  // 上级部门ID
 	ManagerID string `json:"manager_id,omitempty"` // 部门管理者ID
 
-	Users []*User `json:"users,omitempty"` // 部门用户
+	Users    []*User    `json:"users,omitempty"`    // 部门用户
+	Projects []*Project `json:"projects,omitempty"` // 部门可以访问的项目
+	Roles    []*Role    `json:"roles,omitempty"`    // 部门人员的角色
 }
 
 func (d *Department) String() string {
