@@ -33,16 +33,6 @@ func (s *Store) CreateMemberUser(u *models.User) error {
 		return err
 	}
 
-	// 绑定成员角色
-	role, err := s.dao.Role.GetRoleByName(memberUserRoleName)
-	if err != nil {
-		return err
-	}
-
-	if err := s.dao.User.BindRole(u.Domain.ID, u.ID, role.ID); err != nil {
-		return err
-	}
-
 	// 查询出域的具体详情
 	dom, err := s.dao.Domain.GetDomainByID(u.Domain.ID)
 	if err != nil {
@@ -55,13 +45,26 @@ func (s *Store) CreateMemberUser(u *models.User) error {
 		return err
 	}
 
-	// 如果有相关角色则绑定角色
-
-	// 如果有相关项目这加入项目
-
-	roles, err := s.dao.Role.ListUserRole(u.Domain.ID, u.ID)
+	// 部门有允许加入的项目则加入项目
+	projects, err := s.dao.Project.ListDepartmentProjects(dep.ID)
 	if err != nil {
 		return err
+	}
+	if len(projects) > 0 {
+		if err := s.dao.User.AddProjectsToUser(dom.ID, u.ID, projects); err != nil {
+			return err
+		}
+	}
+
+	// 部门有相关角色则赋予相关人员
+	roles, err := s.dao.Role.ListDepartmentRoles(dep.ID)
+	if err != nil {
+		return err
+	}
+	for _, r := range roles {
+		if err := s.dao.User.BindRole(dom.ID, u.ID, r.ID); err != nil {
+			return err
+		}
 	}
 
 	u.Domain = dom
@@ -140,7 +143,14 @@ func (s *Store) GetUser(domainID, userID string) (*models.User, error) {
 		return nil, err
 	}
 
+	// 查询用户的角色
 	roles, err := s.dao.Role.ListUserRole(u.Domain.ID, u.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 查询用户的项目
+	projects, err := s.dao.Project.ListUserProjects(u.Domain.ID, u.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +158,9 @@ func (s *Store) GetUser(domainID, userID string) (*models.User, error) {
 	u.Domain = dom
 	u.Department = dep
 	u.Roles = roles
+	u.Projects = projects
 
+	// 查询用户的默认项目
 	if u.DefaultProject.ID != "" {
 		pro, err := s.dao.Project.GetProjectByID(u.DefaultProject.ID)
 		if err != nil {

@@ -86,6 +86,21 @@ func (s *Store) initRoles() error {
 
 // 创建管理员的账号和域
 func (s *Store) initAdminUser(username, password string) error {
+	sysrole, err := s.dao.Role.GetRoleByName(systemAdminRoleName)
+	if err != nil {
+		return err
+	}
+
+	domainrole, err := s.dao.Role.GetRoleByName(domainAdminRoleName)
+	if err != nil {
+		return err
+	}
+
+	memberrole, err := s.dao.Role.GetRoleByName(memberUserRoleName)
+	if err != nil {
+		return err
+	}
+
 	adminDomain := &models.Domain{
 		Type:        models.Enterprise,
 		Name:        adminDomainName,
@@ -100,11 +115,13 @@ func (s *Store) initAdminUser(username, password string) error {
 	adminDep := &models.Department{
 		Name:     adminDepartmentName,
 		DomainID: adminDomain.ID,
+		RoleIDs:  []string{sysrole.ID, domainrole.ID},
 	}
 
 	defaultDep := &models.Department{
 		Name:     defaultDepartmentName,
 		DomainID: adminDomain.ID,
+		RoleIDs:  []string{memberrole.ID},
 	}
 
 	if err := s.dao.Department.CreateDepartment(adminDep); err != nil {
@@ -115,7 +132,7 @@ func (s *Store) initAdminUser(username, password string) error {
 	if err := s.dao.Department.CreateDepartment(defaultDep); err != nil {
 		return err
 	}
-	fmt.Printf("[INIT] 创建系统管理员默认部门成功: %s\n", defaultDep.Name)
+	fmt.Printf("[INIT] 创建普通成员默认部门成功: %s\n", defaultDep.Name)
 
 	adminUser := &models.User{
 		Account:    username,
@@ -129,19 +146,11 @@ func (s *Store) initAdminUser(username, password string) error {
 	}
 	fmt.Printf("[INIT] 创建系统管理员成功: %s\n", adminUser.Account)
 
-	sysrole, err := s.dao.Role.GetRoleByName(systemAdminRoleName)
-	if err != nil {
-		return err
-	}
 	if err := s.dao.User.BindRole(adminUser.Domain.ID, adminUser.ID, sysrole.ID); err != nil {
 		return err
 	}
 	fmt.Println("[INIT] 绑定系统管理员角色成功")
 
-	domainrole, err := s.dao.Role.GetRoleByName(domainAdminRoleName)
-	if err != nil {
-		return err
-	}
 	if err := s.dao.User.BindRole(adminUser.Domain.ID, adminUser.ID, domainrole.ID); err != nil {
 		return err
 	}

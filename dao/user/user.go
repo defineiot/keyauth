@@ -17,6 +17,8 @@ type Reader interface {
 	ListDepartmentUsers(departmentID string) ([]*models.User, error)
 	ListProjectUsers(projectID string) ([]*models.User, error)
 	GetUser(index models.FoundUserIndex, value string) (*models.User, error)
+	CheckUserIsExistByID(userID string) (bool, error)
+	CheckUserNameIsExist(domainID, account string) error
 
 	// ListUserRoles(domainID, userID string) ([]string, error)
 	// ValidateUser(domainID, userName, password string) (string, error)
@@ -26,8 +28,6 @@ type Reader interface {
 	// CheckUserIsExistByID(userID string) (bool, error)
 	// ListUserProjects(domainID, userID string) ([]string, error)
 	// ListUserOtherDomains(userID string) ([]string, error)
-	CheckUserIsExistByID(userID string) (bool, error)
-	CheckUserNameIsExist(domainID, account string) error
 	// ValidateUser(domainID, userName, password string) (string, error)
 }
 
@@ -37,13 +37,13 @@ type Writer interface {
 	DeleteUser(domainID, userID string) error
 	BindRole(domainID, userID, roleID string) error
 	UnBindRole(domainID, userID, roleID string) error
+	RemoveProjectsFromUser(domainID, userID string, projects []*models.Project) error
+	AddProjectsToUser(domainID, userID string, projects []*models.Project) error
+
 	// SaveUserOtherDomain(userID, otherDomainID string) error
 	// DeleteUserOtherDomain(userID, otherDomainID string) error
-
 	// SetUserPassword(userID, oldPass, newPass string) error
 	// SetDefaultProject(domainID, userID, projectID string) error
-	// AddProjectsToUser(domainID, userID string, projectIDs ...string) error
-	// RemoveProjectsFromUser(domainID, userID string, projectIDs ...string) error
 
 	// SaveInvitationsRecord(inviterID string, invitedRoles, accessProjects []string) (*Invitation, error)
 	// ListInvitationRecord(inviterID string) ([]*Invitation, error)

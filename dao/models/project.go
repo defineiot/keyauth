@@ -10,8 +10,8 @@ import (
 
 // Project tenant resource container
 type Project struct {
-	ID          string  `json:"id"`                    // 项目唯一ID
-	Name        string  `json:"name"`                  // 项目名称
+	ID          string  `json:"id,omitempty"`          // 项目唯一ID
+	Name        string  `json:"name,omitempty"`        // 项目名称
 	Picture     string  `json:"picture,omitempty"`     // 项目描述图片
 	Latitude    float64 `json:"latitude,omitempty"`    // 项目所处地理位置的经度
 	Longitude   float64 `json:"longitude,omitempty"`   // 项目所处地理位置的纬度

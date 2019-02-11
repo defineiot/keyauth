@@ -51,32 +51,6 @@ package mysql
 // 	return nil
 // }
 
-// func (s *store) ListUserProjects(domainID, userID string) ([]string, error) {
-// 	ok, err := s.CheckUserIsExistByID(userID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	if !ok {
-// 		return nil, exception.NewBadRequest("user %s not exist", userID)
-// 	}
-
-// 	rows, err := s.stmts[FindUserProjects].Query(userID, domainID)
-// 	if err != nil {
-// 		return nil, exception.NewInternalServerError("query user's project id error, %s", err)
-// 	}
-// 	defer rows.Close()
-
-// 	projects := []string{}
-// 	for rows.Next() {
-// 		var projectID string
-// 		if err := rows.Scan(&projectID); err != nil {
-// 			return nil, exception.NewInternalServerError("scan user's project id error, %s", err)
-// 		}
-// 		projects = append(projects, projectID)
-// 	}
-// 	return projects, nil
-// }
-
 // func (s *store) SetUserPassword(userID, oldPass, newPass string) error {
 // 	ok, err := s.CheckUserIsExistByID(userID)
 // 	if err != nil {
@@ -138,85 +112,6 @@ package mysql
 // 	_, err = s.stmts[SetUserDefaultProject].Exec(projectID, userID)
 // 	if err != nil {
 // 		return exception.NewInternalServerError("set user's default project exec sql error, %s", err)
-// 	}
-
-// 	return nil
-// }
-
-// func (s *store) AddProjectsToUser(domainID, userID string, projectIDs ...string) error {
-// 	// check the user is not exist
-// 	ok, err := s.CheckUserIsExistByID(userID)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if !ok {
-// 		return exception.NewBadRequest("user %s not exist", userID)
-// 	}
-
-// 	// check projects is owned by this user
-// 	pids, err := s.ListUserProjects(domainID, userID)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	existPIDs := []string{}
-// 	for _, pid := range pids {
-// 		for _, inpid := range projectIDs {
-// 			if inpid == pid {
-// 				existPIDs = append(existPIDs, inpid)
-// 			}
-// 		}
-// 	}
-// 	if len(existPIDs) != 0 {
-// 		return exception.NewBadRequest("project %s is in this project", existPIDs)
-// 	}
-
-// 	for _, projectID := range projectIDs {
-// 		//
-// 		_, err = s.stmts[AddProjectToUser].Exec(userID, projectID)
-// 		if err != nil {
-// 			return fmt.Errorf("insert add projects to user mapping exec sql err, %s", err)
-// 		}
-// 	}
-
-// 	return nil
-// }
-
-// func (s *store) RemoveProjectsFromUser(domainID, userID string, projectIDs ...string) error {
-// 	// check the user is not exist
-// 	ok, err := s.CheckUserIsExistByID(userID)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if !ok {
-// 		return exception.NewBadRequest("user %s not exist", userID)
-// 	}
-
-// 	// check projects is owned by this user
-// 	pids, err := s.ListUserProjects(domainID, userID)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	nExistPIDs := []string{}
-// 	for _, inpid := range projectIDs {
-// 		var ok bool
-// 		for _, pid := range pids {
-// 			if pid == inpid {
-// 				ok = true
-// 			}
-// 		}
-// 		if !ok {
-// 			nExistPIDs = append(nExistPIDs, inpid)
-// 		}
-// 	}
-// 	if len(nExistPIDs) != 0 {
-// 		return exception.NewBadRequest("project %s isn't in this project", nExistPIDs)
-// 	}
-
-// 	for _, projectID := range projectIDs {
-// 		_, err = s.stmts[RemoveProjectsFromUser].Exec(userID, projectID)
-// 		if err != nil {
-// 			return fmt.Errorf("insert remove projects to user mapping exec sql err, %s", err)
-// 		}
 // 	}
 
 // 	return nil

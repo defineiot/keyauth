@@ -340,3 +340,107 @@ func (s *store) checkUserRoleExist(domainID, userID, roleID string) (bool, error
 
 	return true, nil
 }
+
+func (s *store) AddProjectsToUser(domainID, userID string, projects []*models.Project) error {
+	// check the user is not exist
+	ok, err := s.CheckUserIsExistByID(userID)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return exception.NewBadRequest("user %s not exist", userID)
+	}
+
+	// check projects is owned by this user
+	pids, err := s.listUserProjectIDs(domainID, userID)
+	if err != nil {
+		return err
+	}
+	existPIDs := []string{}
+	for _, pid := range pids {
+		for _, inpid := range projects {
+			if inpid.ID == pid {
+				existPIDs = append(existPIDs, inpid.ID)
+			}
+		}
+	}
+	if len(existPIDs) != 0 {
+		return exception.NewBadRequest("project %s is in this project", existPIDs)
+	}
+
+	for _, p := range projects {
+		_, err = s.stmts[AddProjectToUser].Exec(userID, p.ID)
+		if err != nil {
+			return fmt.Errorf("insert add projects to user mapping exec sql err, %s", err)
+		}
+	}
+
+	return nil
+}
+
+func (s *store) RemoveProjectsFromUser(domainID, userID string, projects []*models.Project) error {
+	// check the user is not exist
+	ok, err := s.CheckUserIsExistByID(userID)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return exception.NewBadRequest("user %s not exist", userID)
+	}
+
+	// check projects is owned by this user
+	pids, err := s.listUserProjectIDs(domainID, userID)
+	if err != nil {
+		return err
+	}
+	nExistPIDs := []string{}
+	for _, inpid := range projects {
+		var ok bool
+		for _, pid := range pids {
+			if pid == inpid.ID {
+				ok = true
+			}
+		}
+		if !ok {
+			nExistPIDs = append(nExistPIDs, inpid.ID)
+		}
+	}
+	if len(nExistPIDs) != 0 {
+		return exception.NewBadRequest("project %s isn't in this project", nExistPIDs)
+	}
+
+	for _, p := range projects {
+		_, err = s.stmts[RemoveProjectsFromUser].Exec(userID, p.ID)
+		if err != nil {
+			return fmt.Errorf("insert remove projects to user mapping exec sql err, %s", err)
+		}
+	}
+
+	return nil
+}
+
+func (s *store) listUserProjectIDs(domainID, userID string) ([]string, error) {
+	ok, err := s.CheckUserIsExistByID(userID)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, exception.NewBadRequest("user %s not exist", userID)
+	}
+
+	rows, err := s.stmts[FindUserProjects].Query(userID, domainID)
+	if err != nil {
+		return nil, exception.NewInternalServerError("query user's project id error, %s", err)
+	}
+	defer rows.Close()
+
+	projects := []string{}
+	for rows.Next() {
+		var projectID string
+		if err := rows.Scan(&projectID); err != nil {
+			return nil, exception.NewInternalServerError("scan user's project id error, %s", err)
+		}
+		projects = append(projects, projectID)
+	}
+	return projects, nil
+}
