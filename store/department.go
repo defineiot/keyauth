@@ -8,16 +8,33 @@ import (
 // CreateDepartment todo
 func (s *Store) CreateDepartment(dep *models.Department) error {
 	has, err := s.dao.Department.GetDepartmentByName(dep.DomainID, dep.Name)
-	if _, ok := err.(*exception.NotFound); !ok {
-		return err
+	if err != nil {
+		if _, ok := err.(*exception.NotFound); !ok {
+			return err
+		}
 	}
+
 	if has != nil && has.ID != "" {
 		return exception.NewBadRequest("the department %s has exist", dep.Name)
 	}
 
 	// 检查项目是否合法
+	for _, pid := range dep.ProjectIDs {
+		p, err := s.dao.Project.GetProjectByID(pid)
+		if err != nil {
+			return exception.NewBadRequest(err.Error())
+		}
+		dep.Projects = append(dep.Projects, p)
+	}
 
 	// 检查角色是否存在
+	for _, rid := range dep.RoleIDs {
+		r, err := s.dao.Role.GetRole(rid)
+		if err != nil {
+			return exception.NewBadRequest(err.Error())
+		}
+		dep.Roles = append(dep.Roles, r)
+	}
 
 	if err := s.dao.Department.CreateDepartment(dep); err != nil {
 		return err
@@ -101,6 +118,20 @@ func (s *Store) GetDepartment(depID string) (*models.Department, error) {
 		u.Roles = roles
 	}
 	dep.Users = users
+
+	// 填充部门相关的项目数据
+	projects, err := s.dao.Project.ListDepartmentProjects(depID)
+	if err != nil {
+		return nil, err
+	}
+	dep.Projects = projects
+
+	// 添加部门相关的角色数据
+	roles, err := s.dao.Role.ListDepartmentRoles(depID)
+	if err != nil {
+		return nil, err
+	}
+	dep.Roles = roles
 
 	if s.isCache {
 		if !s.cache.Set(cacheKey, dep, s.ttl) {

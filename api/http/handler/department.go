@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/defineiot/keyauth/api/global"
@@ -11,31 +12,43 @@ import (
 	"github.com/defineiot/keyauth/internal/exception"
 )
 
+type createDepReq struct {
+	Name     string   `json:"name,omitempty"`
+	ParentID string   `json:"parent_id,omitempty"`
+	Projects []string `json:"projects,omitempty"`
+	Roles    []string `json:"roles,omitempty"`
+}
+
 // CreateDepartment use to create domain department
 func CreateDepartment(w http.ResponseWriter, r *http.Request) {
 	tk := context.GetTokenFromContext(r)
 	uid := tk.UserID
 
-	val, err := request.CheckObjectBody(r)
+	body, err := request.CheckBody(r)
 	if err != nil {
 		response.Failed(w, err)
 		return
 	}
 
 	// 校验传入参数的合法性
-	name := val.Get("name").ToString()
-	parentID := val.Get("parent_id").ToString()
+	reqData := new(createDepReq)
+	if err := json.Unmarshal(body, reqData); err != nil {
+		response.Failed(w, err)
+		return
+	}
 
-	if name == "" {
+	if reqData.Name == "" {
 		response.Failed(w, exception.NewBadRequest("department name missed"))
 		return
 	}
 
 	dep := &models.Department{
-		Name:      name,
-		DomainID:  tk.DomainID,
-		ParentID:  parentID,
-		ManagerID: uid,
+		Name:       reqData.Name,
+		DomainID:   tk.DomainID,
+		ParentID:   reqData.ParentID,
+		ManagerID:  uid,
+		ProjectIDs: reqData.Projects,
+		RoleIDs:    reqData.Roles,
 	}
 
 	// 交给业务控制层处理

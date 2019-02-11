@@ -66,6 +66,26 @@ func (s *store) ListRole() ([]*models.Role, error) {
 	return roles, nil
 }
 
+func (s *store) ListDepartmentRoles(departmentID string) ([]*models.Role, error) {
+	rows, err := s.stmts[FindDepartmentRoles].Query(departmentID)
+	if err != nil {
+		return nil, exception.NewInternalServerError("query role list error, %s", err)
+	}
+	defer rows.Close()
+
+	roles := []*models.Role{}
+	for rows.Next() {
+		r := new(models.Role)
+		if err := rows.Scan(&r.ID, &r.Name, &r.Description, &r.CreateAt, &r.UpdateAt); err != nil {
+			return nil, exception.NewInternalServerError("scan project record error, %s", err)
+		}
+
+		roles = append(roles, r)
+	}
+
+	return roles, nil
+}
+
 func (s *store) GetRole(id string) (*models.Role, error) {
 	r := new(models.Role)
 	err := s.stmts[FindRoleByID].QueryRow(id).Scan(&r.ID, &r.Name, &r.Description, &r.CreateAt, &r.UpdateAt)

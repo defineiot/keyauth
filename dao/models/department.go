@@ -24,6 +24,9 @@ type Department struct {
 	Users    []*User    `json:"users,omitempty"`    // 部门用户
 	Projects []*Project `json:"projects,omitempty"` // 部门可以访问的项目
 	Roles    []*Role    `json:"roles,omitempty"`    // 部门人员的角色
+
+	ProjectIDs []string `json:"-"`
+	RoleIDs    []string `json:"-"`
 }
 
 func (d *Department) String() string {

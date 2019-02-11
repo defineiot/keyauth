@@ -73,6 +73,26 @@ func (s *store) ListDomainProjects(domainID string) ([]*models.Project, error) {
 	return projects, nil
 }
 
+func (s *store) ListDepartmentProjects(departmentID string) ([]*models.Project, error) {
+	rows, err := s.stmts[FindDepartmentProjects].Query(departmentID)
+	if err != nil {
+		return nil, exception.NewInternalServerError("query project list error, %s", err)
+	}
+	defer rows.Close()
+
+	projects := []*models.Project{}
+	for rows.Next() {
+		p := new(models.Project)
+		if err := rows.Scan(&p.ID, &p.Name, &p.Picture, &p.Latitude, &p.Longitude, &p.Enabled,
+			&p.Owner, &p.Description, &p.DomainID, &p.CreateAt, &p.UpdateAt); err != nil {
+			return nil, exception.NewInternalServerError("scan project record error, %s", err)
+		}
+		projects = append(projects, p)
+	}
+
+	return projects, nil
+}
+
 func (s *store) ListUserProjects(domainID, userID string) ([]*models.Project, error) {
 	rows, err := s.stmts[FindUserProjects].Query(domainID, userID)
 	if err != nil {

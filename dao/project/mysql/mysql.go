@@ -10,13 +10,14 @@ import (
 )
 
 const (
-	CreateProject       = "create-project"
-	FindProjectByID     = "find-project-by-id"
-	UpdateProjectByID   = "update-project-by-id"
-	FindDomainPorjects  = "find-domain-projects"
-	FindUserProjects    = "find-user-projects"
-	DeleteProjectByID   = "delete-project-by-id"
-	DeleteProjectByName = "delete-project-by-name"
+	CreateProject          = "create-project"
+	FindProjectByID        = "find-project-by-id"
+	UpdateProjectByID      = "update-project-by-id"
+	FindDomainPorjects     = "find-domain-projects"
+	FindDepartmentProjects = "find-department-projects"
+	FindUserProjects       = "find-user-projects"
+	DeleteProjectByID      = "delete-project-by-id"
+	DeleteProjectByName    = "delete-project-by-name"
 
 	FindProjectUsers        = "find-project-users"
 	AddUsersToProject       = "add-users-to-project"
@@ -36,6 +37,15 @@ func NewProjectStore(opt *dao.Options) (project.Store, error) {
 			SELECT id, name, picture, latitude, longitude, enabled, owner_id,  description, domain_id, create_at, update_at 
 			FROM projects
 			WHERE domain_id = ? 
+			ORDER BY create_at 
+			DESC;
+		`,
+		FindDepartmentProjects: `
+			SELECT id, name, picture, latitude, longitude, enabled, owner_id,  description, domain_id, create_at, update_at 
+			FROM projects p
+			LEFT JOIN department_project_mappings m 
+			ON m.project_id = p.id 
+			WHERE m.department_id = ? 
 			ORDER BY create_at 
 			DESC;
 		`,

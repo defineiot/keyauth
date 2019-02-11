@@ -42,10 +42,55 @@ func (s *store) CreateDepartment(d *models.Department) error {
 		d.Path = parentDep.Path + "/" + d.Number
 	}
 
-	_, err := s.stmts[SaveDepartment].Exec(d.ID, d.Number, d.Name, d.ParentID, d.Grade,
-		d.Path, d.ManagerID, d.DomainID, d.CreateAt)
+	tx, err := s.db.Begin()
 	if err != nil {
+		return exception.NewInternalServerError("start create department transaction error, %s", err)
+	}
+	defer tx.Commit()
+
+	// 创建部门
+	sdPre, err := tx.Prepare(s.unprepared[SaveDepartment])
+	if err != nil {
+		return exception.NewInternalServerError("prepare save department sql error, %s", err)
+	}
+	defer sdPre.Close()
+
+	if _, err := sdPre.Exec(d.ID, d.Number, d.Name, d.ParentID, d.Grade,
+		d.Path, d.ManagerID, d.DomainID, d.CreateAt); err != nil {
+		tx.Rollback()
 		return exception.NewInternalServerError("insert save department exec sql err, %s", err)
+	}
+
+	// 部门项目
+	if len(d.ProjectIDs) > 0 {
+		sdpPre, err := tx.Prepare(s.unprepared[SaveDepartmentProject])
+		if err != nil {
+			return exception.NewInternalServerError("prepare save department project sql error, %s", err)
+		}
+		defer sdpPre.Close()
+
+		for _, pid := range d.ProjectIDs {
+			if _, err := sdpPre.Exec(d.ID, pid); err != nil {
+				tx.Rollback()
+				return exception.NewInternalServerError("save department project error, %s", err)
+			}
+		}
+	}
+
+	// 部门角色
+	if len(d.RoleIDs) > 0 {
+		sdrPre, err := tx.Prepare(s.unprepared[SaveDepartmentRole])
+		if err != nil {
+			return exception.NewInternalServerError("prepare save department role sql error, %s", err)
+		}
+		defer sdrPre.Close()
+
+		for _, rid := range d.RoleIDs {
+			if _, err := sdrPre.Exec(d.ID, rid); err != nil {
+				tx.Rollback()
+				return exception.NewInternalServerError("save department role error, %s", err)
+			}
+		}
 	}
 
 	return nil

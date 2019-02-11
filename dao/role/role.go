@@ -17,8 +17,8 @@ type Reader interface {
 	GetRoleByName(name string) (*models.Role, error)
 	CheckRoleExist(name string) (bool, error)
 	ListRole() ([]*models.Role, error)
+	ListDepartmentRoles(departmentID string) ([]*models.Role, error)
 	ListUserRole(domainID, userID string) ([]*models.Role, error)
-	// VerifyRole(name string, feature string) (bool, error)
 }
 
 // Writer for write data to store

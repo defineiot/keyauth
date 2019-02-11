@@ -11,12 +11,14 @@ import (
 )
 
 const (
-	SaveDepartment       = "save-department"
-	FindDepartment       = "find-department"
-	FindDepartmentByName = "find-department-by-name"
-	FindSubDepartments   = "find-sub-departments"
-	CountSubDepartments  = "count-sub-departments"
-	DeleteDepartment     = "delete-departments"
+	SaveDepartment        = "save-department"
+	SaveDepartmentProject = "save-department-project"
+	SaveDepartmentRole    = "save-department-role"
+	FindDepartment        = "find-department"
+	FindDepartmentByName  = "find-department-by-name"
+	FindSubDepartments    = "find-sub-departments"
+	CountSubDepartments   = "count-sub-departments"
+	DeleteDepartment      = "delete-departments"
 )
 
 // NewDepartmentStore use to create domain storage service
@@ -33,6 +35,14 @@ func NewDepartmentStore(opt *dao.Options) (department.Store, error) {
 			INSERT INTO departments (id, number, name, parent, grade, path, manager, domain_id, create_at) 
 			VALUES (?,?,?,?,?,?,?,?,?);
 		`,
+		SaveDepartmentProject: `
+			INSERT INTO department_project_mappings (department_id, project_id) 
+			VALUES (?,?);
+		`,
+		SaveDepartmentRole: `
+			INSERT INTO department_role_mappings (department_id, role_id) 
+			VALUES (?,?);
+		`,
 		FindDepartment: `
 			SELECT id, number, name, parent, grade, path, manager, domain_id, create_at 
 			FROM departments 
@@ -48,7 +58,9 @@ func NewDepartmentStore(opt *dao.Options) (department.Store, error) {
 			SELECT id, number, name, parent, grade, path, manager, domain_id, create_at 
 			FROM departments 
 			WHERE parent = ? 
-			AND domain_id = ?;
+			AND domain_id = ? 
+			ORDER BY create_at 
+			DESC;
 		`,
 		CountSubDepartments: `
 			SELECT count(*) 

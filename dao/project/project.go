@@ -13,6 +13,7 @@ type Store interface {
 type Reader interface {
 	GetProjectByID(id string) (*models.Project, error)
 	ListDomainProjects(domainID string) ([]*models.Project, error)
+	ListDepartmentProjects(departmentID string) ([]*models.Project, error)
 	ListUserProjects(domainID, userID string) ([]*models.Project, error)
 	CheckProjectIsExistByID(id string) (bool, error)
 }
