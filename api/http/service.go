@@ -103,7 +103,7 @@ func (s *Service) Start() error {
 	}
 	s.log.Debug("initial global variables success")
 
-	// registe service
+	// 注册服务功能列表
 	if s.conf.Etcd.EnableRegisteFeatures {
 		if err := s.registryService(); err != nil {
 			s.log.Error("registe keyauth service failed, %s", err)
