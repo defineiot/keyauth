@@ -111,12 +111,6 @@ func ValidateToken(w http.ResponseWriter, r *http.Request) {
 	qs := r.URL.Query()
 	ps := context.GetParamsFromContext(r)
 
-	contentT := strings.Split(r.Header.Get("content-type"), ";")
-	if len(contentT) == 0 {
-		response.Failed(w, exception.NewBadRequest("content-type missed, your must be choice one [application/json, application/x-www-form-urlencoded]"))
-		return
-	}
-
 	clientID, clientSecret, ok := r.BasicAuth()
 	if !ok {
 		response.Failed(w, exception.NewForbidden("client_credentials missed"))
