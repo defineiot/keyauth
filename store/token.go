@@ -769,6 +769,15 @@ func (s *Store) issueTokenByUpScope(clientID, clientSecret, accessToken, scope s
 	}
 	t.Scope = scope
 
+	// 清除缓存的token
+	if s.isCache {
+		cacheKey := s.cachePrefix.token + t.AccessToken
+		if !s.cache.Delete(cacheKey) {
+			s.log.Debug("delete token from cache failed, key: %s", cacheKey)
+		}
+		s.log.Debug("delete token from cache success, key: %s", cacheKey)
+	}
+
 	return t, nil
 }
 
