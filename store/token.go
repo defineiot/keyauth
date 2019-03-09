@@ -231,6 +231,10 @@ func (s *Store) ValidateTokenWithClient(v *ValidateTokenReq) (*models.Token, err
 		if v.ClientSecret != app.ClientSecret {
 			return nil, exception.NewForbidden("unauthorized_client")
 		}
+
+		if v.FeatureName != "" {
+			return nil, exception.NewBadRequest("application don't support feature validate")
+		}
 	}
 
 	tk := new(models.Token)
