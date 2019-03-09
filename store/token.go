@@ -2,7 +2,6 @@ package store
 
 import (
 	"encoding/base64"
-	"fmt"
 	"math/rand"
 	"regexp"
 	"strings"
@@ -708,8 +707,6 @@ func (s *Store) issueTokenByUpScope(clientID, clientSecret, accessToken, scope s
 		return nil, exception.NewBadRequest("access_token missed")
 	}
 
-	fmt.Println(scope)
-
 	scopeSlice := strings.Split(scope, ",")
 	if len(scopeSlice) != 2 {
 		return nil, exception.NewBadRequest("scope format invalidate, format: <domain_id>,<project_id>")
@@ -733,7 +730,9 @@ func (s *Store) issueTokenByUpScope(clientID, clientSecret, accessToken, scope s
 		return nil, err
 	}
 
-	fmt.Println(t)
+	if t.GetProjectID() == projectID {
+		return t, nil
+	}
 
 	// 切换用户的域空间, 判断需要切换的域是否属于该用户
 	if domainID != "" && domainID != t.DomainID {
@@ -773,6 +772,15 @@ func (s *Store) issueTokenByUpScope(clientID, clientSecret, accessToken, scope s
 		return nil, err
 	}
 	t.Scope = scope
+
+	// 清除缓存的token
+	if s.isCache {
+		cacheKey := s.cachePrefix.token + t.AccessToken
+		if !s.cache.Delete(cacheKey) {
+			s.log.Debug("delete token from cache failed, key: %s", cacheKey)
+		}
+		s.log.Debug("delete token from cache success, key: %s", cacheKey)
+	}
 
 	return t, nil
 }

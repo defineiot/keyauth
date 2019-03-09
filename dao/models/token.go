@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/defineiot/keyauth/internal/exception"
@@ -71,6 +72,16 @@ func (t *Token) String() string {
 	}
 
 	return string(str)
+}
+
+// GetProjectID 获取token的ProjectID
+func (t *Token) GetProjectID() string {
+	scope := strings.Split(t.Scope, ",")
+	if len(scope) < 2 {
+		return ""
+	}
+
+	return scope[1]
 }
 
 // ValidateSave 校验token创建
