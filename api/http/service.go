@@ -57,14 +57,22 @@ func NewService(config *conf.Config) (*Service, error) {
 	r := router.NewRouter()
 	r.SetURLPrefix("/keyauth/v1")
 	RouteToV1(r)
-	n.UseHandler(r.Router)
 
 	// 设置路由中间件
-	corsM := cors.AllowAll()
+	corsM := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"HEAD", "GET", "POST", "PUT", "PATCH", "DELETE"},
+		AllowedHeaders:   []string{"*"},
+		ExposedHeaders:   []string{"*"},
+		AllowCredentials: true,
+		Debug:            true,
+	})
+
 	recoverM := negroni.NewRecovery()
 	accessL := negroni.NewLogger()
 	n.Use(corsM)
 	n.Use(accessL)
+	n.UseHandler(r.Router)
 	n.Use(recoverM)
 
 	// 生成HTTP服务对象
