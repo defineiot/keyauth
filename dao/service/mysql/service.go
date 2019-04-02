@@ -206,6 +206,9 @@ func (s *store) RegistryServiceFeatures(serviceID, version string, features ...*
 			newF.IsAdded = true
 			newF.AddedVersion = version
 			newF.AddedAt = time.Now().Unix()
+			newF.IsDeleted = false
+			newF.DeletedVersion = ""
+			newF.DeleteAt = 0
 			added = append(added, newF)
 		} else {
 
