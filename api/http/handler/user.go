@@ -127,6 +127,78 @@ func ListProjectUser(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// BindRole 给用户绑定角色
+func BindRole(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	tk := context.GetTokenFromContext(r)
+	uid := ps.ByName("uid")
+	rn := ps.ByName("rn")
+
+	u, err := global.Store.GetUser(tk.DomainID, uid)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	if !tk.IsSystemAdmin {
+		// 1. check user is in your domain
+		if u.Domain.ID != tk.DomainID {
+			response.Failed(w, exception.NewForbidden("this user: %s not in your domain", uid))
+			return
+		}
+
+		// 2. forbidden other role bind system_admin
+		if rn == "system_admin" {
+			response.Failed(w, exception.NewForbidden("only system admin can bind system_admin role"))
+			return
+		}
+	}
+
+	if err := global.Store.BindRole(tk.DomainID, uid, rn); err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusCreated, "")
+	return
+}
+
+// UnBindRole todo
+func UnBindRole(w http.ResponseWriter, r *http.Request) {
+	ps := context.GetParamsFromContext(r)
+	tk := context.GetTokenFromContext(r)
+	uid := ps.ByName("uid")
+	rn := ps.ByName("rn")
+
+	u, err := global.Store.GetUser(tk.DomainID, uid)
+	if err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	if !tk.IsSystemAdmin {
+		// 1. check user is in your domain
+		if u.Domain.ID != tk.DomainID {
+			response.Failed(w, exception.NewForbidden("this user: %s not in your domain", uid))
+			return
+		}
+	} else {
+		// 2. the initial system admin can't ubind
+		if u.IsDomainOwner {
+			response.Failed(w, exception.NewForbidden("domain owner's role can't be unbind"))
+			return
+		}
+	}
+
+	if err := global.Store.UnBindRole(tk.DomainID, uid, rn); err != nil {
+		response.Failed(w, err)
+		return
+	}
+
+	response.Success(w, http.StatusCreated, "")
+	return
+}
+
 // // RegistryUser use to create domain
 // func RegistryUser(w http.ResponseWriter, r *http.Request) {
 // 	val, err := request.CheckObjectBody(r)
@@ -645,77 +717,4 @@ func ListProjectUser(w http.ResponseWriter, r *http.Request) {
 // 	response.Success(w, http.StatusCreated, nil)
 // 	return
 
-// }
-
-// // BindRole todo
-// func BindRole(w http.ResponseWriter, r *http.Request) {
-// 	ps := context.GetParamsFromContext(r)
-// 	tk := context.GetTokenFromContext(r)
-// 	uid := ps.ByName("uid")
-// 	rn := ps.ByName("rn")
-
-// 	u, err := global.Store.GetUser(tk.DomainID, uid)
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
-
-// 	if !tk.IsSystemAdmin {
-// 		// 1. check user is in your domain
-// 		if u.DomainID != tk.DomainID {
-// 			response.Failed(w, exception.NewForbidden("this user: %s not in your domain", uid))
-// 			return
-// 		}
-
-// 		// 2. forbidden other role bind system_admin
-// 		if rn == "system_admin" {
-// 			response.Failed(w, exception.NewForbidden("only system admin can bind system_admin role"))
-// 			return
-// 		}
-// 	}
-
-// 	if err := global.Store.BindRole(tk.DomainID, uid, rn); err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
-
-// 	response.Success(w, http.StatusCreated, "")
-// 	return
-
-// }
-
-// // UnBindRole todo
-// func UnBindRole(w http.ResponseWriter, r *http.Request) {
-// 	ps := context.GetParamsFromContext(r)
-// 	tk := context.GetTokenFromContext(r)
-// 	uid := ps.ByName("uid")
-// 	rn := ps.ByName("rn")
-
-// 	u, err := global.Store.GetUser(tk.DomainID, uid)
-// 	if err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
-
-// 	if !tk.IsSystemAdmin {
-// 		// 1. check user is in your domain
-// 		if u.DomainID != tk.DomainID {
-// 			response.Failed(w, exception.NewForbidden("this user: %s not in your domain", uid))
-// 			return
-// 		}
-// 	} else {
-// 		// 2. the initial system admin can't ubind
-// 		if u.Name == global.Conf.Admin.UserName {
-// 			response.Failed(w, exception.NewForbidden("can't unbind system initial admin user role"))
-// 			return
-// 		}
-// 	}
-
-// 	if err := global.Store.UnBindRole(tk.DomainID, uid, rn); err != nil {
-// 		response.Failed(w, err)
-// 		return
-// 	}
-
-// 	response.Success(w, http.StatusCreated, "")
-// 	return
 // }

@@ -201,48 +201,6 @@ func (s *Store) RevolkCode(purpose models.CodePurpose, target string, code strin
 // 	return s.user.RemoveProjectsFromUser(domainID, userID, projectIDs...)
 // }
 
-// // BindRole todo
-// func (s *Store) BindRole(domainID, userID, roleName string) error {
-// 	ok, err := s.role.CheckRoleExist(roleName)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if !ok {
-// 		return exception.NewBadRequest("role: %s not exist", roleName)
-// 	}
-
-// 	cacheKey := "user_" + userID
-// 	if s.isCache {
-// 		if !s.cache.Delete(cacheKey) {
-// 			s.log.Debugf("delete user from cache failed, key: %s", cacheKey)
-// 		}
-// 		s.log.Debugf("delete user from cache success, key: %s", cacheKey)
-// 	}
-
-// 	return s.user.BindRole(domainID, userID, roleName)
-// }
-
-// // UnBindRole todo
-// func (s *Store) UnBindRole(domainID, userID, roleName string) error {
-// 	ok, err := s.role.CheckRoleExist(roleName)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if !ok {
-// 		return exception.NewBadRequest("role: %s not exist", roleName)
-// 	}
-
-// 	cacheKey := "user_" + userID
-// 	if s.isCache {
-// 		if !s.cache.Delete(cacheKey) {
-// 			s.log.Debugf("delete user from cache failed, key: %s", cacheKey)
-// 		}
-// 		s.log.Debugf("delete user from cache success, key: %s", cacheKey)
-// 	}
-
-// 	return s.user.UnBindRole(domainID, userID, roleName)
-// }
-
 // // ListUserDomain get an user
 // func (s *Store) ListUserDomain(userID string) ([]*domain.Domain, error) {
 // 	var err error

@@ -20,7 +20,7 @@ type FoundUserIndex string
 
 // User info
 type User struct {
-	ID                string    `json:"id"`                            // 用户UUID
+	ID                string    `json:"id,omitempty"`                  // 用户UUID
 	Account           string    `json:"account,omitempty"`             // 用户账号名称
 	Mobile            string    `json:"mobile,omitempty"`              // 手机号码, 用户可以通过手机进行注册和密码找回, 还可以通过手机号进行登录
 	Email             string    `json:"email,omitempty"`               // 邮箱, 用户可以通过邮箱进行注册和照明密码
@@ -37,13 +37,14 @@ type User struct {
 	CreateAt          int64     `json:"create_at,omitempty"`           // 用户创建的时间
 	ExpiresActiveDays int       `json:"expires_active_days,omitempty"` // 用户多久未登录时(天), 冻结改用户, 防止僵尸用户的账号被利用
 	Password          *Password `json:"password,omitempty"`            // 密码相关信息
+	IsDomainOwner     bool      `json:"is_domain_owner,omitempty"`
 
 	Domain         *Domain      `json:"domain,omitempty"`          // 如果需要对象由上层进行查找
 	DefaultProject *Project     `json:"default_project,omitempty"` //  如果需要对象由上层进行查找
 	Department     *Department  `json:"department,omitempty"`      // 所属部门信息
 	LoginStatus    *LoginStatus `json:"login_status,omitempty"`    // 用户登录状态
-	Roles          []*Role      `json:"roles"`                     // 角色列表
-	Projects       []*Project   `json:"projects"`
+	Roles          []*Role      `json:"roles,omitempty"`           // 角色列表
+	Projects       []*Project   `json:"projects,omitempty"`
 }
 
 // Password user's password

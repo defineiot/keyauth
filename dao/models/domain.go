@@ -38,7 +38,6 @@ type Domain struct {
 	ContactsEmail  string     `json:"contacts_email,omitempty"`  // 联系人邮箱
 	CreateAt       int64      `json:"create_at,omitempty"`       // 创建时间
 	UpdateAt       int64      `json:"update_at,omitempty"`       // 更新时间
-	Owner          string     `json:"owner,omitempty"`           // 创建者ID
 }
 
 func (d *Domain) String() string {

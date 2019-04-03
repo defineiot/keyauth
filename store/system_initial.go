@@ -135,10 +135,11 @@ func (s *Store) initAdminUser(username, password string) error {
 	fmt.Printf("[INIT] 创建普通成员默认部门成功: %s\n", defaultDep.Name)
 
 	adminUser := &models.User{
-		Account:    username,
-		Password:   &models.Password{Password: s.hmacHash(password)},
-		Domain:     adminDomain,
-		Department: adminDep,
+		Account:       username,
+		Password:      &models.Password{Password: s.hmacHash(password)},
+		Domain:        adminDomain,
+		Department:    adminDep,
+		IsDomainOwner: true,
 	}
 
 	if err := s.dao.User.CreateUser(adminUser); err != nil {

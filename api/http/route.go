@@ -17,6 +17,7 @@ func RouteToV1(r *router.MyRouter) {
 	r.HandlerFunc("POST", "/members/", "CreateMemberUser", handler.CreateMemberUser)
 	r.HandlerFunc("GET", "/members/", "ListMemberUsers", handler.ListMemberUsers)
 	r.HandlerFunc("GET", "/members/:mid/", "GetMemberUser", handler.GetMemberUser)
+	// r.HandlerFunc("POST", "", "", "")
 	r.HandlerFunc("DELETE", "/members/:mid/", "DeleteMemberUser", handler.DeleteMemberUser)
 
 	// Token

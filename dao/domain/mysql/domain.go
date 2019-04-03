@@ -31,7 +31,7 @@ func (s *store) CreateDomain(d *models.Domain) error {
 		d.ID, d.Name, d.DisplayName, d.LogoPath, d.Description, d.Enabled,
 		int(d.Type), d.CreateAt, d.Size, d.Location, d.Industry, d.Address,
 		d.Fax, d.Phone, d.ContactsName, d.ContactsTitle, d.ContactsMobile,
-		d.ContactsEmail, d.Owner)
+		d.ContactsEmail)
 	if err != nil {
 		return exception.NewInternalServerError("insert domain exec sql err, %s", err)
 	}
@@ -45,7 +45,7 @@ func (s *store) GetDomainByID(domainID string) (*models.Domain, error) {
 		&d.ID, &d.Name, &d.DisplayName, &d.LogoPath, &d.Description, &d.Enabled,
 		&d.Type, &d.CreateAt, &d.UpdateAt, &d.Size, &d.Location, &d.Industry,
 		&d.Address, &d.Fax, &d.Phone, &d.ContactsName, &d.ContactsTitle,
-		&d.ContactsMobile, &d.ContactsEmail, &d.Owner)
+		&d.ContactsMobile, &d.ContactsEmail)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewNotFound("domain %s not find", domainID)
@@ -70,7 +70,7 @@ func (s *store) ListUserThirdDomains(userID string) ([]*models.Domain, error) {
 			&d.ID, &d.Name, &d.DisplayName, &d.LogoPath, &d.Description, &d.Enabled,
 			&d.Type, &d.CreateAt, &d.UpdateAt, &d.Size, &d.Location, &d.Industry,
 			&d.Address, &d.Fax, &d.Phone, &d.ContactsName, &d.ContactsTitle,
-			&d.ContactsMobile, &d.ContactsEmail, &d.Owner)
+			&d.ContactsMobile, &d.ContactsEmail)
 		if err != nil {
 			return nil, exception.NewInternalServerError("scan domain record error, %s", err)
 		}
@@ -86,7 +86,7 @@ func (s *store) GetDomainByName(name string) (*models.Domain, error) {
 		&d.ID, &d.Name, &d.DisplayName, &d.LogoPath, &d.Description, &d.Enabled,
 		&d.Type, &d.CreateAt, &d.UpdateAt, &d.Size, &d.Location, &d.Industry,
 		&d.Address, &d.Fax, &d.Phone, &d.ContactsName, &d.ContactsTitle,
-		&d.ContactsMobile, &d.ContactsEmail, &d.Owner)
+		&d.ContactsMobile, &d.ContactsEmail)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewNotFound("domain %s not find", name)
@@ -126,7 +126,7 @@ func (s *store) ListDomain(pageNumber, pageSize int64) ([]*models.Domain, int64,
 			&d.ID, &d.Name, &d.DisplayName, &d.LogoPath, &d.Description, &d.Enabled,
 			&d.Type, &d.CreateAt, &d.UpdateAt, &d.Size, &d.Location, &d.Industry,
 			&d.Address, &d.Fax, &d.Phone, &d.ContactsName, &d.ContactsTitle,
-			&d.ContactsMobile, &d.ContactsEmail, &d.Owner)
+			&d.ContactsMobile, &d.ContactsEmail)
 		if err != nil {
 			return nil, 0, exception.NewInternalServerError("scan domain record error, %s", err)
 		}

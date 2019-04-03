@@ -33,22 +33,22 @@ func NewDomainStore(opt *dao.Options) (domain.Store, error) {
 
 	unprepared := map[string]string{
 		CreateDomain: `
-			INSERT INTO domains (id, name, display_name, logo_path, description, enabled, type, create_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email, owner_id)
-			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);
+			INSERT INTO domains (id, name, display_name, logo_path, description, enabled, type, create_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email)
+			VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);
 		`,
 		FindDomainByID: `
-			SELECT id, name, display_name, logo_path, description, enabled, type, create_at, update_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email, owner_id
+			SELECT id, name, display_name, logo_path, description, enabled, type, create_at, update_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email
 			FROM domains 
 			WHERE id = ?;
 		`,
 		FindDomains: `
-			SELECT id, name, display_name, logo_path, description, enabled, type, create_at, update_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email, owner_id 
+			SELECT id, name, display_name, logo_path, description, enabled, type, create_at, update_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email 
 			FROM domains
 			ORDER BY create_at 
 			DESC;
 		`,
 		FindUserThirdDomains: `
-			SELECT id, name, display_name, logo_path, description, enabled, type, create_at, update_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email, owner_id 
+			SELECT id, name, display_name, logo_path, description, enabled, type, create_at, update_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email 
 			FROM domains d 
 			LEFT JOIN user_domain_mappings m 
 			ON m.domain_id = d.id 
@@ -57,13 +57,13 @@ func NewDomainStore(opt *dao.Options) (domain.Store, error) {
 			DESC;
 		`,
 		FindDomainsWithPage: `
-			SELECT id, name, display_name, logo_path, description, enabled, type, create_at, update_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email, owner_id 
+			SELECT id, name, display_name, logo_path, description, enabled, type, create_at, update_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email 
 			FROM domains
 			ORDER BY create_at 
 			DESC LIMIT ?,?;
 		`,
 		FindDomainByName: `
-			SELECT id, name, display_name, logo_path, description, enabled, type, create_at, update_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email, owner_id
+			SELECT id, name, display_name, logo_path, description, enabled, type, create_at, update_at, size, location, industry, address, fax, phone, contacts_name, contacts_title, contacts_mobile, contacts_email 
 			FROM domains 
 			WHERE name = ?;
 		`,

@@ -230,3 +230,45 @@ func (s *Store) ListProjectUser(projectID string) ([]*models.User, error) {
 
 	return users, nil
 }
+
+// BindRole todo
+func (s *Store) BindRole(domainID, userID, roleName string) error {
+	ok, err := s.dao.Role.CheckRoleExist(roleName)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return exception.NewBadRequest("role: %s not exist", roleName)
+	}
+
+	cacheKey := "user_" + userID
+	if s.isCache {
+		if !s.cache.Delete(cacheKey) {
+			s.log.Debug("delete user from cache failed, key: %s", cacheKey)
+		}
+		s.log.Debug("delete user from cache success, key: %s", cacheKey)
+	}
+
+	return s.dao.User.BindRole(domainID, userID, roleName)
+}
+
+// UnBindRole todo
+func (s *Store) UnBindRole(domainID, userID, roleName string) error {
+	ok, err := s.dao.Role.CheckRoleExist(roleName)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return exception.NewBadRequest("role: %s not exist", roleName)
+	}
+
+	cacheKey := "user_" + userID
+	if s.isCache {
+		if !s.cache.Delete(cacheKey) {
+			s.log.Debug("delete user from cache failed, key: %s", cacheKey)
+		}
+		s.log.Debug("delete user from cache success, key: %s", cacheKey)
+	}
+
+	return s.dao.User.UnBindRole(domainID, userID, roleName)
+}
